@@ -25,6 +25,7 @@
 #include "../sm_120/dp4a_research_benchmarks.cu"
 #include "../sm_120/wgmma_research_benchmarks.cu"
 #include "../sm_120/fp8_research_benchmarks.cu"
+#include "../sm_120/cuda_graph_research_benchmarks.cu"
 
 #define CHECK_CUDA(call) \
     do { \
@@ -54,6 +55,7 @@ void printUsage(const char* program) {
     printf("  dp4a                - DP4A (INT8 dot product of 4 bytes)\n");
     printf("  wgmma               - WGMMA (Warpgroup MMA Async)\n");
     printf("  fp8                 - FP8 / TCGen05 Block Scaling (E4M3/E5M2)\n");
+    printf("  graph               - CUDA Graph (kernel launch optimization)\n");
     printf("  all                 - Run all benchmarks (default)\n");
     printf("\nSize: Number of elements (default: 1M)\n");
     printf("\nSupported Architectures:\n");
@@ -457,6 +459,21 @@ int main(int argc, char** argv) {
                 break;
             default:
                 printf("\n[FP8 research not available for SM %d.%d]\n",
+                       info.computeCapabilityMajor, info.computeCapabilityMinor);
+                break;
+        }
+    }
+
+    // Run CUDA Graph research benchmarks
+    if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "graph") == 0) {
+        switch (sm) {
+            case 120:
+                printf("\n[Running SM 12.0 CUDA Graph Research]\n");
+                printf("For NCU analysis: ncu --set full --kernels-by-compute ./gpupeek.exe graph\n");
+                runCUDAGraphResearchBenchmarks(N);
+                break;
+            default:
+                printf("\n[CUDA Graph research not available for SM %d.%d]\n",
                        info.computeCapabilityMajor, info.computeCapabilityMinor);
                 break;
         }

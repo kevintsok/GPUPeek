@@ -50,7 +50,9 @@ GPUPeek/
         ├── wgmma_research_kernel.cu       # WGMMA (Async warpgroup MMA) kernels
         ├── wgmma_research_benchmarks.cu
         ├── fp8_research_kernel.cu        # FP8 / TCGen05 Block Scaling kernels
-        └── fp8_research_benchmarks.cu
+        ├── fp8_research_benchmarks.cu
+        ├── cuda_graph_research_kernel.cu   # CUDA Graph kernels
+        └── cuda_graph_research_benchmarks.cu
 ```
 
 ## Architecture-Specific Directories
@@ -118,6 +120,7 @@ cmake --build . --config Release
 ./build/gpupeek dp4a      # DP4A (INT8 dot product of 4 bytes)
 ./build/gpupeek wgmma     # WGMMA (Warpgroup MMA Async)
 ./build/gpupeek fp8      # FP8 / TCGen05 Block Scaling (E4M3/E5M2)
+./build/gpupeek graph    # CUDA Graph (kernel launch optimization)
 
 # NCU profiling (for Nsight Compute analysis)
 ./build/gpupeek ncu
@@ -234,6 +237,13 @@ cmake --build . --config Release
 - Quantized inference patterns (INT8 -> FP32)
 - Block scaling for weight-only quantization
 - Baseline comparisons (FP32, FP16, naive)
+
+**CUDA Graph (`./gpupeek graph`)**
+- Graph lifecycle (create, instantiate, launch, destroy)
+- Stream capture (begin/end capture)
+- Kernel launch overhead reduction
+- Pipeline / inference benchmarks
+- Graph vs regular launch comparison
 
 ## Sample Output
 

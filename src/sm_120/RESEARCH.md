@@ -1017,3 +1017,82 @@ ncu --metrics dram__bytes.sum ./gpupeek fp8
 2. **块大小**: 32 元素/块是常见选择
 3. **缩放因子**: 存储倒数避免除法
 4. **量化感知训练**: 需要校准数据
+
+## 16. CUDA Graph 研究
+
+### 16.1 CUDA Graph API
+
+CUDA Graph 用于优化内核启动开销。
+
+**Graph 生命周期**:
+
+| 函数 | 描述 |
+|------|------|
+| cudaGraphCreate | 创建空图 |
+| cudaGraphInstantiate | 从图创建可执行图 |
+| cudaGraphLaunch | 启动可执行图 |
+| cudaGraphExecDestroy | 销毁可执行图 |
+| cudaGraphDestroy | 销毁图 |
+
+**Stream 捕获**:
+
+| 函数 | 描述 |
+|------|------|
+| cudaStreamBeginCapture | 开始捕获 |
+| cudaStreamEndCapture | 结束捕获并返回图 |
+| cudaStreamIsCapturing | 检查捕获状态 |
+
+### 16.2 节点操作
+
+| 函数 | 描述 |
+|------|------|
+| cudaGraphAddKernelNode | 添加内核节点 |
+| cudaGraphAddMemcpyNode | 添加拷贝节点 |
+| cudaGraphAddMemsetNode | 添加置零节点 |
+| cudaGraphAddEmptyNode | 添加空节点 |
+| cudaGraphAddBarrierNode | 添加屏障节点 |
+
+### 16.3 CUDA Graph 测试命令
+
+```bash
+# CUDA Graph 基准测试
+./build/gpupeek.exe graph
+
+# NCU 分析
+ncu --set full --kernels-by-compute ./gpupeek graph
+ncu --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./gpupeek graph
+```
+
+### 16.4 CUDA Graph Kernel 代码覆盖
+
+| Kernel | 功能 |
+|--------|------|
+| vectorAddKernel | 向量加法 |
+| vectorMulKernel | 向量乘法 |
+| vectorScaleKernel | 向量缩放 |
+| matrixMultiplyKernel | 矩阵乘法 |
+| reluKernel | ReLU 激活 |
+| biasAddKernel | 偏置加法 |
+| Graph Benchmark 测试 | Graph 生命周期性能 |
+| Stream Capture 测试 | 捕获性能 |
+| Launch Overhead 测试 | 启动开销对比 |
+| Pipeline 测试 | 推理流水线 |
+
+### 16.5 CUDA Graph 使用场景
+
+**优势**:
+1. 减少多个内核启动的 CPU 开销
+2. 启用并行内核执行
+3. 降低重复工作负载的延迟
+4. 提高小内核的 GPU 利用率
+
+**最佳场景**:
+- 深度学习推理流水线
+- 重复批处理
+- 多内核流式工作负载
+- 小内核（启动开销显著）
+
+**权衡**:
+- Graph 创建有前期成本
+- 灵活性有限（图是静态的）
+- 更新需要重新实例化
