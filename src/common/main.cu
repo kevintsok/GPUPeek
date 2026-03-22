@@ -20,6 +20,7 @@
 #include "../sm_120/atomic_benchmarks.cu"
 #include "../sm_120/barrier_benchmarks.cu"
 #include "../sm_120/warp_specialize_benchmarks.cu"
+#include "../sm_120/mma_research_benchmarks.cu"
 
 #define CHECK_CUDA(call) \
     do { \
@@ -44,6 +45,7 @@ void printUsage(const char* program) {
     printf("  atomic              - Atomic operations deep research\n");
     printf("  barrier             - Barrier synchronization research\n");
     printf("  warp                - Warp specialization and producer/consumer patterns\n");
+    printf("  mma                 - MMA (Tensor Core) research (WMMA/MMA/WGMMA/TCGen05)\n");
     printf("  all                 - Run all benchmarks (default)\n");
     printf("\nSize: Number of elements (default: 1M)\n");
     printf("\nSupported Architectures:\n");
@@ -372,6 +374,21 @@ int main(int argc, char** argv) {
                 break;
             default:
                 printf("\n[Warp Specialization research not available for SM %d.%d]\n",
+                       info.computeCapabilityMajor, info.computeCapabilityMinor);
+                break;
+        }
+    }
+
+    // Run MMA (Tensor Core) research benchmarks
+    if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "mma") == 0) {
+        switch (sm) {
+            case 120:
+                printf("\n[Running SM 12.0 MMA (Tensor Core) Research]\n");
+                printf("For NCU SASS analysis: ncu --set full --metrics smsp__average_executed_epc_per_warp,sm__pipe_tensor_cycles_active.pct ./gpupeek.exe mma\n");
+                runMMAResearchBenchmarks(N);
+                break;
+            default:
+                printf("\n[MMA research not available for SM %d.%d]\n",
                        info.computeCapabilityMajor, info.computeCapabilityMinor);
                 break;
         }
