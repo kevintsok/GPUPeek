@@ -15,22 +15,23 @@
 #include "../sm_120/memory_research_benchmarks.cu"
 #include "../sm_120/deep_research_benchmarks.cu"
 #include "../sm_120/advanced_research_benchmarks.cu"
-#include "../sm_120/ncu_profiling_benchmarks.cu"
-#include "../sm_120/cuda_core_benchmarks.cu"
-#include "../sm_120/atomic_benchmarks.cu"
-#include "../sm_120/barrier_benchmarks.cu"
-#include "../sm_120/warp_specialize_benchmarks.cu"
-#include "../sm_120/mma_research_benchmarks.cu"
-#include "../sm_120/tensor_mem_research_benchmarks.cu"
-#include "../sm_120/dp4a_research_benchmarks.cu"
-#include "../sm_120/wgmma_research_benchmarks.cu"
-#include "../sm_120/fp8_research_benchmarks.cu"
-#include "../sm_120/cuda_graph_research_benchmarks.cu"
-#include "../sm_120/unified_memory_research_benchmarks.cu"
-#include "../sm_120/multi_stream_research_benchmarks.cu"
-#include "../sm_120/mbarrier_research_benchmarks.cu"
-#include "../sm_120/cooperative_groups_research_benchmarks.cu"
-#include "../sm_120/redux_sync_research_benchmarks.cu"
+// Research modules with compilation issues - DISABLED until fixed
+// #include "../sm_120/ncu_profiling_benchmarks.cu"
+// #include "../sm_120/cuda_core_benchmarks.cu"
+// #include "../sm_120/atomic_benchmarks.cu"
+// #include "../sm_120/barrier_benchmarks.cu"
+// #include "../sm_120/warp_specialize_benchmarks.cu"
+// #include "../sm_120/mma_research_benchmarks.cu"
+// #include "../sm_120/tensor_mem_research_benchmarks.cu"
+// #include "../sm_120/wgmma_research_benchmarks.cu"
+// #include "../sm_120/dp4a_research_benchmarks.cu"
+// #include "../sm_120/fp8_research_benchmarks.cu"
+// #include "../sm_120/cuda_graph_research_benchmarks.cu"
+// #include "../sm_120/unified_memory_research_benchmarks.cu"
+// #include "../sm_120/multi_stream_research_benchmarks.cu"
+// #include "../sm_120/mbarrier_research_benchmarks.cu"
+// #include "../sm_120/cooperative_groups_research_benchmarks.cu"
+// #include "../sm_120/redux_sync_research_benchmarks.cu"
 #include "../sm_120/fp4_fp6_research_benchmarks.cu"
 
 #define CHECK_CUDA(call) \
@@ -332,238 +333,82 @@ int main(int argc, char** argv) {
 
     // Run NCU profiling benchmarks
     if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "ncu") == 0) {
-        switch (sm) {
-            case 120:
-                printf("\n[Running SM 12.0 NCU Profiling Benchmarks]\n");
-                printf("For full NCU analysis, run: ncu --set full ./gpupeek.exe ncu\n");
-                runNCUProfilingBenchmarks(N);
-                break;
-            default:
-                printf("\n[NCU profiling not available for SM %d.%d]\n",
-                       info.computeCapabilityMajor, info.computeCapabilityMinor);
-                break;
-        }
+        printf("\n[NCU profiling disabled - requires compilation fix]\n");
     }
 
     // Run CUDA Core research benchmarks
     if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "cuda") == 0) {
-        switch (sm) {
-            case 120:
-                printf("\n[Running SM 12.0 CUDA Core Arithmetic Research]\n");
-                runCudaCoreBenchmarks(N);
-                break;
-            default:
-                printf("\n[CUDA Core research not available for SM %d.%d]\n",
-                       info.computeCapabilityMajor, info.computeCapabilityMinor);
-                break;
-        }
+        printf("\n[CUDA Core research disabled - requires compilation fix]\n");
     }
 
     // Run Atomic research benchmarks
     if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "atomic") == 0) {
-        switch (sm) {
-            case 120:
-                printf("\n[Running SM 12.0 Atomic Operations Research]\n");
-                runAtomicBenchmarks(N);
-                break;
-            default:
-                printf("\n[Atomic research not available for SM %d.%d]\n",
-                       info.computeCapabilityMajor, info.computeCapabilityMinor);
-                break;
-        }
+        printf("\n[Atomic research disabled - requires compilation fix]\n");
     }
 
     // Run Barrier research benchmarks
     if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "barrier") == 0) {
-        switch (sm) {
-            case 120:
-                printf("\n[Running SM 12.0 Barrier Synchronization Research]\n");
-                runBarrierBenchmarks(N);
-                break;
-            default:
-                printf("\n[Barrier research not available for SM %d.%d]\n",
-                       info.computeCapabilityMajor, info.computeCapabilityMinor);
-                break;
-        }
+        printf("\n[Barrier research disabled - requires compilation fix]\n");
     }
 
     // Run Warp Specialization research benchmarks
     if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "warp") == 0) {
-        switch (sm) {
-            case 120:
-                printf("\n[Running SM 12.0 Warp Specialization Research]\n");
-                runWarpSpecializeBenchmarks(N);
-                break;
-            default:
-                printf("\n[Warp Specialization research not available for SM %d.%d]\n",
-                       info.computeCapabilityMajor, info.computeCapabilityMinor);
-                break;
-        }
+        printf("\n[Warp Specialization research disabled - requires compilation fix]\n");
     }
 
     // Run MMA (Tensor Core) research benchmarks
     if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "mma") == 0) {
-        switch (sm) {
-            case 120:
-                printf("\n[Running SM 12.0 MMA (Tensor Core) Research]\n");
-                printf("For NCU SASS analysis: ncu --set full --metrics smsp__average_executed_epc_per_warp,sm__pipe_tensor_cycles_active.pct ./gpupeek.exe mma\n");
-                runMMAResearchBenchmarks(N);
-                break;
-            default:
-                printf("\n[MMA research not available for SM %d.%d]\n",
-                       info.computeCapabilityMajor, info.computeCapabilityMinor);
-                break;
-        }
+        printf("\n[MMA research disabled - requires compilation fix]\n");
     }
 
     // Run Tensor Memory research benchmarks
     if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "tensor_mem") == 0) {
-        switch (sm) {
-            case 120:
-                printf("\n[Running SM 12.0 Tensor Memory Research]\n");
-                printf("For NCU SASS analysis: ncu --set full --metrics sm__inst_executed.ldmatrix.sum ./gpupeek.exe tensor_mem\n");
-                runTensorMemResearchBenchmarks(N);
-                break;
-            default:
-                printf("\n[Tensor memory research not available for SM %d.%d]\n",
-                       info.computeCapabilityMajor, info.computeCapabilityMinor);
-                break;
-        }
+        printf("\n[Tensor memory research disabled - requires compilation fix]\n");
     }
 
     // Run DP4A research benchmarks
     if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "dp4a") == 0) {
-        switch (sm) {
-            case 120:
-                printf("\n[Running SM 12.0 DP4A Research]\n");
-                printf("For NCU SASS analysis: ncu --set full --metrics sm__inst_executed.dp4a.sum ./gpupeek.exe dp4a\n");
-                runDP4AResearchBenchmarks(N);
-                break;
-            default:
-                printf("\n[DP4A research not available for SM %d.%d]\n",
-                       info.computeCapabilityMajor, info.computeCapabilityMinor);
-                break;
-        }
+        printf("\n[DP4A research disabled - requires compilation fix]\n");
     }
 
     // Run WGMMA research benchmarks
     if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "wgmma") == 0) {
-        switch (sm) {
-            case 120:
-                printf("\n[Running SM 12.0 WGMMA Research]\n");
-                printf("For NCU SASS analysis: ncu --set full --metrics sm__inst_executed.wgmma.sum ./gpupeek.exe wgmma\n");
-                runWGMMA_ResearchBenchmarks(N);
-                break;
-            default:
-                printf("\n[WGMMA research not available for SM %d.%d]\n",
-                       info.computeCapabilityMajor, info.computeCapabilityMinor);
-                break;
-        }
+        printf("\n[WGMMA research disabled - requires compilation fix]\n");
     }
 
     // Run FP8 research benchmarks
     if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "fp8") == 0) {
-        switch (sm) {
-            case 120:
-                printf("\n[Running SM 12.0 FP8/TCGen05 Research]\n");
-                printf("For NCU SASS analysis: ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek.exe fp8\n");
-                runFP8ResearchBenchmarks(N);
-                break;
-            default:
-                printf("\n[FP8 research not available for SM %d.%d]\n",
-                       info.computeCapabilityMajor, info.computeCapabilityMinor);
-                break;
-        }
+        printf("\n[FP8 research disabled - requires compilation fix]\n");
     }
 
     // Run CUDA Graph research benchmarks
     if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "graph") == 0) {
-        switch (sm) {
-            case 120:
-                printf("\n[Running SM 12.0 CUDA Graph Research]\n");
-                printf("For NCU analysis: ncu --set full --kernels-by-compute ./gpupeek.exe graph\n");
-                runCUDAGraphResearchBenchmarks(N);
-                break;
-            default:
-                printf("\n[CUDA Graph research not available for SM %d.%d]\n",
-                       info.computeCapabilityMajor, info.computeCapabilityMinor);
-                break;
-        }
+        printf("\n[CUDA Graph research disabled - requires compilation fix]\n");
     }
 
     // Run Unified Memory research benchmarks
     if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "unified") == 0) {
-        switch (sm) {
-            case 120:
-                printf("\n[Running SM 12.0 Unified Memory Research]\n");
-                printf("For NCU analysis: ncu --set full --metrics dram__bytes.sum ./gpupeek.exe unified\n");
-                runUnifiedMemoryResearchBenchmarks(N);
-                break;
-            default:
-                printf("\n[Unified Memory research not available for SM %d.%d]\n",
-                       info.computeCapabilityMajor, info.computeCapabilityMinor);
-                break;
-        }
+        printf("\n[Unified Memory research disabled - requires compilation fix]\n");
     }
 
     // Run Multi-Stream research benchmarks
     if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "multi_stream") == 0) {
-        switch (sm) {
-            case 120:
-                printf("\n[Running SM 12.0 Multi-Stream Research]\n");
-                printf("For NCU analysis: ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./gpupeek.exe multi_stream\n");
-                runMultiStreamResearchBenchmarks(N);
-                break;
-            default:
-                printf("\n[Multi-Stream research not available for SM %d.%d]\n",
-                       info.computeCapabilityMajor, info.computeCapabilityMinor);
-                break;
-        }
+        printf("\n[Multi-Stream research disabled - requires compilation fix]\n");
     }
 
     // Run Mbarrier research benchmarks
     if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "mbarrier") == 0) {
-        switch (sm) {
-            case 120:
-                printf("\n[Running SM 12.0 Mbarrier Research]\n");
-                printf("For NCU analysis: ncu --set full --metrics sm__inst_executed.mbarrier.sum ./gpupeek.exe mbarrier\n");
-                runMbarrierResearchBenchmarks(N);
-                break;
-            default:
-                printf("\n[Mbarrier research not available for SM %d.%d]\n",
-                       info.computeCapabilityMajor, info.computeCapabilityMinor);
-                break;
-        }
+        printf("\n[Mbarrier research disabled - requires compilation fix]\n");
     }
 
     // Run Cooperative Groups research benchmarks
     if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "coop") == 0) {
-        switch (sm) {
-            case 120:
-                printf("\n[Running SM 12.0 Cooperative Groups Research]\n");
-                printf("For NCU analysis: ncu --set full --metrics sm__average_active_warps_per_sm ./gpupeek.exe coop\n");
-                runCooperativeGroupsBenchmarks(N);
-                break;
-            default:
-                printf("\n[Cooperative Groups research not available for SM %d.%d]\n",
-                       info.computeCapabilityMajor, info.computeCapabilityMinor);
-                break;
-        }
+        printf("\n[Cooperative Groups research disabled - requires compilation fix]\n");
     }
 
     // Run Redux.sync research benchmarks
     if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "redux") == 0) {
-        switch (sm) {
-            case 120:
-                printf("\n[Running SM 12.0 Redux.sync Research]\n");
-                printf("For NCU analysis: ncu --set full --metrics sm__inst_executed.redux_sync.sum ./gpupeek.exe redux\n");
-                runReduxSyncBenchmarks(N);
-                break;
-            default:
-                printf("\n[Redux.sync research not available for SM %d.%d]\n",
-                       info.computeCapabilityMajor, info.computeCapabilityMinor);
-                break;
-        }
+        printf("\n[Redux.sync research disabled - requires compilation fix]\n");
     }
 
     // Run FP4/FP6 research benchmarks

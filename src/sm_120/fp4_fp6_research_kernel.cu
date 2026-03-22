@@ -228,8 +228,8 @@ __global__ void blockScalingKernel(const T* __restrict__ input,
         // Load scale for this block
         float scale = scales[block_id];
 
-        // Apply block scaling
-        output[idx] = input[idx] * scale;
+        // Apply block scaling (__half * float requires conversion)
+        output[idx] = __float2half(__half2float(input[idx]) * scale);
     }
 }
 

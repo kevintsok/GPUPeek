@@ -52,6 +52,12 @@ __global__ void wmma_fp16_kernel(const T* __restrict__ a,
     const int WMMA_N = 16;
     const int WMMA_K = 16;
 
+    // WMMA fragment type aliases
+    using frag_a_t = fragment<matrix_a, 16, 16, 16, __half, row_major_t>;
+    using frag_b_t = fragment<matrix_b, 16, 16, 16, __half, col_major_t>;
+    using frag_c_t = fragment<accumulator, 16, 16, 16, float>;
+    using frag_d_t = fragment<accumulator, 16, 16, 16, float>;
+
     extern __shared__ char shared_mem[];
     T* sh_a = (T*)shared_mem;
     T* sh_b = (T*)&shared_mem[BM * BK * sizeof(T)];
@@ -62,10 +68,10 @@ __global__ void wmma_fp16_kernel(const T* __restrict__ a,
     size_t block_col = blockIdx.y;
 
     // outer warp tile
-    frag_a mat_a;
-    frag_b mat_b;
-    frag_c mat_c;
-    frag_d mat_d;
+    frag_a_t mat_a;
+    frag_b_t mat_b;
+    frag_c_t mat_c;
+    frag_d_t mat_d;
 
     // init accumulators
     wmma::fill_fragment(mat_c, 0.0f);
