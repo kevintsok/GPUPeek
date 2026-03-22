@@ -1632,3 +1632,83 @@ ncu --set full --metrics sm__average_active_warps_per_sm ./gpupeek coop
 - 向量化协作加载
 - 等待模式
 
+## 22. Redux.sync Warp 级归约研究
+
+### 22.1 PTX ISA Redux.sync 指令 (Section 9.7.12)
+
+Redux.sync 执行 Warp 级别的归约操作。
+
+**支持的操作**:
+
+| 操作 | PTX | 描述 |
+|------|-----|------|
+| ADD | .add | 加法归约 |
+| MIN | .min | 最小值归约 |
+| MAX | .max | 最大值归约 |
+| AND | .and | 按位与归约 |
+| OR | .or | 按位或归约 |
+| XOR | .xor | 按位异或归约 |
+
+**语法**:
+```ptx
+redux.sync [dest], [src], op
+```
+
+**SASS 等价**: RRED 指令（硬件加速的归约）
+
+### 22.2 Redux.sync vs Shuffle-based 归约
+
+| 方法 | 指令数 | 延迟 | 优势 |
+|------|--------|------|------|
+| Shuffle 循环 | log2(32) = 5 次 shuffle | 较高 | 兼容性好 |
+| **Redux.sync** | **1 条指令** | **最低** | **硬件加速** |
+
+### 22.3 Redux.sync 测试命令
+
+```bash
+# Redux.sync 基准测试
+./build/gpupeek.exe redux
+
+# NCU 分析
+ncu --set full --metrics sm__inst_executed.redux_sync.sum ./gpupeek redux
+```
+
+### 22.4 Redux.sync Kernel 代码覆盖
+
+| Kernel | 功能 |
+|--------|------|
+| reduxAddKernel | Warp 级加法归约 |
+| reduxMinKernel | Warp 级最小值归约 |
+| reduxMaxKernel | Warp 级最大值归约 |
+| reduxAndKernel | Warp 级按位与归约 |
+| reduxOrKernel | Warp 级按位或归约 |
+| reduxXorKernel | Warp 级按位异或归约 |
+| shuffleReductionKernel | Shuffle 基线归约 |
+| butterflyReductionKernel | 蝴蝶模式归约 |
+| reduxAtomicKernel | Redux + Atomic 操作 |
+| warpVoteAnyKernel | Warp Vote ANY |
+| warpVoteAllKernel | Warp Vote ALL |
+| matchSyncKernel | Match.sync 模式匹配 |
+| blockReduceReduxKernel | Block 级归约 |
+
+### 22.5 测试分类
+
+**基础操作**:
+- Redux ADD/MIN/MAX
+- Redux AND/OR/XOR
+
+**性能对比**:
+- Shuffle 循环归约（基线）
+- 蝴蝶模式归约
+- Redux 概念（模拟）
+
+**Atomic 组合**:
+- Redux + Atomic Add
+
+**Vote 操作**:
+- __any_sync
+- __all_sync
+
+**Match 操作**:
+- Match.sync 模式匹配
+

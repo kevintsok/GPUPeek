@@ -60,7 +60,9 @@ GPUPeek/
         ├── mbarrier_research_kernel.cu   # Mbarrier (memory barrier) kernels
         ├── mbarrier_research_benchmarks.cu
         ├── cooperative_groups_research_kernel.cu   # Cooperative Groups kernels
-        └── cooperative_groups_research_benchmarks.cu
+        ├── cooperative_groups_research_benchmarks.cu
+        ├── redux_sync_research_kernel.cu   # Redux.sync warp reduction kernels
+        └── redux_sync_research_benchmarks.cu
 ```
 
 ## Architecture-Specific Directories
@@ -133,6 +135,7 @@ cmake --build . --config Release
 ./build/gpupeek multi_stream  # Multi-Stream concurrency (priorities, events, overlap)
 ./build/gpupeek mbarrier    # Mbarrier (async sync, transactions, fences)
 ./build/gpupeek coop        # Cooperative Groups (grid sync, broadcast, reduce)
+./build/gpupeek redux     # Redux.sync warp-level reduction (ADD/MIN/MAX/AND/OR/XOR)
 
 # NCU profiling (for Nsight Compute analysis)
 ./build/gpupeek ncu
@@ -284,6 +287,14 @@ cmake --build . --config Release
 - Broadcast from specific thread
 - Even-odd synchronization pattern
 - Barrier efficiency analysis
+
+**Redux.sync (`./gpupeek redux`)**
+- Warp-level reduction (ADD/MIN/MAX/AND/OR/XOR)
+- Shuffle-based vs redux performance comparison
+- Redux + atomic operations
+- Warp vote operations (any/all)
+- Match.sync pattern matching
+- Block-level reduction with redux
 
 ## Sample Output
 
