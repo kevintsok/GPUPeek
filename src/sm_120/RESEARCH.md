@@ -1321,3 +1321,119 @@ ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./gpupeek
 **同步测试**:
 - cudaStreamQuery（非阻塞）
 - cudaStreamSynchronize（阻塞）
+
+## 19. Blackwell 架构深入分析 (微基准测试研究)
+
+> 关键发现来源: arXiv:2507.10789 - "Dissecting the NVIDIA Blackwell Architecture with Microbenchmarks"
+
+### 19.1 架构代际对比
+
+| 参数 | GH100 (Hopper/H100) | GB203 (Blackwell/RTX 5080) |
+|------|---------------------|---------------------------|
+| 晶体管 | 80B | 92B |
+| SM 数量 | 132 | 84 |
+| Tensor Core 代数 | 4th Gen | **5th Gen** |
+| FP64 Units/SM | 64 | **仅 2** |
+| L1 Cache/SM | 256 KB | **128 KB** |
+| Shared Memory/SM | ~227 KB | **~99 KB** |
+| L2 Cache | 50 MB (2 分区) | **65 MB (单体)** |
+| 内存 | 80 GB HBM2e | 16 GB GDDR7 |
+| 内存带宽 | 15.8 TB/s | 8.2 TB/s |
+
+### 19.2 TCGen05 vs WGMMA
+
+**重要**: Blackwell 的 TCGen05 与 Hopper 的 WGMMA **不兼容**!
+
+| 特性 | WGMMA (Hopper) | TCGen05 (Blackwell) |
+|------|-----------------|---------------------|
+| 指令集 | PTX 9.7.15 | PTX 扩展 |
+| 级别 | Warpgroup (3 warps) | Warpgroup |
+| 异步 | 是 | 是 |
+| 稀疏支持 | 2:4 | 2:4 |
+| SASS | WGMMA | **OMMA (FP4), QMMA (FP8/FP6)** |
+| PTX 映射 | wgmma.mma_async | **mma.sync** |
+
+### 19.3 内存层级变化
+
+**L1 Cache 减半**:
+- Hopper: 256 KB/SM
+- Blackwell: **128 KB/SM** (减少 50%)
+
+**Shared Memory 限制减少**:
+- Hopper: ~227 KB/SM
+- Blackwell: **~99 KB/SM** (减少 56%)
+
+**L2 Cache 增大但架构改变**:
+- Hopper: 50 MB，**2 分区**设计
+- Blackwell: 65 MB，**单体**设计（单分区）
+
+### 19.4 FP64 延迟问题
+
+Blackwell **大幅减少 FP64 计算单元** (仅 2/SM vs 64/SM in Hopper):
+
+| 指标 | GH100 | GB203 |
+|------|-------|-------|
+| FP64 单元/SM | 64 | **2** |
+| FP64 True Latency | ~8 cycles | **~63 cycles** |
+| FP64 Completion Latency | ~13 cycles | **~11 cycles** |
+
+**结论**: Blackwell 不适合 FP64 密集型工作负载
+
+### 19.5 INT32/FP32 执行单元统一
+
+| 架构 | INT32 | FP32 |
+|------|-------|------|
+| Hopper | 独立管道 | 独立管道 |
+| **Blackwell** | **统一执行单元** | **统一执行单元** |
+
+**影响**:
+- 混合 INT32/FP32 工作负载延迟更低
+- Blackwell: 15.96/14 cycles
+- Hopper: 31.62/16 cycles
+
+### 19.6 延迟对比表
+
+| 操作 | GH100 | GB203 |
+|------|-------|-------|
+| FP32/INT32 True Latency | 31.62/16 cycles | **15.96/14 cycles** |
+| FP64 True Latency | ~8 cycles | **~63 cycles** |
+| L2 Cache Hit Latency | ~273 cycles | **~358 cycles** |
+| Global Memory Latency | ~659 cycles | **~877 cycles** |
+| MMA Completion Latency | 1.66 cycles | **1.21 cycles** |
+
+### 19.7 功耗效率 (FP8/FP4/FP6)
+
+| 精度 | GH100 | GB203 |
+|------|-------|-------|
+| FP8 | ~55W | **~46W** |
+| FP4 | N/A | **~16.75W** |
+| FP6 e2m3 | N/A | **~39.38W** |
+| FP6 e3m2 | N/A | **~46.72W** |
+
+**结论**: Blackwell 在低精度推理时更节能
+
+### 19.8 Transformer Engine
+
+| 版本 | 支持的精度 | 架构 |
+|------|-----------|------|
+| TE 1st Gen | FP8, FP16, BF16, FP32, FP64 | Hopper |
+| **TE 2nd Gen** | **FP4, FP6** + above | **Blackwell** |
+
+### 19.9 对 CUDA 编程的影响
+
+1. **WGMMA 不可用**: 使用 `mma.sync` + WMMA API 代替
+2. **Shared Memory 减少**: 需要更高效的共享内存使用策略
+3. **FP64 工作负载**: 考虑使用 Hopper 或等待 Blackwell Ultra
+4. **低精度推理**: FP4/FP6 在 Blackwell 上效率最高
+
+### 19.10 微基准测试论文
+
+```
+@misc{jarmusch2025blackwell,
+  title={Dissecting the NVIDIA Blackwell Architecture with Microbenchmarks},
+  author={Aaron Jarmusch and Nathan Graddon and Sunita Chandrasekaran},
+  year={2025},
+  eprint={2507.10789},
+  archivePrefix={arXiv}
+}
+```
