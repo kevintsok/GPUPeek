@@ -447,7 +447,166 @@
 ./build/gpupeek.exe atomic    # Atomic原子操作
 ./build/gpupeek.exe barrier   # Barrier同步
 ./build/gpupeek.exe warp      # Warp特化
+./build/gpupeek.exe mma       # MMA (Tensor Core) 研究
 
 # NCU profiling
 ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./build/gpupeek.exe cuda
 ```
+
+## 11. MMA (Tensor Core) 深入研究
+
+### 11.1 PTX ISA MMA 指令分类 (Section 9.7.14-9.7.16)
+
+#### WMMA (Warp-level MMA) - Section 9.7.14.4
+
+| 指令 | Shape | 数据类型 |
+|------|-------|---------|
+| wmma.load | m16n16k16 | .f16, .bf16, .tf32, .f32, .f64, .s32 |
+| wmma.store | m16n16k16 | .f16, .bf16, .tf32, .f32, .f64, .s32 |
+| wmma.mma | m16n16k16 | .f16, .bf16, .tf32, .f32, .f64, .s32 |
+
+**SASS 映射**: HMMA (H = Half/FP16), BMMA (B = BF16), IMMA (I = INT), DMMA (D = Double/FP64)
+
+#### MMA (New Warp-level MMA) - Section 9.7.14.5
+
+| Shape | FP16 | FP64 | TF32 | BF16 | INT8 | INT4 |
+|-------|------|------|------|------|------|------|
+| m8n8k4 | Yes | Yes | - | - | - | - |
+| m8n8k16 | Yes | - | - | - | Yes | - |
+| m8n8k32 | Yes | - | - | - | Yes | Yes |
+| m8n8k128 | Yes | - | - | - | Yes | Yes |
+| m16n8k4 | Yes | - | Yes | - | - | - |
+| m16n8k8 | Yes | - | Yes | Yes | Yes | - |
+| m16n8k16 | Yes | - | Yes | Yes | Yes | Yes |
+| m16n8k32 | Yes | - | - | Yes | Yes | Yes |
+| m16n8k64 | Yes | - | - | - | Yes | - |
+| m16n8k128 | Yes | - | - | - | Yes | - |
+| m16n8k256 | Yes | - | - | - | Yes | - |
+
+#### MMA.SP (Sparse MMA) - Section 9.7.14.6
+
+| Shape | FP16 | BF16 | TF32 | INT8 | FP8 |
+|-------|------|------|------|------|-----|
+| m16n8k8.sp | Yes | Yes | Yes | - | - |
+| m16n8k16.sp | Yes | Yes | Yes | Yes | - |
+| m16n8k32.sp | Yes | - | - | Yes | - |
+| m16n8k64.sp | Yes | - | - | - | - |
+| m16n8k128.sp | Yes | - | - | - | - |
+
+**2:4 结构化稀疏**: 每4个元素中有2个必须是零
+
+#### WGMMA (Async Warpgroup MMA) - Section 9.7.15
+
+| Shape | FP16 | BF16 | TF32 | FP64 | INT8 | FP8 |
+|-------|------|------|------|------|------|------|
+| m64nNk16 | Yes | Yes | Yes | Yes | Yes | - |
+| m64nNk8 | Yes | Yes | Yes | - | Yes | - |
+| m64nNk32 | Yes | Yes | - | - | - | Yes |
+| m64nNk256 | Yes | - | - | - | - | - |
+
+**N = K / 16** (N取决于K维度)
+
+#### TCGen05 (TensorCore 5th Generation) - Section 9.7.16
+
+| Shape | FP16 | BF16 | TF32 | FP32 | FP64 | INT8 | FP8 |
+|-------|------|------|------|------|------|------|------|
+| .32x32b | Yes | Yes | Yes | Yes | Yes | - | - |
+| .16x64b | Yes | Yes | Yes | Yes | Yes | - | - |
+| .16x128b | Yes | Yes | Yes | Yes | - | - | - |
+| .16x256b | Yes | Yes | Yes | - | - | - | - |
+| .16x32bx2 | Yes | Yes | Yes | Yes | - | - | - |
+
+**TCGen05 变体**:
+- `tcgen05.mma` - 基本 MMA
+- `tcgen05.mma.sp` - 稀疏 MMA
+- `tcgen05.mma.ws` - Weight-only Quantization (W8A16)
+- `tcgen05.mma.ws.sp` - Weight-only + Sparse
+
+### 11.2 SASS 指令映射
+
+| PTX | SASS | 描述 |
+|-----|------|------|
+| wmma.mma.f16 | HMMA | Half precision MMA |
+| wmma.mma.bf16 | BMMA | BFloat16 MMA |
+| wmma.mma.tf32 | HMMA | TensorFloat-32 MMA |
+| wmma.mma.f64 | DMMA | Double precision MMA |
+| wmma.mma.s32 | IMMA | INT32 MMA |
+| mma.mma | HMMA/IMMA/DMMA | 通用 MMA 指令 |
+| wgmma.mma_async | WGMMA | 异步 Warpgroup MMA |
+| ld.matrix | LDMATRIX | 矩阵加载 (SM 8.0+) |
+| st.matrix | STMATRIX | 矩阵存储 (SM 8.0+) |
+
+### 11.3 NCU Tensor Core 关键指标
+
+| 指标 | 含义 | 理想值 |
+|------|------|--------|
+| sm__pipe_tensor_cycles_active.pct | Tensor Core 利用率 | 越高越好 |
+| sm__pipe_tensor_cycles_active.sum | Tensor Core 活跃周期数 | 越少越好 |
+| smsp__average_executed_epc_per_warp | 每 warp 执行指令数 | 稳定 |
+| sm__inst_executed.sum | 总执行指令数 | 越少越好 |
+| dram__bytes.sum | 全局内存带宽 | 参考内存带宽 |
+| lts__tcs_hit_rate.pct | L2 缓存命中 | 越高越好 |
+
+### 11.4 MMA 研究测试命令
+
+```bash
+# 基本 MMA 基准测试
+./build/gpupeek.exe mma
+
+# NCU Tensor Core 利用率分析
+ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek.exe mma
+
+# NCU SASS 指令分析
+ncu --set full --kernels-by-compute --metrics sm__inst_executed ./gpupeek.exe mma
+
+# 完整 Tensor Core 分析
+ncu --set full \
+  --metrics sm__pipe_tensor_cycles_active.pct,sm__inst_executed.sum,dram__bytes.sum,lts__tcs_hit_rate.pct \
+  ./gpupeek.exe mma
+```
+
+### 11.5 MMA Kernel 代码覆盖
+
+| Kernel | PTX 指令 | Shape | 数据类型 |
+|--------|----------|-------|----------|
+| wmma_fp16_kernel | wmma.mma | m16n16k16 | FP16 |
+| wmma_fp32_acc_kernel | wmma.mma | m16n16k16 | FP16 (FP32累加) |
+| mma_m16n8k8_fp16_kernel | mma.m16n8k8 | m16n8k8 | FP16 |
+| mma_tf32_kernel | mma.m16n8k4 | m16n8k4 | TF32 |
+| mma_bf16_kernel | mma.m16n8k8 | m16n8k8 | BF16 |
+| mma_fp64_kernel | mma.m8n8k4 | m8n8k4 | FP64 |
+| mma_int8_kernel | mma.m16n8k16 | m16n8k16 | INT8 |
+| mma_sparse_fp16_kernel | mma.sp | m16n8k16 | FP16 (稀疏) |
+| wgmma_async_kernel | wgmma.mma_async | m64nNk16 | FP16/BF16 |
+| tcgen05_mma_kernel | tcgen05.mma | 多种 | FP16/BF16/FP8 |
+| ldmatrix_kernel | ld.matrix | 8x8 | various |
+| stmatrix_kernel | st.matrix | 8x8 | various |
+| naive_gemm_kernel | FMA | - | Baseline |
+| shared_gemm_kernel | FMA+Shared | - | Baseline |
+
+### 11.6 MMA 性能分析框架
+
+**理论峰值计算**:
+- RTX 5080 Tensor Core 峰值: ~xxxx TFLOPS (待实测)
+- FP16 峰值: ~xxxx TFLOPS
+- BF16 峰值: ~xxxx TFLOPS
+- TF32 峰值: ~xxxx TFLOPS
+- FP64 峰值: ~xxxx TFLOPS
+
+**实测指标**:
+| 数据类型 | Shape | GFLOPS | 内存带宽 | Tensor Core利用率 |
+|----------|-------|--------|----------|-------------------|
+| FP16 | m16n16k16 | 待实测 | 待实测 | 待实测 |
+| BF16 | m16n8k8 | 待实测 | 待实测 | 待实测 |
+| TF32 | m16n8k4 | 待实测 | 待实测 | 待实测 |
+| FP64 | m8n8k4 | 待实测 | 待实测 | 待实测 |
+| INT8 | m16n8k16 | 待实测 | 待实测 | 待实测 |
+
+### 11.7 MMA 优化建议
+
+1. **Shape 选择**: m16n8k8 通常是 FP16/BF16 的最佳平衡
+2. **数据类型**: 优先使用 FP16，需要精度时用 BF16 或 TF32
+3. **稀疏加速**: 结构化稀疏可提供 2x 加速
+4. **异步操作**: WGMMA 可隐藏内存延迟
+5. **Weight-only Quantization**: TCGen05.mma.ws 支持 INT8 权重 + FP16 激活
+6. **内存布局**: 使用行主序或列主序匹配 ldmatrix/stmatrix 要求

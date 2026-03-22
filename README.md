@@ -40,7 +40,9 @@ GPUPeek/
         ├── barrier_kernels.cu           # Barrier sync kernels
         ├── barrier_benchmarks.cu
         ├── warp_specialize_kernels.cu   # Warp specialization kernels
-        └── warp_specialize_benchmarks.cu
+        ├── warp_specialize_benchmarks.cu
+        ├── mma_research_kernel.cu      # MMA research kernels
+        └── mma_research_benchmarks.cu
 ```
 
 ## Architecture-Specific Directories
@@ -103,6 +105,7 @@ cmake --build . --config Release
 ./build/gpupeek atomic    # Atomic operations deep research
 ./build/gpupeek barrier   # Barrier synchronization research
 ./build/gpupeek warp      # Warp specialization and producer/consumer patterns
+./build/gpupeek mma      # MMA (Tensor Core) research (WMMA/MMA/WGMMA/TCGen05)
 
 # NCU profiling (for Nsight Compute analysis)
 ./build/gpupeek ncu
@@ -189,6 +192,19 @@ cmake --build . --config Release
 - Multi-Stage Pipeline (Load/Compute/Store)
 - Block Specialization
 - Warp-Level Mutex/Barrier/Reduction/Scan
+
+**MMA Research (`./gpupeek mma`)**
+- WMMA (Warp-level MMA) - m16n16k16 shape
+- MMA Shapes (m16n8k8, m8n8k4, m16n8k16, etc.)
+- TF32 MMA (m16n8k4)
+- BF16 MMA (m16n8k8)
+- FP64 MMA (m8n8k4)
+- INT8 MMA (m16n8k16)
+- Sparse MMA (2:4 structured sparsity)
+- WGMMA Async (warpgroup-level async MMA)
+- TCGen05 MMA (5th gen Tensor Core)
+- LDMATRIX/STMATRIX operations
+- Block Scaling (Weight-only quantization)
 
 ## Sample Output
 
