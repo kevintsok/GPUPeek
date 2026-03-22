@@ -1547,5 +1547,88 @@ ncu --set full --metrics sm__inst_executed.mbarrier.sum ./gpupeek mbarrier
 
 **Grid 依赖**:
 - Grid 依赖控制
+
+## 21. Cooperative Groups 研究
+
+### 21.1 Cooperative Groups API
+
+Cooperative Groups 使线程能够跨 Thread Block、Grid 和 Multi-GPU 进行合作。
+
+**核心 API**:
+
+| API | 描述 |
+|-----|------|
+| `cooperative_groups::this_thread_block()` | 获取当前线程块组 |
+| `cooperative_groups::this_grid()` | 获取当前 Grid 组 |
+| `cooperative_groups::this_multi_grid()` | 获取多 GPU 组 |
+| `grid.sync()` | Grid 级别同步 |
+| `block.sync()` | Block 级别同步 |
+
+### 21.2 同步级别
+
+| 级别 | API | 同步范围 |
+|------|-----|----------|
+| Warp | `this_warp()` | 同一 Warp 的线程 |
+| Thread Block | `this_thread_block()` | 同一 Block 的线程 |
+| Grid | `this_grid()` | Grid 中所有线程 |
+| Multi-GPU | `this_multi_grid()` | 所有 GPU 上的线程 |
+
+### 21.3 Cooperative Groups 特性
+
+**优点**:
+1. 显式分组管理
+2. Grid 级别同步
+3. 多 GPU 协作
+4. 灵活的集合操作
+
+**限制**:
+1. 需要 Cooperative Launch
+2. Grid 同步开销较大
+3. 多 GPU 需要 CUDA 9.0+
+
+### 21.4 Cooperative Groups 测试命令
+
+```bash
+# Cooperative Groups 基准测试
+./build/gpupeek.exe coop
+
+# NCU 分析
+ncu --set full --metrics sm__average_active_warps_per_sm ./gpupeek coop
+```
+
+### 21.5 Cooperative Groups Kernel 代码覆盖
+
+| Kernel | 功能 |
+|--------|------|
+| threadBlockSyncKernel | 线程块同步 |
+| gridReduceKernel | Grid 级别归约 |
+| cooperativeLoadKernel | 协作加载 |
+| gridBarrierMemsetKernel | Grid barrier + memset |
+| multiBlockReduceKernel | 多 Block 归约 |
+| twoPhaseKernel | 两阶段协作内核 |
+| broadcastKernel | 从特定线程广播 |
+| evenOddSyncKernel | 奇偶同步模式 |
+| barrierEfficiencyKernel | Barrier 效率测试 |
+| vectorizedCoopLoadKernel | 向量化协作加载 |
+
+### 21.6 测试分类
+
+**Thread Block 同步**:
+- 线程块内同步
+- 协作加载/存储
+
+**Grid 级别同步**:
+- Grid 归约
+- Grid barrier
+- 多 Block 归约
+
+**协作模式**:
+- 两阶段协作内核
+- 从特定线程广播
+- 奇偶同步模式
+
+**效率分析**:
+- Barrier 效率测试
+- 向量化协作加载
 - 等待模式
 

@@ -58,7 +58,9 @@ GPUPeek/
         ├── multi_stream_research_kernel.cu   # Multi-Stream kernels
         ├── multi_stream_research_benchmarks.cu
         ├── mbarrier_research_kernel.cu   # Mbarrier (memory barrier) kernels
-        └── mbarrier_research_benchmarks.cu
+        ├── mbarrier_research_benchmarks.cu
+        ├── cooperative_groups_research_kernel.cu   # Cooperative Groups kernels
+        └── cooperative_groups_research_benchmarks.cu
 ```
 
 ## Architecture-Specific Directories
@@ -130,6 +132,7 @@ cmake --build . --config Release
 ./build/gpupeek unified  # Unified Memory (managed memory, prefetch, page faults)
 ./build/gpupeek multi_stream  # Multi-Stream concurrency (priorities, events, overlap)
 ./build/gpupeek mbarrier    # Mbarrier (async sync, transactions, fences)
+./build/gpupeek coop        # Cooperative Groups (grid sync, broadcast, reduce)
 
 # NCU profiling (for Nsight Compute analysis)
 ./build/gpupeek ncu
@@ -270,6 +273,17 @@ cmake --build . --config Release
 - Transaction counting
 - Memory fence comparison (__threadfence_block vs __threadfence)
 - Grid dependency control
+
+**Cooperative Groups (`./gpupeek coop`)**
+- Thread block synchronization
+- Grid-level reduction and sync
+- Cooperative load/store
+- Grid barrier patterns
+- Multi-block reduction
+- Two-phase cooperative kernels
+- Broadcast from specific thread
+- Even-odd synchronization pattern
+- Barrier efficiency analysis
 
 ## Sample Output
 

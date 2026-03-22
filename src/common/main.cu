@@ -29,6 +29,7 @@
 #include "../sm_120/unified_memory_research_benchmarks.cu"
 #include "../sm_120/multi_stream_research_benchmarks.cu"
 #include "../sm_120/mbarrier_research_benchmarks.cu"
+#include "../sm_120/cooperative_groups_research_benchmarks.cu"
 
 #define CHECK_CUDA(call) \
     do { \
@@ -62,6 +63,7 @@ void printUsage(const char* program) {
     printf("  unified             - Unified Memory (managed memory, prefetch, page faults)\n");
     printf("  multi_stream        - Multi-Stream concurrency (priorities, events, overlap)\n");
     printf("  mbarrier            - Mbarrier operations (async sync, transactions, fences)\n");
+    printf("  coop                - Cooperative Groups (grid sync, broadcast, reduce)\n");
     printf("  all                 - Run all benchmarks (default)\n");
     printf("\nSize: Number of elements (default: 1M)\n");
     printf("\nSupported Architectures:\n");
@@ -525,6 +527,21 @@ int main(int argc, char** argv) {
                 break;
             default:
                 printf("\n[Mbarrier research not available for SM %d.%d]\n",
+                       info.computeCapabilityMajor, info.computeCapabilityMinor);
+                break;
+        }
+    }
+
+    // Run Cooperative Groups research benchmarks
+    if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "coop") == 0) {
+        switch (sm) {
+            case 120:
+                printf("\n[Running SM 12.0 Cooperative Groups Research]\n");
+                printf("For NCU analysis: ncu --set full --metrics sm__average_active_warps_per_sm ./gpupeek.exe coop\n");
+                runCooperativeGroupsBenchmarks(N);
+                break;
+            default:
+                printf("\n[Cooperative Groups research not available for SM %d.%d]\n",
                        info.computeCapabilityMajor, info.computeCapabilityMinor);
                 break;
         }
