@@ -9,6 +9,7 @@ Uses compute capability-specific directories for architecture-specific code.
 GPUPeek/
 ├── CMakeLists.txt
 ├── README.md
+├── CLAUDE.md                     # Project rules and conventions
 ├── ref/                         # NVIDIA official documentation
 │   └── README.md                 # Documentation index
 └── src/
@@ -23,7 +24,23 @@ GPUPeek/
     └── sm_120/                  # SM 12.0 (Blackwell) specific
         ├── arch.cu               # Architecture info & utilities
         ├── arch_kernels.cu       # Architecture-specific kernels
-        └── benchmarks.cu          # Architecture-specific benchmark runner
+        ├── benchmarks.cu          # Architecture-specific benchmark runner
+        ├── memory_research_kernel.cu    # Memory research kernels
+        ├── memory_research_benchmarks.cu
+        ├── deep_research_kernel.cu      # Deep research kernels
+        ├── deep_research_benchmarks.cu
+        ├── advanced_research_kernel.cu   # Advanced research kernels
+        ├── advanced_research_benchmarks.cu
+        ├── ncu_profiling_kernel.cu      # NCU profiling kernels
+        ├── ncu_profiling_benchmarks.cu
+        ├── cuda_core_kernels.cu         # CUDA Core arithmetic kernels
+        ├── cuda_core_benchmarks.cu
+        ├── atomic_kernels.cu            # Atomic research kernels
+        ├── atomic_benchmarks.cu
+        ├── barrier_kernels.cu           # Barrier sync kernels
+        ├── barrier_benchmarks.cu
+        ├── warp_specialize_kernels.cu   # Warp specialization kernels
+        └── warp_specialize_benchmarks.cu
 ```
 
 ## Architecture-Specific Directories
@@ -77,6 +94,18 @@ cmake --build . --config Release
 
 # Run with custom size
 ./build/gpupeek all 10000000
+
+# Research benchmarks (comprehensive analysis)
+./build/gpupeek memory    # Memory research (L1/L2, TMA, access patterns)
+./build/gpupeek deep      # Deep research (Tensor Core, L2 cache, etc.)
+./build/gpupeek advanced   # Advanced research (Occupancy, PCIe, atomics)
+./build/gpupeek cuda      # CUDA Core arithmetic (FP64/32/16, INT, vectors)
+./build/gpupeek atomic    # Atomic operations deep research
+./build/gpupeek barrier   # Barrier synchronization research
+./build/gpupeek warp      # Warp specialization and producer/consumer patterns
+
+# NCU profiling (for Nsight Compute analysis)
+./build/gpupeek ncu
 ```
 
 ## Benchmarks
@@ -108,6 +137,58 @@ cmake --build . --config Release
 - Register Bandwidth
 - Software Prefetch
 - Reduced Precision
+
+### Comprehensive Research Benchmarks
+
+**Memory Research (`./gpupeek memory`)**
+- Global Memory Bandwidth vs Data Size
+- Global -> L1 -> L2 Memory Hierarchy
+- TMA (Tensor Memory Accelerator) Copy
+- Memory Access Patterns (Sequential, Strided, Random)
+
+**Deep Research (`./gpupeek deep`)**
+- L2 Cache Analysis
+- Tensor Core WMMA Operations
+- Warp-Level Operations Deep Dive
+- Instruction Throughput Analysis
+
+**Advanced Research (`./gpupeek advanced`)**
+- Occupancy Analysis
+- Memory Clock and Theoretical Bandwidth
+- PCIe Bandwidth Test
+- Bank Conflict Analysis
+- Branch Divergence Analysis
+- Atomic Operations Performance
+- Constant Memory Bandwidth
+- Instruction Latency Analysis
+
+**CUDA Core Arithmetic (`./gpupeek cuda`)**
+- Data Type Throughput (FP64/FP32/FP16/BF16/INT8/INT32)
+- Instruction Latency vs Throughput
+- Vector Instructions (float2/float4/double2)
+- Transcendental Functions (sin/cos/exp/log)
+- Mixed Precision (FP32->FP16->FP32)
+
+**Atomic Operations (`./gpupeek atomic`)**
+- Warp-Level Atomic Operations
+- Block-Level Atomic Operations
+- Grid-Level Atomic Operations (High Contention)
+- Atomic Add vs CAS vs Min/Max Comparison
+- Atomic Operations by Data Type
+
+**Barrier Synchronization (`./gpupeek barrier`)**
+- __syncthreads() Overhead Measurement
+- Barrier Stall Analysis
+- Block Size vs Barrier Efficiency
+- Multi-Block Synchronization Patterns
+- Warp-Level Synchronization Primitives
+
+**Warp Specialization (`./gpupeek warp`)**
+- Warp Specialization Basic (2-Warp Producer/Consumer)
+- TMA + Barrier Synchronization
+- Multi-Stage Pipeline (Load/Compute/Store)
+- Block Specialization
+- Warp-Level Mutex/Barrier/Reduction/Scan
 
 ## Sample Output
 
@@ -182,3 +263,4 @@ Reduced Precision:   303.11 GB/s (0.014 ms)
 - **Architecture**: Blackwell (Compute Capability 12.0)
 - **CUDA**: 13.0
 - **Driver**: 595.79
+

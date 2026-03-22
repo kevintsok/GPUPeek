@@ -12,6 +12,14 @@
 // Architecture-specific includes (conditionally included based on detected architecture)
 #include "../sm_120/arch_kernels.cu"
 #include "../sm_120/benchmarks.cu"
+#include "../sm_120/memory_research_benchmarks.cu"
+#include "../sm_120/deep_research_benchmarks.cu"
+#include "../sm_120/advanced_research_benchmarks.cu"
+#include "../sm_120/ncu_profiling_benchmarks.cu"
+#include "../sm_120/cuda_core_benchmarks.cu"
+#include "../sm_120/atomic_benchmarks.cu"
+#include "../sm_120/barrier_benchmarks.cu"
+#include "../sm_120/warp_specialize_benchmarks.cu"
 
 #define CHECK_CUDA(call) \
     do { \
@@ -28,6 +36,14 @@ void printUsage(const char* program) {
     printf("\nBenchmarks:\n");
     printf("  generic             - Generic GPU benchmarks (all architectures)\n");
     printf("  arch                - Architecture-specific benchmarks (auto-detected)\n");
+    printf("  memory              - Memory research (size vs BW, L1/L2, TMA, patterns)\n");
+    printf("  deep                - Deep research (L2 cache, Tensor Core, Warp, instructions)\n");
+    printf("  advanced            - Advanced research (Occupancy, PCIe, atomics, etc.)\n");
+    printf("  ncu                 - NCU profiling kernels (for Nsight Compute analysis)\n");
+    printf("  cuda                - CUDA Core arithmetic research (FP64/32/16, INT, vectors)\n");
+    printf("  atomic              - Atomic operations deep research\n");
+    printf("  barrier             - Barrier synchronization research\n");
+    printf("  warp                - Warp specialization and producer/consumer patterns\n");
     printf("  all                 - Run all benchmarks (default)\n");
     printf("\nSize: Number of elements (default: 1M)\n");
     printf("\nSupported Architectures:\n");
@@ -244,6 +260,119 @@ int main(int argc, char** argv) {
                 printf("\n[No architecture-specific benchmarks for SM %d.%d]\n",
                        info.computeCapabilityMajor, info.computeCapabilityMinor);
                 printf("Consider adding support for this architecture.\n");
+                break;
+        }
+    }
+
+    // Run memory research benchmarks
+    if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "memory") == 0) {
+        switch (sm) {
+            case 120:
+                printf("\n[Running SM 12.0 Memory Research Benchmarks]\n");
+                runMemoryResearchBenchmarks(N);
+                break;
+            default:
+                printf("\n[Memory research not available for SM %d.%d]\n",
+                       info.computeCapabilityMajor, info.computeCapabilityMinor);
+                break;
+        }
+    }
+
+    // Run deep research benchmarks
+    if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "deep") == 0) {
+        switch (sm) {
+            case 120:
+                printf("\n[Running SM 12.0 Deep Research Benchmarks]\n");
+                runDeepResearchBenchmarks(N);
+                break;
+            default:
+                printf("\n[Deep research not available for SM %d.%d]\n",
+                       info.computeCapabilityMajor, info.computeCapabilityMinor);
+                break;
+        }
+    }
+
+    // Run advanced research benchmarks
+    if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "advanced") == 0) {
+        switch (sm) {
+            case 120:
+                printf("\n[Running SM 12.0 Advanced Research Benchmarks]\n");
+                runAdvancedResearchBenchmarks(N);
+                break;
+            default:
+                printf("\n[Advanced research not available for SM %d.%d]\n",
+                       info.computeCapabilityMajor, info.computeCapabilityMinor);
+                break;
+        }
+    }
+
+    // Run NCU profiling benchmarks
+    if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "ncu") == 0) {
+        switch (sm) {
+            case 120:
+                printf("\n[Running SM 12.0 NCU Profiling Benchmarks]\n");
+                printf("For full NCU analysis, run: ncu --set full ./gpupeek.exe ncu\n");
+                runNCUProfilingBenchmarks(N);
+                break;
+            default:
+                printf("\n[NCU profiling not available for SM %d.%d]\n",
+                       info.computeCapabilityMajor, info.computeCapabilityMinor);
+                break;
+        }
+    }
+
+    // Run CUDA Core research benchmarks
+    if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "cuda") == 0) {
+        switch (sm) {
+            case 120:
+                printf("\n[Running SM 12.0 CUDA Core Arithmetic Research]\n");
+                runCudaCoreBenchmarks(N);
+                break;
+            default:
+                printf("\n[CUDA Core research not available for SM %d.%d]\n",
+                       info.computeCapabilityMajor, info.computeCapabilityMinor);
+                break;
+        }
+    }
+
+    // Run Atomic research benchmarks
+    if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "atomic") == 0) {
+        switch (sm) {
+            case 120:
+                printf("\n[Running SM 12.0 Atomic Operations Research]\n");
+                runAtomicBenchmarks(N);
+                break;
+            default:
+                printf("\n[Atomic research not available for SM %d.%d]\n",
+                       info.computeCapabilityMajor, info.computeCapabilityMinor);
+                break;
+        }
+    }
+
+    // Run Barrier research benchmarks
+    if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "barrier") == 0) {
+        switch (sm) {
+            case 120:
+                printf("\n[Running SM 12.0 Barrier Synchronization Research]\n");
+                runBarrierBenchmarks(N);
+                break;
+            default:
+                printf("\n[Barrier research not available for SM %d.%d]\n",
+                       info.computeCapabilityMajor, info.computeCapabilityMinor);
+                break;
+        }
+    }
+
+    // Run Warp Specialization research benchmarks
+    if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "warp") == 0) {
+        switch (sm) {
+            case 120:
+                printf("\n[Running SM 12.0 Warp Specialization Research]\n");
+                runWarpSpecializeBenchmarks(N);
+                break;
+            default:
+                printf("\n[Warp Specialization research not available for SM %d.%d]\n",
+                       info.computeCapabilityMajor, info.computeCapabilityMinor);
                 break;
         }
     }
