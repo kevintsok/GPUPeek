@@ -52,7 +52,9 @@ GPUPeek/
         ├── fp8_research_kernel.cu        # FP8 / TCGen05 Block Scaling kernels
         ├── fp8_research_benchmarks.cu
         ├── cuda_graph_research_kernel.cu   # CUDA Graph kernels
-        └── cuda_graph_research_benchmarks.cu
+        ├── cuda_graph_research_benchmarks.cu
+        ├── unified_memory_research_kernel.cu   # Unified Memory kernels
+        └── unified_memory_research_benchmarks.cu
 ```
 
 ## Architecture-Specific Directories
@@ -121,6 +123,7 @@ cmake --build . --config Release
 ./build/gpupeek wgmma     # WGMMA (Warpgroup MMA Async)
 ./build/gpupeek fp8      # FP8 / TCGen05 Block Scaling (E4M3/E5M2)
 ./build/gpupeek graph    # CUDA Graph (kernel launch optimization)
+./build/gpupeek unified  # Unified Memory (managed memory, prefetch, page faults)
 
 # NCU profiling (for Nsight Compute analysis)
 ./build/gpupeek ncu

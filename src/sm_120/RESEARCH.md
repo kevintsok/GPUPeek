@@ -1096,3 +1096,88 @@ ncu --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./gpupeek graph
 - Graph 创建有前期成本
 - 灵活性有限（图是静态的）
 - 更新需要重新实例化
+
+## 17. Unified Memory 研究
+
+### 17.1 Unified Memory API
+
+Unified Memory 提供单一托管内存空间，GPU 和 CPU 都可以访问。
+
+**核心函数**:
+
+| 函数 | 描述 |
+|------|------|
+| cudaMallocManaged | 分配统一托管内存 |
+| cudaMemPrefetchAsync | 异步预取数据到设备/主机 |
+| cudaMemAdvise | 设置内存使用建议 |
+| cudaMemsetAccessAdvise | 设置访问建议 |
+| cudaPointerGetAttributes | 查询指针属性 |
+
+### 17.2 概念
+
+- **Managed Memory**: 单次分配，CPU/GPU共享
+- **Page Fault**: 按需迁移触发
+- **Prefetching**: 显式数据迁移
+- **Access Counters**: 跟踪设备访问模式
+
+### 17.3 使用场景
+
+- 简化内存管理
+- GPU 内存扩展
+- 异构计算
+- 核外处理
+
+### 17.4 Unified Memory 测试命令
+
+```bash
+# Unified Memory 基准测试
+./build/gpupeek.exe unified
+
+# NCU 分析
+ncu --set full --metrics dram__bytes.sum,uops__issue_active.sum ./gpupeek unified
+```
+
+### 17.5 Unified Memory Kernel 代码覆盖
+
+| Kernel | 功能 |
+|--------|------|
+| vectorAddKernel | 向量加法 |
+| matrixMultiplyKernel | 矩阵乘法 |
+| vectorScaleKernel | 向量缩放 |
+| vectorReduceKernel | 向量归约 |
+| sequentialAccessKernel | 顺序访问 |
+| randomAccessKernel | 随机访问 |
+| stridedAccessKernel | 跨距访问 |
+| touchAllPagesKernel | 页面触碰（页错误检测） |
+| writeCombiningKernel | 写合并 |
+| writeScatterKernel | 写散射 |
+| spinWaitKernel | GPU自旋等待同步 |
+
+### 17.6 测试分类
+
+**基础测试**:
+- cudaMallocManaged 基本分配
+- 指针属性查询
+- GPU 内核执行
+- CPU 验证
+
+**页错误检测**:
+- 首次触碰（触发页错误）
+- 缓存后再次访问对比
+
+**访问模式**:
+- 顺序访问
+- 跨距访问（stride=64）
+- 随机访问
+
+**预取和Advice**:
+- 无预取（系统管理）
+- 显式 GPU 预取
+- cudaMemAdvise (Read Mostly)
+
+**写合并测试**:
+- 顺序写入
+- 散射写入
+
+**同步测试**:
+- GPU 自旋等待同步

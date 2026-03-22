@@ -26,6 +26,7 @@
 #include "../sm_120/wgmma_research_benchmarks.cu"
 #include "../sm_120/fp8_research_benchmarks.cu"
 #include "../sm_120/cuda_graph_research_benchmarks.cu"
+#include "../sm_120/unified_memory_research_benchmarks.cu"
 
 #define CHECK_CUDA(call) \
     do { \
@@ -56,6 +57,7 @@ void printUsage(const char* program) {
     printf("  wgmma               - WGMMA (Warpgroup MMA Async)\n");
     printf("  fp8                 - FP8 / TCGen05 Block Scaling (E4M3/E5M2)\n");
     printf("  graph               - CUDA Graph (kernel launch optimization)\n");
+    printf("  unified             - Unified Memory (managed memory, prefetch, page faults)\n");
     printf("  all                 - Run all benchmarks (default)\n");
     printf("\nSize: Number of elements (default: 1M)\n");
     printf("\nSupported Architectures:\n");
@@ -474,6 +476,21 @@ int main(int argc, char** argv) {
                 break;
             default:
                 printf("\n[CUDA Graph research not available for SM %d.%d]\n",
+                       info.computeCapabilityMajor, info.computeCapabilityMinor);
+                break;
+        }
+    }
+
+    // Run Unified Memory research benchmarks
+    if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "unified") == 0) {
+        switch (sm) {
+            case 120:
+                printf("\n[Running SM 12.0 Unified Memory Research]\n");
+                printf("For NCU analysis: ncu --set full --metrics dram__bytes.sum ./gpupeek.exe unified\n");
+                runUnifiedMemoryResearchBenchmarks(N);
+                break;
+            default:
+                printf("\n[Unified Memory research not available for SM %d.%d]\n",
                        info.computeCapabilityMajor, info.computeCapabilityMinor);
                 break;
         }
