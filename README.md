@@ -48,7 +48,9 @@ GPUPeek/
         ├── dp4a_research_kernel.cu        # DP4A (INT8 dot) kernels
         ├── dp4a_research_benchmarks.cu
         ├── wgmma_research_kernel.cu       # WGMMA (Async warpgroup MMA) kernels
-        └── wgmma_research_benchmarks.cu
+        ├── wgmma_research_benchmarks.cu
+        ├── fp8_research_kernel.cu        # FP8 / TCGen05 Block Scaling kernels
+        └── fp8_research_benchmarks.cu
 ```
 
 ## Architecture-Specific Directories
@@ -115,6 +117,7 @@ cmake --build . --config Release
 ./build/gpupeek tensor_mem # Tensor memory (LDMATRIX/STMATRIX/cp.async)
 ./build/gpupeek dp4a      # DP4A (INT8 dot product of 4 bytes)
 ./build/gpupeek wgmma     # WGMMA (Warpgroup MMA Async)
+./build/gpupeek fp8      # FP8 / TCGen05 Block Scaling (E4M3/E5M2)
 
 # NCU profiling (for Nsight Compute analysis)
 ./build/gpupeek ncu

@@ -24,6 +24,7 @@
 #include "../sm_120/tensor_mem_research_benchmarks.cu"
 #include "../sm_120/dp4a_research_benchmarks.cu"
 #include "../sm_120/wgmma_research_benchmarks.cu"
+#include "../sm_120/fp8_research_benchmarks.cu"
 
 #define CHECK_CUDA(call) \
     do { \
@@ -52,6 +53,7 @@ void printUsage(const char* program) {
     printf("  tensor_mem          - Tensor memory operations (LDMATRIX/STMATRIX/cp.async)\n");
     printf("  dp4a                - DP4A (INT8 dot product of 4 bytes)\n");
     printf("  wgmma               - WGMMA (Warpgroup MMA Async)\n");
+    printf("  fp8                 - FP8 / TCGen05 Block Scaling (E4M3/E5M2)\n");
     printf("  all                 - Run all benchmarks (default)\n");
     printf("\nSize: Number of elements (default: 1M)\n");
     printf("\nSupported Architectures:\n");
@@ -440,6 +442,21 @@ int main(int argc, char** argv) {
                 break;
             default:
                 printf("\n[WGMMA research not available for SM %d.%d]\n",
+                       info.computeCapabilityMajor, info.computeCapabilityMinor);
+                break;
+        }
+    }
+
+    // Run FP8 research benchmarks
+    if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "fp8") == 0) {
+        switch (sm) {
+            case 120:
+                printf("\n[Running SM 12.0 FP8/TCGen05 Research]\n");
+                printf("For NCU SASS analysis: ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek.exe fp8\n");
+                runFP8ResearchBenchmarks(N);
+                break;
+            default:
+                printf("\n[FP8 research not available for SM %d.%d]\n",
                        info.computeCapabilityMajor, info.computeCapabilityMinor);
                 break;
         }

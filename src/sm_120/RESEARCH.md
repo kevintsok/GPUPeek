@@ -930,3 +930,90 @@ ncu --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek wgmma
 2. **异步提交**: 使用 commit_group 批量提交
 3. **等待模式**: 使用 wait_group 0 等待当前组
 4. **稀疏加速**: 使用 2:4 结构化稀疏 (2x 加速)
+
+## 15. FP8 / TCGen05 Block Scaling 研究
+
+### 15.1 PTX ISA TCGen05 (Section 9.7.16)
+
+TCGen05 是第5代 Tensor Core，支持 FP8 格式和块缩放。
+
+**FP8 格式**:
+
+| 格式 | 指数位 | 尾数位 | 范围 | 用途 |
+|------|--------|--------|------|------|
+| E4M3 | 4 | 3 | 0-240 | 推理激活 |
+| E5M2 | 5 | 2 | 0-57344 | 推理权重 |
+
+### 15.2 TCGen05 MMA 变体
+
+| 变体 | 描述 |
+|------|------|
+| tcgen05.mma | 基本 MMA |
+| tcgen05.mma.sp | 稀疏 MMA |
+| tcgen05.mma.ws | Weight-only 缩放 |
+| tcgen05.mma.ws.sp | Weight-only + 稀疏 |
+
+### 15.3 块缩放 (Block Scaling)
+
+**W8A16**: 8位权重，16位激活
+- 每块32元素一个缩放因子
+- 内存减少 4x vs FP32
+
+**W8A8**: 8位权重，8位激活
+- 每块32元素一个缩放因子
+- 内存减少 8x vs FP32
+
+### 15.4 FP8 vs 其他格式对比
+
+| 格式 | 位宽 | 范围 | 适用场景 |
+|------|------|------|----------|
+| FP32 | 32 | 1e-38 to 1e38 | 训练 |
+| FP16 | 16 | 1e-5 to 1e4 | 推理 |
+| BF16 | 16 | 1e-38 to 1e38 | ML |
+| TF32 | 19 | 1e-38 to 1e4 | ML |
+| **FP8 E4M3** | 8 | 0-240 | **推理** |
+| **FP8 E5M2** | 8 | 0-57344 | **推理** |
+
+### 15.5 NCU FP8 关键指标
+
+| 指标 | 含义 |
+|------|------|
+| sm__pipe_tensor_cycles_active.pct | Tensor Core 利用率 |
+| sm__inst_executed.fp8.sum | FP8 指令数 |
+| dram__bytes.sum | 内存带宽 |
+
+### 15.6 FP8 测试命令
+
+```bash
+# FP8 基准测试
+./build/gpupeek.exe fp8
+
+# NCU Tensor Core 利用率
+ncu --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek fp8
+
+# NCU 内存带宽
+ncu --metrics dram__bytes.sum ./gpupeek fp8
+```
+
+### 15.7 FP8 Kernel 代码覆盖
+
+| Kernel | 功能 |
+|--------|------|
+| convert_to_fp8_e4m3 | FP32 -> FP8 E4M3 |
+| convert_to_fp8_e5m2 | FP32 -> FP8 E5M2 |
+| block_scale_quantize_kernel | W8A16 块缩放量化 |
+| block_scale_quantize_w8a8_kernel | W8A8 块缩放量化 |
+| w8a16_mma_kernel | W8A16 MMA |
+| fp8_gemm_e4m3_kernel | FP8 E4M3 GEMM |
+| fp8_gemm_e5m2_kernel | FP8 E5M2 GEMM |
+| weight_only_quant_kernel | Weight-only 量化 |
+| tcgen05_block_scaled_mma_kernel | TCGen05 块缩放 MMA |
+| fp32_baseline_gemm_kernel | FP32 基线 |
+| fp16_baseline_gemm_kernel | FP16 基线 |
+
+### 15.8 FP8 优化建议
+
+1. **E4M3 vs E5M2**: 激活用 E4M3，权重用 E5M2
+2. **块大小**: 32 元素/块是常见选择
+3. **缩放因子**: 存储倒数避免除法
+4. **量化感知训练**: 需要校准数据
