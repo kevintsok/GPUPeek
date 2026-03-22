@@ -831,3 +831,102 @@ ncu --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek dp4a
 2. **Warp归约**: 使用__shfl_down_sync加速
 3. **量化推理**: 结合缩放因子实现INT8->FP32
 4. **批量处理**: 一次处理多个向量提高效率
+
+## 14. WGMMA (Warpgroup Matrix Multiply Async) 研究
+
+### 14.1 PTX ISA WGMMA 指令 (Section 9.7.15)
+
+WGMMA 是异步的 Warpgroup 级别矩阵乘法指令，与 WMMA/MMA 的主要区别：
+
+| 特性 | WMMA | MMA | WGMMA |
+|------|------|-----|-------|
+| 级别 | Warp | Warp | Warpgroup (3 warps) |
+| Shape | m16n16k16 | m16n8k8 等 | m64nNk16 |
+| 同步 | 同步 | 同步 | **异步** |
+| 设置开销 | 中 | 中 | 低 |
+| 吞吐量 | 高 | 高 | 最高 |
+
+### 14.2 WGMMA Shapes
+
+| Shape | M | N | K |
+|-------|---|---|---|
+| m64nNk16 | 64 | K/16*64 | 16 |
+| m64nNk8 | 64 | K/8*64 | 8 |
+| m64nNk32 | 64 | K/32*64 | 32 |
+| m64nNk256 | 64 | K/256*64 | 256 |
+
+### 14.3 WGMMA 数据类型
+
+| 数据类型 | PTX | 描述 |
+|----------|-----|------|
+| FP16 | .f16 | 半精度浮点 |
+| BF16 | .bf16 | BFloat16 |
+| TF32 | .tf32 | TensorFloat-32 |
+| FP64 | .f64 | 双精度浮点 |
+| INT8 | .s8, .u8 | 有符号/无符号整数 |
+
+### 14.4 WGMMA 异步操作
+
+| 指令 | 描述 |
+|------|------|
+| wgmma.fence | 确保操作顺序 |
+| wgmma.commit_group | 提交异步操作组 |
+| wgmma.wait_group n | 等待 n 个组完成 |
+
+### 14.5 SASS 映射
+
+| SASS | 描述 | PTX |
+|------|------|-----|
+| WGMMA | 异步Warpgroup MMA | wgmma.mma_async |
+| WGMMA.sp | 异步Warpgroup MMA稀疏版 | wgmma.mma_async.sp |
+| WGMMAF | WGMMA fence | wgmma.fence |
+| WGMMAWG | WGMMA wait group | wgmma.wait_group |
+
+### 14.6 NCU WGMMA 关键指标
+
+| 指标 | 含义 |
+|------|------|
+| sm__inst_executed.wgmma.sum | WGMMA 指令数 |
+| sm__pipe_tensor_cycles_active.pct | Tensor Core 利用率 |
+| sm__throughput.avg.pct_of_peak_sustainedTesla | GPU 利用率 |
+
+### 14.7 WGMMA 测试命令
+
+```bash
+# WGMMA 基准测试
+./build/gpupeek.exe wgmma
+
+# NCU WGMMA 指令分析
+ncu --metrics sm__inst_executed.wgmma.sum ./gpupeek wgmma
+
+# NCU Tensor Core 利用率
+ncu --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek wgmma
+```
+
+### 14.8 WGMMA Kernel 代码覆盖
+
+| Kernel | PTX 指令 | 功能 |
+|--------|----------|------|
+| wgmma_fp16_kernel | wgmma.mma_async.m64nNk16.f16 | FP16基本 |
+| wgmma_bf16_kernel | wgmma.mma_async.m64nNk16.bf16 | BF16 |
+| wgmma_fp64_kernel | wgmma.mma_async.m64nNk8.f64 | FP64 |
+| wgmma_int8_kernel | wgmma.mma_async.m64nNk16.s8 | INT8 |
+| wgmma_sparse_fp16_kernel | wgmma.mma_async.sp.m64nNk32 | 稀疏FP16 |
+| wgmma_pipeline_kernel | wgmma + pipeline | 流水线隐藏延迟 |
+| wmma_baseline_fp16_kernel | wmma.mma | WMMA基线对比 |
+
+### 14.9 WGMMA vs WMMA 对比
+
+| 特性 | WGMMA | WMMA |
+|------|-------|------|
+| Tile大小 | 64xN | 16x16 |
+| 异步执行 | 是 | 否 |
+| Warpgroup级别 | 是 | 否 |
+| 内存延迟隐藏 | 好 | 差 |
+
+### 14.10 WGMMA 优化建议
+
+1. **流水线**: 使用双缓冲隐藏内存延迟
+2. **异步提交**: 使用 commit_group 批量提交
+3. **等待模式**: 使用 wait_group 0 等待当前组
+4. **稀疏加速**: 使用 2:4 结构化稀疏 (2x 加速)
