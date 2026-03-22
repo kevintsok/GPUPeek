@@ -1712,3 +1712,93 @@ ncu --set full --metrics sm__inst_executed.redux_sync.sum ./gpupeek redux
 **Match 操作**:
 - Match.sync 模式匹配
 
+## 23. FP4/FP6 低精度 MMA 研究
+
+### 23.1 Blackwell FP4/FP6 支持
+
+Blackwell (SM 12.0) 第5代 Tensor Core 支持 FP4 和 FP6 低精度格式。
+
+**格式规格**:
+
+| 格式 | 指数位 | 尾数位 | 总位数 | PTX 类型 |
+|------|--------|--------|--------|----------|
+| FP4 (e2m1) | 2 | 1 | 4 | e2m1 |
+| FP6 (e2m3) | 2 | 3 | 6 | e2m3 |
+| FP6 (e3m2) | 3 | 2 | 6 | e3m2 |
+
+**PTX ISA (CUDA 12.9+)**:
+
+```ptx
+mma.sync.aligned.m16n8k32.row.col.f32.e2m1.e2m1.f32   // FP4
+mma.sync.aligned.m16n8k32.row.col.f32.e2m3.e2m3.f32   // FP6 e2m3
+mma.sync.aligned.m16n8k32.row.col.f32.e3m2.e3m2.f32   // FP6 e3m2
+```
+
+**Shape**: m16n8k32 (与 FP8 的 m16n8k16 不同)
+
+### 23.2 FP4/FP6 应用场景
+
+- **LLM 量化**: 4-bit 权重用于大语言模型推理
+- **极致量化**: 比 INT8 更低的内存占用
+- **推理加速**: 低精度计算更高的 TFLOPS
+
+### 23.3 FP4/FP6 与 FP8 对比
+
+| 特性 | FP8 (E4M3/E5M2) | FP4 (e2m1) | FP6 (e2m3/e3m2) |
+|------|-------------------|-------------|-------------------|
+| 位数 | 8 | 4 | 6 |
+| 精度 | 高 | 极低 | 低 |
+| 内存减少 | 2x vs FP16 | 4x vs FP16 | 2.67x vs FP16 |
+| TFLOPS | 最高 | 最高 | 高 |
+| 适用 | 权重+激活 | 仅权重 | 仅权重 |
+
+### 23.4 TCGen05 状态
+
+> **注意**: TCGen05 指令集在当前 Blackwell (GB203) 上**尚未支持**
+>
+> 真正的 FP4/FP6 MMA 需要 CUDA 12.9+ 和特定的 `.kind::f8f6f4` 后缀
+
+### 23.5 FP4/FP6 测试命令
+
+```bash
+# FP4/FP6 基准测试
+./build/gpupeek.exe fp4
+
+# NCU 分析
+ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek fp4
+```
+
+### 23.6 FP4/FP6 Kernel 代码覆盖
+
+| Kernel | 功能 |
+|--------|------|
+| float_to_fp4_e2m1 | FP32 → FP4 转换 |
+| fp4_e2m1_to_float | FP4 → FP32 转换 |
+| float_to_fp6_e2m3 | FP32 → FP6 转换 |
+| fp4StyleMmaKernel | FP4 风格 GEMM (模拟) |
+| fp6StyleMmaKernel | FP6 风格 GEMM (模拟) |
+| blockScalingKernel | 块缩放 |
+| weightOnlyQuantKernel | 仅权重量化 |
+| dequantizeKernel | 反量化 |
+| quantizedAttentionKernel | 量化注意力计算 |
+
+### 23.7 测试分类
+
+**转换测试**:
+- FP32 → FP4 转换
+- FP4 → FP32 转换
+
+**GEMM 测试**:
+- FP16 基线 GEMM
+- FP4 风格 GEMM (模拟)
+- FP6 风格 GEMM (模拟)
+
+**量化测试**:
+- 块缩放
+- 仅权重量化
+- 反量化
+
+**LLM 推理模式**:
+- 量化注意力计算
+- Softmax
+

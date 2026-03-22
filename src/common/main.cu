@@ -31,6 +31,7 @@
 #include "../sm_120/mbarrier_research_benchmarks.cu"
 #include "../sm_120/cooperative_groups_research_benchmarks.cu"
 #include "../sm_120/redux_sync_research_benchmarks.cu"
+#include "../sm_120/fp4_fp6_research_benchmarks.cu"
 
 #define CHECK_CUDA(call) \
     do { \
@@ -66,6 +67,7 @@ void printUsage(const char* program) {
     printf("  mbarrier            - Mbarrier operations (async sync, transactions, fences)\n");
     printf("  coop                - Cooperative Groups (grid sync, broadcast, reduce)\n");
     printf("  redux               - Redux.sync warp-level reduction (ADD/MIN/MAX/AND/OR/XOR)\n");
+    printf("  fp4                 - FP4/FP6 low-precision MMA (Blackwell new formats)\n");
     printf("  all                 - Run all benchmarks (default)\n");
     printf("\nSize: Number of elements (default: 1M)\n");
     printf("\nSupported Architectures:\n");
@@ -559,6 +561,21 @@ int main(int argc, char** argv) {
                 break;
             default:
                 printf("\n[Redux.sync research not available for SM %d.%d]\n",
+                       info.computeCapabilityMajor, info.computeCapabilityMinor);
+                break;
+        }
+    }
+
+    // Run FP4/FP6 research benchmarks
+    if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "fp4") == 0) {
+        switch (sm) {
+            case 120:
+                printf("\n[Running SM 12.0 FP4/FP6 Research]\n");
+                printf("For NCU analysis: ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek.exe fp4\n");
+                runFP4FP6ResearchBenchmarks(N);
+                break;
+            default:
+                printf("\n[FP4/FP6 research not available for SM %d.%d]\n",
                        info.computeCapabilityMajor, info.computeCapabilityMinor);
                 break;
         }

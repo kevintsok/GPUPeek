@@ -62,7 +62,9 @@ GPUPeek/
         ├── cooperative_groups_research_kernel.cu   # Cooperative Groups kernels
         ├── cooperative_groups_research_benchmarks.cu
         ├── redux_sync_research_kernel.cu   # Redux.sync warp reduction kernels
-        └── redux_sync_research_benchmarks.cu
+        ├── redux_sync_research_benchmarks.cu
+        ├── fp4_fp6_research_kernel.cu   # FP4/FP6 low-precision MMA kernels
+        └── fp4_fp6_research_benchmarks.cu
 ```
 
 ## Architecture-Specific Directories
@@ -136,6 +138,7 @@ cmake --build . --config Release
 ./build/gpupeek mbarrier    # Mbarrier (async sync, transactions, fences)
 ./build/gpupeek coop        # Cooperative Groups (grid sync, broadcast, reduce)
 ./build/gpupeek redux     # Redux.sync warp-level reduction (ADD/MIN/MAX/AND/OR/XOR)
+./build/gpupeek fp4      # FP4/FP6 low-precision MMA (Blackwell new formats)
 
 # NCU profiling (for Nsight Compute analysis)
 ./build/gpupeek ncu
@@ -295,6 +298,13 @@ cmake --build . --config Release
 - Warp vote operations (any/all)
 - Match.sync pattern matching
 - Block-level reduction with redux
+
+**FP4/FP6 (`./gpupeek fp4`)**
+- FP4 (e2m1) and FP6 (e2m3/e3m2) formats
+- FP4/FP6 conversion kernels
+- FP4/FP6-style GEMM simulation
+- Block scaling for weight-only quantization
+- LLM inference patterns with quantized weights
 
 ## Sample Output
 
