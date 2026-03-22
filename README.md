@@ -44,7 +44,9 @@ GPUPeek/
         ├── mma_research_kernel.cu      # MMA research kernels
         ├── mma_research_benchmarks.cu
         ├── tensor_mem_research_kernel.cu   # Tensor memory kernels
-        └── tensor_mem_research_benchmarks.cu
+        ├── tensor_mem_research_benchmarks.cu
+        ├── dp4a_research_kernel.cu        # DP4A (INT8 dot) kernels
+        └── dp4a_research_benchmarks.cu
 ```
 
 ## Architecture-Specific Directories
@@ -109,6 +111,7 @@ cmake --build . --config Release
 ./build/gpupeek warp      # Warp specialization and producer/consumer patterns
 ./build/gpupeek mma      # MMA (Tensor Core) research (WMMA/MMA/WGMMA/TCGen05)
 ./build/gpupeek tensor_mem # Tensor memory (LDMATRIX/STMATRIX/cp.async)
+./build/gpupeek dp4a      # DP4A (INT8 dot product of 4 bytes)
 
 # NCU profiling (for Nsight Compute analysis)
 ./build/gpupeek ncu
@@ -217,6 +220,14 @@ cmake --build . --config Release
 - cp.async group patterns (commit/wait)
 - LDMATRIX + MMA + STMATRIX pipeline
 - Baseline comparisons (naive, shared, cp.async, TMA)
+
+**DP4A Research (`./gpupeek dp4a`)**
+- DP4A (INT8 dot product of 4 bytes)
+- DP4A with saturation (satfinite variant)
+- Accumulation and batch processing
+- Quantized inference patterns (INT8 -> FP32)
+- Block scaling for weight-only quantization
+- Baseline comparisons (FP32, FP16, naive)
 
 ## Sample Output
 

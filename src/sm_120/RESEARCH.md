@@ -751,3 +751,83 @@ ncu --set full --kernels-by-compute ./gpupeek tensor_mem
    - LDMATRIX 加载 → MMA 计算 → STMATRIX 存储
    - 使用 shared memory 作为中间缓存
    - pipeline 重叠实现高吞吐
+
+## 13. DP4A (INT8 Dot Product of 4 Bytes) 研究
+
+### 13.1 PTX ISA DP4A 指令 (Section 9.7.1.23)
+
+DP4A 执行: `result = sum(a[i]*b[i]) for i=0..3`
+
+| 变体 | 描述 | 数据类型 |
+|------|------|---------|
+| dp4a.s32.s8.s8 | 有符号INT8 | 结果INT32 |
+| dp4a.u32.u8.u8 | 无符号UINT8 | 结果UINT32 |
+| dp4a.s32.rmi | 带舍入模式 | - |
+| dp4a.s32.satfinite | 带饱和 | 溢出钳位 |
+
+### 13.2 SASS 映射
+
+| SASS | 描述 | PTX |
+|------|------|-----|
+| DP4A | 4字节点积 | dp4a.s32.s8.s8 |
+
+### 13.3 NCU DP4A 关键指标
+
+| 指标 | 含义 |
+|------|------|
+| sm__inst_executed.dp4a.sum | DP4A 指令数 |
+| sm__pipe_tensor_cycles_active.pct | INT8/张量流水线利用率 |
+
+### 13.4 DP4A 测试命令
+
+```bash
+# DP4A 基准测试
+./build/gpupeek.exe dp4a
+
+# NCU DP4A 指令分析
+ncu --metrics sm__inst_executed.dp4a.sum ./gpupeek dp4a
+
+# NCU INT8 流水线分析
+ncu --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek dp4a
+```
+
+### 13.5 DP4A Kernel 代码覆盖
+
+| Kernel | PTX 指令 | 功能 |
+|--------|----------|------|
+| dp4a_s32_kernel | dp4a.s32.s8.s8 | 有符号INT8基本 |
+| dp4a_u32_kernel | dp4a.u32.u8.u8 | 无符号INT8基本 |
+| dp4a_satfinite_kernel | dp4a.s32.satfinite | 饱和DP4A |
+| dp4a_accumulate_kernel | dp4a + add | 累加DP4A |
+| dp4a_batch_kernel | dp4a (循环) | 批量处理 |
+| dp4a_packed_kernel | dp4a | 打包INT8 |
+| dp4a_shared_kernel | dp4a + 共享内存 | 块级归约 |
+| dp4a_warp_reduce_kernel | dp4a + shuffle | Warp级归约 |
+| dp4a_quantized_kernel | dp4a + 反量化 | 量化推理 |
+| dp4a_block_scale_kernel | dp4a + 块缩放 | 权重量化 |
+| naive_dot4_kernel | 无 | 基线 - 朴素INT8 |
+| fp32_mad4_kernel | FMA | 基线 - FP32 |
+| fp16_dot4_kernel | FP16 | 基线 - FP16 |
+
+### 13.6 DP4A 性能分析
+
+**优势**:
+1. **高吞吐**: 4个INT8乘法加法单指令完成
+2. **低带宽**: 相比FP32减少75%内存带宽
+3. **推理友好**: 支持INT8量化推理
+
+**与Tensor Core MMA对比**:
+| 特性 | DP4A | MMA (INT8) |
+|------|------|------------|
+| Shape | 4元素向量 | 16x16 矩阵块 |
+| 精度 | INT8 | INT8 |
+| 吞吐量 | 高 | 非常高 |
+| 设置开销 | 低 | 高 |
+| 适用场景 | 点积、卷积核 | 矩阵乘法 |
+
+### 13.7 DP4A 优化建议
+
+1. **数据打包**: 将4个INT8打包成32位访问
+2. **Warp归约**: 使用__shfl_down_sync加速
+3. **量化推理**: 结合缩放因子实现INT8->FP32
+4. **批量处理**: 一次处理多个向量提高效率
