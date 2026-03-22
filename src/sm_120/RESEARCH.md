@@ -1802,3 +1802,49 @@ ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek fp4
 - 量化注意力计算
 - Softmax
 
+### 23.8 FP4/FP6 初步测试结果 (2026-03-23)
+
+| 测试 | 结果 |
+|------|------|
+| FP32 → FP4 转换 | 1.304 ms (1M 元素) |
+| FP4 → FP32 转换 | 0.052 ms (1M 元素) |
+| FP16 GEMM 基线 | 743.57 GFLOPS |
+| FP4 风格 GEMM (模拟) | 920.45 GFLOPS |
+
+**注意**: FP4/FP6 风格 GEMM 比 FP16 基线快，这是因为模拟 kernel 做了量化简化。真正的 FP4/FP6 MMA 需要 CUDA 12.9+ 硬件支持。
+
+## 24. 项目状态 (2026-03-23 更新)
+
+### 编译状态
+
+**正常工作的模块**:
+- ✅ memory - 内存研究
+- ✅ deep - 深度研究
+- ✅ advanced - 高级研究
+- ✅ fp4 - FP4/FP6 研究
+
+**禁用的模块** (编译错误):
+- ❌ ncu - NCU 分析 (编码问题)
+- ❌ cuda - CUDA Core 算力 (缺少 bf16 头文件)
+- ❌ atomic - 原子操作 (待查)
+- ❌ barrier - Barrier 同步 (cooperative groups API 问题)
+- ❌ warp - Warp 特化 (cooperative groups API 问题)
+- ❌ mma - MMA/Tensor Core (WMMA fragment 类型未定义)
+- ❌ tensor_mem - Tensor 内存 (WMMA fragment 类型未定义)
+- ❌ wgmma - WGMMA (WMMA fragment 类型未定义)
+- ❌ dp4a - DP4A (待查)
+- ❌ fp8 - FP8 (待查)
+- ❌ graph - CUDA Graph (待查)
+- ❌ unified - Unified Memory (待查)
+- ❌ multi_stream - 多流并发 (CHECK_CUDA 重定义)
+- ❌ mbarrier - Mbarrier (待查)
+- ❌ coop - Cooperative Groups (cooperative groups API 问题)
+- ❌ redux - Redux.sync (待查)
+
+### 主要编译问题
+
+1. **WMMA fragment 类型**: `frag_a`, `frag_b`, `frag_c` 等类型在多个 kernel 文件中使用但未定义
+2. **Cooperative Groups API**: `cuda::thread_block` 等类型找不到
+3. **CHECK_CUDA 重定义**: 多个 benchmark 文件定义了各自的 CHECK_CUDA 宏
+4. **缺少头文件**: `cuda_bf16.h` 等在某些模块中未包含
+
