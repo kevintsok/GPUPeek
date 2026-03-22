@@ -1437,3 +1437,115 @@ Blackwell **大幅减少 FP64 计算单元** (仅 2/SM vs 64/SM in Hopper):
   archivePrefix={arXiv}
 }
 ```
+
+## 20. Mbarrier (Memory Barrier) 研究
+
+### 20.1 PTX ISA Mbarrier 指令 (Section 9.7.13)
+
+Mbarrier 为异步内存操作提供同步机制，是 cp.async、cp.async.bulk、st.async、WGMMA 等操作的关键。
+
+**核心指令**:
+
+| 指令 | 描述 |
+|------|------|
+| mbarrier.init | 初始化 barrier，设置字节计数 |
+| mbarrier.arrive | 到达 barrier 并增加计数 |
+| mbarrier.arrive_drop | 到达后丢弃（fire-and-forget） |
+| mbarrier.complete_tx | 完成事务 |
+| mbarrier.test_wait | 等待 barrier 相位 |
+| mbarrier.try_wait | 尝试等待 barrier |
+| mbarrier.pending_count | 检查待处理的到达数 |
+
+### 20.2 Mbarrier 与 Async Copy
+
+```
+// Mbarrier 同步异步拷贝的典型模式:
+mbarrier.init [addr], byte_count;           // 初始化
+cp.async.bulk [dst], [src], size;          // 异步拷贝
+mbarrier.arrive mbarrier_ptr, 1;           // 到达
+mbarrier.wait mbarrier_ptr, pending_cnt;    // 等待完成
+```
+
+### 20.3 Mbarrier 操作阶段
+
+Mbarrier 使用阶段（phase）机制来跟踪异步操作：
+
+1. **初始化**: 设置 barrier 的字节计数
+2. **期望**: 使用 `expect_tx` 声明待处理的到达数
+3. **到达**: 使用 `arrive` 或 `arrive_drop` 信号到达
+4. **完成**: 使用 `complete_tx` 标记事务完成
+5. **等待**: 使用 `test_wait` 或 `try_wait` 等待相位切换
+
+### 20.4 Mbarrier 与 CUDA Graph
+
+Mbarrier 用于 GPU 间的依赖同步：
+
+| 场景 | Mbarrier 用途 |
+|------|--------------|
+| Grid 依赖 | 等待另一个 grid 完成 |
+| 跨 GPU 同步 | 多 GPU 间的内存操作同步 |
+| 流水线 | 阶段间的完成信号 |
+
+### 20.5 内存 Fence 变体
+
+| 指令 | 范围 | 用途 |
+|------|------|------|
+| `__threadfence_block()` | Block 内 | 共享内存同步 |
+| `__threadfence()` | GPU 内 | GPU 到 GPU 同步 |
+| `__threadfence_system()` | 系统级 | GPU 到 CPU 同步 |
+
+### 20.6 Mbarrier 测试命令
+
+```bash
+# Mbarrier 基准测试
+./build/gpupeek.exe mbarrier
+
+# NCU 分析
+ncu --set full --metrics sm__inst_executed.mbarrier.sum ./gpupeek mbarrier
+```
+
+### 20.7 Mbarrier Kernel 代码覆盖
+
+| Kernel | 功能 |
+|--------|------|
+| mbarrier_init_wait_kernel | Mbarrier 初始化和等待 |
+| async_copy_mbarrier_kernel | 异步拷贝 + Mbarrier 同步 |
+| mbarrier_pipeline_kernel | 流水线同步 |
+| mbarrier_reduce_kernel | 带同步的归约 |
+| mbarrier_producer_consumer_kernel | 生产者-消费者模式 |
+| mbarrier_tx_count_kernel | 事务计数 |
+| fence_sync_kernel | Fence 同步 |
+| memory_fence_variants_kernel | 各种 fence 变体对比 |
+| grid_dep_control_kernel | Grid 依赖控制 |
+| cluster_barrier_kernel | Cluster barrier (需要 CUDA 12.0+) |
+
+### 20.8 测试分类
+
+**基础测试**:
+- Mbarrier 初始化和等待
+- 原子同步基线
+
+**Async Copy 同步**:
+- 异步拷贝概念验证
+- 事务计数
+
+**流水线同步**:
+- 4 阶段流水线
+- 阶段间同步
+
+**生产者-消费者**:
+- Mbarrier 同步的生产者-消费者模式
+
+**事务计数**:
+- 到达计数
+- 完成计数
+
+**Fence 对比**:
+- 无 fence
+- __threadfence_block
+- __threadfence
+
+**Grid 依赖**:
+- Grid 依赖控制
+- 等待模式
+

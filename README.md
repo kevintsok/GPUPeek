@@ -56,7 +56,9 @@ GPUPeek/
         ├── unified_memory_research_kernel.cu   # Unified Memory kernels
         ├── unified_memory_research_benchmarks.cu
         ├── multi_stream_research_kernel.cu   # Multi-Stream kernels
-        └── multi_stream_research_benchmarks.cu
+        ├── multi_stream_research_benchmarks.cu
+        ├── mbarrier_research_kernel.cu   # Mbarrier (memory barrier) kernels
+        └── mbarrier_research_benchmarks.cu
 ```
 
 ## Architecture-Specific Directories
@@ -127,6 +129,7 @@ cmake --build . --config Release
 ./build/gpupeek graph    # CUDA Graph (kernel launch optimization)
 ./build/gpupeek unified  # Unified Memory (managed memory, prefetch, page faults)
 ./build/gpupeek multi_stream  # Multi-Stream concurrency (priorities, events, overlap)
+./build/gpupeek mbarrier    # Mbarrier (async sync, transactions, fences)
 
 # NCU profiling (for Nsight Compute analysis)
 ./build/gpupeek ncu
@@ -258,6 +261,15 @@ cmake --build . --config Release
 - Memory transfer + compute overlap
 - 3-stage pipeline with event chaining
 - Stream query vs synchronize
+
+**Mbarrier (`./gpupeek mbarrier`)**
+- Mbarrier initialization and wait
+- Async copy synchronization
+- Pipeline synchronization patterns
+- Producer-consumer with mbarrier
+- Transaction counting
+- Memory fence comparison (__threadfence_block vs __threadfence)
+- Grid dependency control
 
 ## Sample Output
 

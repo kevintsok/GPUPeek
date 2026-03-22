@@ -28,6 +28,7 @@
 #include "../sm_120/cuda_graph_research_benchmarks.cu"
 #include "../sm_120/unified_memory_research_benchmarks.cu"
 #include "../sm_120/multi_stream_research_benchmarks.cu"
+#include "../sm_120/mbarrier_research_benchmarks.cu"
 
 #define CHECK_CUDA(call) \
     do { \
@@ -60,6 +61,7 @@ void printUsage(const char* program) {
     printf("  graph               - CUDA Graph (kernel launch optimization)\n");
     printf("  unified             - Unified Memory (managed memory, prefetch, page faults)\n");
     printf("  multi_stream        - Multi-Stream concurrency (priorities, events, overlap)\n");
+    printf("  mbarrier            - Mbarrier operations (async sync, transactions, fences)\n");
     printf("  all                 - Run all benchmarks (default)\n");
     printf("\nSize: Number of elements (default: 1M)\n");
     printf("\nSupported Architectures:\n");
@@ -508,6 +510,21 @@ int main(int argc, char** argv) {
                 break;
             default:
                 printf("\n[Multi-Stream research not available for SM %d.%d]\n",
+                       info.computeCapabilityMajor, info.computeCapabilityMinor);
+                break;
+        }
+    }
+
+    // Run Mbarrier research benchmarks
+    if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "mbarrier") == 0) {
+        switch (sm) {
+            case 120:
+                printf("\n[Running SM 12.0 Mbarrier Research]\n");
+                printf("For NCU analysis: ncu --set full --metrics sm__inst_executed.mbarrier.sum ./gpupeek.exe mbarrier\n");
+                runMbarrierResearchBenchmarks(N);
+                break;
+            default:
+                printf("\n[Mbarrier research not available for SM %d.%d]\n",
                        info.computeCapabilityMajor, info.computeCapabilityMinor);
                 break;
         }
