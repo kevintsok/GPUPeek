@@ -42,7 +42,9 @@ GPUPeek/
         ├── warp_specialize_kernels.cu   # Warp specialization kernels
         ├── warp_specialize_benchmarks.cu
         ├── mma_research_kernel.cu      # MMA research kernels
-        └── mma_research_benchmarks.cu
+        ├── mma_research_benchmarks.cu
+        ├── tensor_mem_research_kernel.cu   # Tensor memory kernels
+        └── tensor_mem_research_benchmarks.cu
 ```
 
 ## Architecture-Specific Directories
@@ -106,6 +108,7 @@ cmake --build . --config Release
 ./build/gpupeek barrier   # Barrier synchronization research
 ./build/gpupeek warp      # Warp specialization and producer/consumer patterns
 ./build/gpupeek mma      # MMA (Tensor Core) research (WMMA/MMA/WGMMA/TCGen05)
+./build/gpupeek tensor_mem # Tensor memory (LDMATRIX/STMATRIX/cp.async)
 
 # NCU profiling (for Nsight Compute analysis)
 ./build/gpupeek ncu
@@ -205,6 +208,15 @@ cmake --build . --config Release
 - TCGen05 MMA (5th gen Tensor Core)
 - LDMATRIX/STMATRIX operations
 - Block Scaling (Weight-only quantization)
+
+**Tensor Memory (`./gpupeek tensor_mem`)**
+- LDMATRIX - Warp-level matrix load (8x8 tiles)
+- STMATRIX - Warp-level matrix store
+- cp.async - Asynchronous copy operations
+- cp.async.bulk - Bulk async copy with reduction
+- cp.async group patterns (commit/wait)
+- LDMATRIX + MMA + STMATRIX pipeline
+- Baseline comparisons (naive, shared, cp.async, TMA)
 
 ## Sample Output
 

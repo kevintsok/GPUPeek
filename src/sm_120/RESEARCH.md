@@ -610,3 +610,144 @@ ncu --set full \
 4. **异步操作**: WGMMA 可隐藏内存延迟
 5. **Weight-only Quantization**: TCGen05.mma.ws 支持 INT8 权重 + FP16 激活
 6. **内存布局**: 使用行主序或列主序匹配 ldmatrix/stmatrix 要求
+
+## 12. Tensor Memory Operations 深入研究
+
+### 12.1 PTX ISA 张量内存指令
+
+#### LDMATRIX (Section 9.7.14.5.15)
+
+| 指令变体 | 描述 | 每线程加载 |
+|----------|------|-----------|
+| ldmatrix.sync.aligned.m8n8.x1 | 8x8 tile, 1个tile | 2 elements |
+| ldmatrix.sync.aligned.m8n8.x2 | 8x8 tile, 2个tile | 4 elements |
+| ldmatrix.sync.aligned.m8n8.x4 | 8x8 tile, 4个tile | 8 elements |
+| ldmatrix.sync.aligned.m16n8.k1 | 16x8 tile | varies |
+
+**关键特性**:
+- Warp级别操作 (32 threads协作)
+- 转置布局存储 (适合MMA消耗)
+- 必须16-byte对齐
+
+#### STMATRIX (Section 9.7.14.5.16)
+
+| 指令变体 | 描述 |
+|----------|------|
+| stmatrix.sync.aligned.m8n8.x1 | 8x8 tile, 1个tile |
+| stmatrix.sync.aligned.m8n8.x2 | 8x8 tile, 2个tile |
+| stmatrix.sync.aligned.m8n8.x4 | 8x8 tile, 4个tile |
+
+#### cp.async (Section 9.7.9.25)
+
+| 指令 | 描述 |
+|------|------|
+| cp.async.ca | Cache policy async copy |
+| cp.async.commit_group | 提交async组 |
+| cp.async.wait_group n | 等待n个组 |
+| cp.async.wait_all | 等待所有 |
+
+#### cp.async.bulk (Section 9.7.9.25.4)
+
+| 指令 | 描述 |
+|------|------|
+| cp.async.bulk | 批量async拷贝 |
+| cp.async.bulk.commit_group | 批量提交组 |
+| cp.async.bulk.wait_group n | 批量等待 |
+| cp.reduce.async.bulk.add | 批量拷贝+求和 |
+| cp.async.bulk.prefetch | 批量预取 |
+
+### 12.2 SASS 指令映射
+
+| SASS | 描述 | PTX |
+|------|------|-----|
+| LDMATRIX | Matrix load (8x8 tile) | ld.matrix |
+| LDMATRIXu | Matrix load (unaligned) | ld.matrix |
+| STMATRIX | Matrix store | st.matrix |
+| STMATRIXu | Matrix store (unaligned) | st.matrix |
+| CP.ASYNC | Async copy commit | cp.async |
+| BAR.ASYNC | Async barrier | bar.async |
+
+### 12.3 NCU 张量内存关键指标
+
+| 指标 | 含义 |
+|------|------|
+| sm__inst_executed.ldmatrix.sum | LDMATRIX 指令数 |
+| sm__inst_executed.stmatrix.sum | STMATRIX 指令数 |
+| sm__pipe_tensor_cycles_active.pct | Tensor内存流水线利用率 |
+| sm__pipe_mem_cycles_active.pct | 内存流水线利用率 |
+| sm__throughput.avg.pct_of_peak_sustainedTesla | GPU利用率 |
+
+### 12.4 Tensor Memory 测试命令
+
+```bash
+# 张量内存基准测试
+./build/gpupeek.exe tensor_mem
+
+# NCU LDMATRIX 分析
+ncu --metrics sm__inst_executed.ldmatrix.sum ./gpupeek tensor_mem
+
+# NCU STMATRIX 分析
+ncu --metrics sm__inst_executed.stmatrix.sum ./gpupeek tensor_mem
+
+# NCU cp.async 分析
+ncu --metrics sm__inst_executed.cp_async.sum ./gpupeek tensor_mem
+
+# 完整 SASS 分析
+ncu --set full --kernels-by-compute ./gpupeek tensor_mem
+```
+
+### 12.5 Tensor Memory Kernel 代码覆盖
+
+| Kernel | PTX 指令 | 功能 |
+|--------|----------|------|
+| ldmatrix_fp16_kernel | ld.matrix | FP16 LDMATRIX基本 |
+| ldmatrix_multi_tile_kernel | ld.matrix | 多tile LDMATRIX |
+| ldmatrix_layout_x1_kernel | ld.matrix.x1 | x1布局 |
+| ldmatrix_layout_x2_kernel | ld.matrix.x2 | x2布局 |
+| stmatrix_fp16_kernel | st.matrix | FP16 STMATRIX基本 |
+| stmatrix_layout_x1_kernel | st.matrix.x1 | x1布局 |
+| cp_async_1d_kernel | cp.async | 1D async拷贝 |
+| cp_async_group_kernel | cp.async.commit_group | Async组模式 |
+| cp_async_bulk_prefetch_kernel | cp.async.bulk.prefetch | 批量预取 |
+| cp_async_reduce_kernel | cp.reduce.async.bulk | 批量拷贝+归约 |
+| ldmatrix_mma_stmatrix_kernel | ld/st/mma | 完整流水线 |
+| naive_load_kernel | 无 | 基线 - naive load |
+| shared_load_kernel | 无 | 基线 - shared load |
+| cp_async_baseline_kernel | cp.async | 基线 - async拷贝 |
+| tma_baseline_kernel | tma | 基线 - TMA |
+
+### 12.6 LDMATRIX/STMATRIX 性能分析
+
+**LDMATRIX 优势**:
+1. **Warp级别协作**: 32线程同时加载8x8 tile，带宽效率高
+2. **转置布局**: 数据以MMA友好格式存储
+3. **对齐保证**: .aligned变体确保16-byte对齐
+
+**cp.async 优势**:
+1. **延迟隐藏**: 拷贝与计算重叠
+2. **批量操作**: commit_group/wait_group支持批量异步
+3. **多种模式**: cp.async.bulk支持更大传输(最高128 bytes)
+
+**性能对比框架**:
+| 操作 | 优势 | 适用场景 |
+|------|------|----------|
+| LDMATRIX | Warp协作、转置 | MMA前加载A/B矩阵 |
+| STMATRIX | Warp协作 | MMA结果存储 |
+| cp.async | 延迟隐藏 | 计算与拷贝重叠 |
+| TMA | 大块2D传输 | 大矩阵分块 |
+
+### 12.7 Tensor Memory 优化建议
+
+1. **LDMATRIX 布局选择**:
+   - 优先使用 .x1 (简单)
+   - 大数据传输用 .x2/.x4
+
+2. **cp.async 使用模式**:
+   - 使用 commit_group 批量提交
+   - 使用 wait_group 0 等待完成
+   - 结合 barrier 实现同步
+
+3. **与 MMA 协同**:
+   - LDMATRIX 加载 → MMA 计算 → STMATRIX 存储
+   - 使用 shared memory 作为中间缓存
+   - pipeline 重叠实现高吞吐
