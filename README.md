@@ -1,12 +1,12 @@
-# Dissecting SM110 Benchmarks
+# GPUPeek
 
-NVIDIA GPU benchmark kernels for exploring GPU mechanisms and metrics.
+A CUDA benchmark framework for exploring GPU mechanisms and metrics.
 Uses compute capability-specific directories for architecture-specific code.
 
 ## Project Structure
 
 ```
-dissecting-sm110/
+GPUPeek/
 ├── CMakeLists.txt
 ├── README.md
 ├── ref/                         # NVIDIA official documentation
@@ -49,7 +49,7 @@ Each GPU architecture (compute capability) has its own directory:
 export PATH="/c/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.29.30133/bin/HostX64/x64:$PATH"
 
 "/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v13.0/bin/nvcc.exe" \
-    -o build/dissecting_sm110_benchmarks \
+    -o build/gpupeek \
     src/common/main.cu src/common/gpu_info.cu \
     -Isrc/common -Iinclude \
     -O3 -arch=sm_90 --use_fast_math
@@ -67,16 +67,16 @@ cmake --build . --config Release
 
 ```bash
 # Run all benchmarks (generic + architecture-specific)
-./build/dissecting_sm110_benchmarks
+./build/gpupeek
 
 # Run only generic benchmarks (work on all architectures)
-./build/dissecting_sm110_benchmarks generic
+./build/gpupeek generic
 
 # Run only architecture-specific benchmarks (auto-detects GPU)
-./build/dissecting_sm110_benchmarks arch
+./build/gpupeek arch
 
 # Run with custom size
-./build/dissecting_sm110_benchmarks all 10000000
+./build/gpupeek all 10000000
 ```
 
 ## Benchmarks

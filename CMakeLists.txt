@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
-project(dissecting_sm110_benchmarks LANGUAGES CXX CUDA)
+project(GPUPeek LANGUAGES CXX CUDA)
 
 set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
@@ -27,22 +27,22 @@ set(ARCH_SOURCES
 )
 
 # Target
-add_executable(dissecting_sm110_benchmarks
+add_executable(gpupeek
     ${COMMON_SOURCES}
     ${ARCH_SOURCES}
 )
 
-target_include_directories(dissecting_sm110_benchmarks PRIVATE
+target_include_directories(gpupeek PRIVATE
     ${CMAKE_SOURCE_DIR}/src/common
     ${CMAKE_SOURCE_DIR}/include
     ${CUDAToolkit_INCLUDE_DIRS}
 )
 
-target_link_libraries(dissecting_sm110_benchmarks PRIVATE
+target_link_libraries(gpupeek PRIVATE
     ${CUDAToolkit_LIBRARIES}
 )
 
 # Print GPU info at build time
-add_custom_command(TARGET disassembling_sm110_benchmarks POST_BUILD
+add_custom_command(TARGET gpupeek POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E echo "Building for CUDA architectures: ${CMAKE_CUDA_ARCHITECTURES}"
 )
