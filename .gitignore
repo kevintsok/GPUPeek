@@ -1,0 +1,53 @@
+# Build outputs
+build/
+*.exe
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
+
+# CUDA temp files
+*.cudafe1.cpp
+*.cudafe2.cpp
+*.cudafe1.c
+*.cudafe2.c
+*.cu.c
+*.ptx
+*.fatbin
+*.cubin
+*.gpu
+*.nvv
+tmpxft_*
+tmp*
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.opensdf
+*.sdf
+ipch/
+
+# CLion / JetBrains
+.idea/
+*.swp
+*.swo
+
+# NVCC generated files
+*.cudafe1
+*.cudafe2
+
+# Data files
+*.dat
+*.bin
+*.raw
+
+# OS
+.DS_Store
+Thumbs.db
+.claude/
