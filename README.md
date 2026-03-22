@@ -54,7 +54,9 @@ GPUPeek/
         ├── cuda_graph_research_kernel.cu   # CUDA Graph kernels
         ├── cuda_graph_research_benchmarks.cu
         ├── unified_memory_research_kernel.cu   # Unified Memory kernels
-        └── unified_memory_research_benchmarks.cu
+        ├── unified_memory_research_benchmarks.cu
+        ├── multi_stream_research_kernel.cu   # Multi-Stream kernels
+        └── multi_stream_research_benchmarks.cu
 ```
 
 ## Architecture-Specific Directories
@@ -124,6 +126,7 @@ cmake --build . --config Release
 ./build/gpupeek fp8      # FP8 / TCGen05 Block Scaling (E4M3/E5M2)
 ./build/gpupeek graph    # CUDA Graph (kernel launch optimization)
 ./build/gpupeek unified  # Unified Memory (managed memory, prefetch, page faults)
+./build/gpupeek multi_stream  # Multi-Stream concurrency (priorities, events, overlap)
 
 # NCU profiling (for Nsight Compute analysis)
 ./build/gpupeek ncu
@@ -247,6 +250,14 @@ cmake --build . --config Release
 - Kernel launch overhead reduction
 - Pipeline / inference benchmarks
 - Graph vs regular launch comparison
+
+**Multi-Stream (`./gpupeek multi_stream`)**
+- Stream priorities (high/low)
+- Event-based synchronization (cudaStreamWaitEvent)
+- Concurrent kernel execution
+- Memory transfer + compute overlap
+- 3-stage pipeline with event chaining
+- Stream query vs synchronize
 
 ## Sample Output
 

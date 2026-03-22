@@ -27,6 +27,7 @@
 #include "../sm_120/fp8_research_benchmarks.cu"
 #include "../sm_120/cuda_graph_research_benchmarks.cu"
 #include "../sm_120/unified_memory_research_benchmarks.cu"
+#include "../sm_120/multi_stream_research_benchmarks.cu"
 
 #define CHECK_CUDA(call) \
     do { \
@@ -58,6 +59,7 @@ void printUsage(const char* program) {
     printf("  fp8                 - FP8 / TCGen05 Block Scaling (E4M3/E5M2)\n");
     printf("  graph               - CUDA Graph (kernel launch optimization)\n");
     printf("  unified             - Unified Memory (managed memory, prefetch, page faults)\n");
+    printf("  multi_stream        - Multi-Stream concurrency (priorities, events, overlap)\n");
     printf("  all                 - Run all benchmarks (default)\n");
     printf("\nSize: Number of elements (default: 1M)\n");
     printf("\nSupported Architectures:\n");
@@ -491,6 +493,21 @@ int main(int argc, char** argv) {
                 break;
             default:
                 printf("\n[Unified Memory research not available for SM %d.%d]\n",
+                       info.computeCapabilityMajor, info.computeCapabilityMinor);
+                break;
+        }
+    }
+
+    // Run Multi-Stream research benchmarks
+    if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "multi_stream") == 0) {
+        switch (sm) {
+            case 120:
+                printf("\n[Running SM 12.0 Multi-Stream Research]\n");
+                printf("For NCU analysis: ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./gpupeek.exe multi_stream\n");
+                runMultiStreamResearchBenchmarks(N);
+                break;
+            default:
+                printf("\n[Multi-Stream research not available for SM %d.%d]\n",
                        info.computeCapabilityMajor, info.computeCapabilityMinor);
                 break;
         }

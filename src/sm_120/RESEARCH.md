@@ -417,10 +417,10 @@
 
 | 测试项 | 描述 | 状态 |
 |--------|------|------|
-| E.1 Multi-Stream并发 | 流依赖、重叠执行、优先级 | 待实现 |
-| E.2 Unified Memory | Page fault、prefetch、page migration | 待实现 |
+| E.1 Multi-Stream并发 | 流依赖、重叠执行、优先级 | 已实现 |
+| E.2 Unified Memory | Page fault、prefetch、page migration | 已实现 |
 | E.3 Occupancy深入分析 | 精确occupancy边界测试 | 已实现 |
-| E.4 CUDA Graph | Graph capture、instantiate、launch | 待实现 |
+| E.4 CUDA Graph | Graph capture、instantiate、launch | 已实现 |
 
 ### NCU 关键指标参考
 
@@ -1181,3 +1181,94 @@ ncu --set full --metrics dram__bytes.sum,uops__issue_active.sum ./gpupeek unifie
 
 **同步测试**:
 - GPU 自旋等待同步
+
+## 18. Multi-Stream 并发研究
+
+### 18.1 Multi-Stream API
+
+Multi-Stream 用于并发执行多个 CUDA 操作。
+
+**核心函数**:
+
+| 函数 | 描述 |
+|------|------|
+| cudaStreamCreate | 创建流 |
+| cudaStreamCreateWithPriority | 创建带优先级的流 |
+| cudaStreamSynchronize | 流同步（阻塞） |
+| cudaStreamQuery | 流查询（非阻塞） |
+| cudaStreamWaitEvent | 等待事件 |
+| cudaEventCreate | 创建事件 |
+| cudaEventRecord | 记录事件 |
+| cudaEventQuery | 查询事件（非阻塞） |
+| cudaEventSynchronize | 事件同步（阻塞） |
+
+### 18.2 概念
+
+- **Stream Priority**: 流优先级调度
+- **Event-based Sync**: 基于事件的同步
+- **Concurrent Execution**: 并发内核执行
+- **Overlap**: 内存传输与计算重叠
+- **Pipeline**: 多阶段流水线
+
+### 18.3 使用场景
+
+- 数据处理流水线
+- 并发内核执行
+- 内存传输与计算重叠
+- 优先级调度
+
+### 18.4 Multi-Stream 测试命令
+
+```bash
+# Multi-Stream 基准测试
+./build/gpupeek.exe multi_stream
+
+# NCU 分析
+ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./gpupeek multi_stream
+```
+
+### 18.5 Multi-Stream Kernel 代码覆盖
+
+| Kernel | 功能 |
+|--------|------|
+| streamVectorAddKernel | 流向量加法 |
+| streamVectorScaleKernel | 流向量缩放 |
+| streamMatrixMulKernel | 流矩阵乘法 |
+| streamReduceKernel | 流归约 |
+| streamMemoryIntensiveKernel | 内存密集型 |
+| streamComputeIntensiveKernel | 计算密集型 |
+| pipelineLoadKernel | 流水线加载 |
+| pipelineProcessKernel | 流水线处理 |
+| pipelineStoreKernel | 流水线存储 |
+| waitKernel | 等待内核 |
+
+### 18.6 测试分类
+
+**基础测试**:
+- 单流基线
+- 多流顺序执行
+- 多流并发执行
+
+**流优先级测试**:
+- 高优先级流
+- 低优先级流
+
+**事件同步测试**:
+- cudaStreamWaitEvent
+- cudaEventQuery 轮询
+
+**重叠测试**:
+- 串行（H2D-计算-D2H）
+- 两流事件同步重叠
+
+**并发内核测试**:
+- 顺序内核
+- 并发内核
+
+**流水线测试**:
+- 串行3阶段流水线
+- 重叠流水线（分块）
+
+**同步测试**:
+- cudaStreamQuery（非阻塞）
+- cudaStreamSynchronize（阻塞）
