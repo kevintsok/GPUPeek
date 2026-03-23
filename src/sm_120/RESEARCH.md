@@ -746,4 +746,55 @@ ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./gpupeek
 
 ---
 
+---
+
+## Appendix C: Directory Structure (2026-03-23)
+
+Each research topic has its own subdirectory under `src/sm_120/`:
+
+```
+src/sm_120/
+├── memory/              # Memory subsystem research
+│   ├── README.md        # How to compile and run
+│   ├── RESEARCH.md      # Educational content
+│   └── *_kernel.cu     # Source code
+├── wmma/               # WMMA/Tensor Core research
+├── cuda_core/           # CUDA Core compute research
+├── atomic/              # Atomic operations research
+├── barrier/             # Barrier synchronization research
+├── warp_specialize/     # Warp specialization research
+├── tensor_mem/          # Tensor memory operations
+├── wgmma/              # WGMMA (Hopper only)
+├── dp4a/               # DP4A research
+├── fp8/                # FP8 research
+├── fp4_fp6/            # FP4/FP6 research
+├── deep/               # Deep research (L2, TMA)
+├── advanced/           # Advanced research
+├── cooperative_groups/ # Cooperative groups API
+├── mbarrier/          # MBarrier research
+├── redux_sync/         # Redux.sync research
+├── cuda_graph/        # CUDA Graph research
+├── unified_memory/    # Unified memory research
+├── multi_stream/      # Multi-stream concurrency
+├── ncu_profiling/     # NCU profiling research
+├── RESEARCH.md         # Main research document
+└── RESEARCH_CN.md      # 中文版研究报告
+```
+
+### README.md (per topic)
+Contains:
+- How to compile the code
+- How to run benchmarks
+- What the benchmarks measure
+- NCU analysis commands
+
+### RESEARCH.md (per topic)
+Contains:
+- Educational content about the topic
+- Key concepts and API explanations
+- Performance characteristics
+- References to official documentation
+
+---
+
 *Report generated from GPUPeek benchmark framework*

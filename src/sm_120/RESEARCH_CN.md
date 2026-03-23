@@ -746,4 +746,55 @@ ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./gpupeek
 
 ---
 
+---
+
+## 附录 C: 目录结构 (2026-03-23)
+
+每个研究专题在 `src/sm_120/` 下有自己的子目录：
+
+```
+src/sm_120/
+├── memory/              # 内存子系统研究
+│   ├── README.md        # 编译和运行指南
+│   ├── RESEARCH.md      # 教学资料
+│   └── *_kernel.cu     # 源代码
+├── wmma/               # WMMA/Tensor Core 研究
+├── cuda_core/           # CUDA Core 算力研究
+├── atomic/              # 原子操作研究
+├── barrier/             # Barrier 同步研究
+├── warp_specialize/     # Warp 特化研究
+├── tensor_mem/          # 张量内存操作
+├── wgmma/              # WGMMA (仅 Hopper)
+├── dp4a/               # DP4A 研究
+├── fp8/                # FP8 研究
+├── fp4_fp6/            # FP4/FP6 研究
+├── deep/               # 深度研究 (L2, TMA)
+├── advanced/           # 高级研究
+├── cooperative_groups/ # Cooperative groups API
+├── mbarrier/          # MBarrier 研究
+├── redux_sync/         # Redux.sync 研究
+├── cuda_graph/        # CUDA Graph 研究
+├── unified_memory/    # 统一内存研究
+├── multi_stream/      # 多流并发
+├── ncu_profiling/     # NCU 性能分析研究
+├── RESEARCH.md         # 主研究报告 (英文)
+└── RESEARCH_CN.md      # 主研究报告 (中文)
+```
+
+### README.md (每个专题)
+包含：
+- 如何编译代码
+- 如何运行基准测试
+- 测试内容说明
+- NCU 分析命令
+
+### RESEARCH.md (每个专题)
+包含：
+- 主题的教学内容
+- 关键概念和 API 说明
+- 性能特征
+- 官方文档参考
+
+---
+
 *报告由 GPUPeek 基准测试框架生成*

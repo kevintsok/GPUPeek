@@ -1,0 +1,40 @@
+# Redux.sync 研究 Module
+
+## 概述
+
+Redux.sync 指令研究，单指令完成 warp 级归约。
+
+## 文件
+
+- `redux_sync_research_kernel.cu` - Redux 内核
+- `redux_sync_research_benchmarks.cu` - Redux 基准测试
+
+## 编译
+
+```bash
+cd D:/Projects/dissecting-sm110
+cmake --build build --config Release
+```
+
+## 运行
+
+```bash
+./build/gpupeek.exe redux
+```
+
+## Redux.sync 支持的操作
+
+| 操作 | 描述 |
+|------|------|
+| ADD | 加法归约 |
+| MIN | 最小值归约 |
+| MAX | 最大值归约 |
+| AND | 按位与归约 |
+| OR | 按位或归约 |
+| XOR | 按位异或归约 |
+
+## NCU 分析
+
+```bash
+ncu --set full --kernels-by-compute ./build/gpupeek.exe redux
+```
