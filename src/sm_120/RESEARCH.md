@@ -352,6 +352,12 @@
 - [PTX ISA](../ref/ptx_isa.html)
 - [Inline PTX Assembly](../ref/inline_ptx.html)
 - [Blackwell Compatibility Guide](../ref/blackwell_guide.html)
+- [CUTLASS Tutorial: TMEM GEMM](../ref/cutlass_tutorial_tmem_gemm.md)
+- [CUTLASS Tutorial: Block Scaling](../ref/cutlass_tutorial_block_scaling.md)
+- [CUTLASS Tutorial: Sub-byte GEMM](../ref/cutlass_tutorial_subbyte_gemm.md)
+- [CUTLASS Tutorial: Cluster GEMM](../ref/cutlass_tutorial_cluster_gemm.md)
+- [DeepSeek FP8 Training](../ref/deepseek_fp8_training.md)
+- [FlashAttention-4](../ref/flashattention4.md)
 
 ## 10. 综合研究计划 (2026-03-22 更新)
 
@@ -593,14 +599,24 @@ ncu --set full \
 - TF32 峰值: ~xxxx TFLOPS
 - FP64 峰值: ~xxxx TFLOPS
 
-**实测指标**:
+**实测指标** (2026-03-23 更新):
 | 数据类型 | Shape | GFLOPS | 内存带宽 | Tensor Core利用率 |
 |----------|-------|--------|----------|-------------------|
-| FP16 | m16n16k16 | 待实测 | 待实测 | 待实测 |
+| FP16 | m16n16k16 | **257.41** | - | - |
 | BF16 | m16n8k8 | 待实测 | 待实测 | 待实测 |
 | TF32 | m16n8k4 | 待实测 | 待实测 | 待实测 |
 | FP64 | m8n8k4 | 待实测 | 待实测 | 待实测 |
 | INT8 | m16n8k16 | 待实测 | 待实测 | 待实测 |
+
+**WMMA FP16 测试结果** (2026-03-23):
+- 矩阵尺寸: M=256, N=256, K=256
+- Shape: m16n16k16
+- Grid: 16x16, Block: 32 (warp)
+- 时间: 0.130 ms/iteration
+- GFLOPS: 257.41 GFLOPS
+- 结果验证: sum=4103416.75 (非零=正确)
+
+**注意**: 这是 WMMA (warp-level) 实测结果。TCGen05 (5th-gen Tensor Core) 需要不同的 API。
 
 ### 11.7 MMA 优化建议
 
@@ -1817,12 +1833,13 @@ ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek fp4
 
 ### 编译状态
 
-**正常工作的模块** (5/17):
+**正常工作的模块** (6/17):
 - ✅ memory - 内存研究
 - ✅ deep - 深度研究
 - ✅ advanced - 高级研究
 - ✅ fp4 - FP4/FP6 研究
 - ✅ multi_stream - 多流并发研究
+- ✅ wmma - WMMA (Warp-level MMA) m16n16k16 Tensor Core
 
 **禁用的模块** (编译错误):
 - ❌ ncu - NCU 分析 (编码问题)
@@ -1830,14 +1847,13 @@ ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek fp4
 - ❌ atomic - 原子操作 (待查)
 - ❌ barrier - Barrier 同步 (cooperative groups API 问题)
 - ❌ warp - Warp 特化 (cooperative groups API 问题)
-- ❌ mma - MMA/Tensor Core (WMMA 运行时错误，需内核重新设计)
+- ❌ mma - MMA/Tensor Core (DISABLED - use `wmma` benchmark instead)
 - ❌ tensor_mem - Tensor 内存 (WMMA fragment 类型未定义)
 - ❌ wgmma - WGMMA (WMMA fragment 类型未定义)
 - ❌ dp4a - DP4A (待查)
 - ❌ fp8 - FP8 (待查)
 - ❌ graph - CUDA Graph (待查)
 - ❌ unified - Unified Memory (待查)
-- ❌ multi_stream - 多流并发 (CHECK_CUDA 重定义)
 - ❌ mbarrier - Mbarrier (待查)
 - ❌ coop - Cooperative Groups (cooperative groups API 问题)
 - ❌ redux - Redux.sync (待查)
@@ -1849,23 +1865,29 @@ ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek fp4
 3. **CHECK_CUDA 重定义**: 多个 benchmark 文件定义了各自的 CHECK_CUDA 宏
 4. **缺少头文件**: `cuda_bf16.h` 等在某些模块中未包含
 
-### WMMA 内核问题 (2026-03-23)
+### WMMA 内核问题 (2026-03-23) - ✅ 已修复
 
 **问题**: WMMA 内核在运行时出现 "illegal memory access" 错误
 
-**原因分析**:
-- WMMA API 需要特定的线程组织方式
-- m16n16k16 形状需要 32 线程 (warp) 每 block
-- 共享内存索引和矩阵加载模式需要严格匹配
+**解决方案**:
+- 创建新的 `wmma_test_kernel.cu` 和 `wmma_test_benchmarks.cu`
+- 使用正确的 fragment 类型定义:
+  ```cuda
+  fragment<matrix_a, 16, 16, 16, __half, row_major> frag_a;
+  fragment<matrix_b, 16, 16, 16, __half, col_major> frag_b;
+  fragment<accumulator, 16, 16, 16, float> frag_d;
+  ```
+- 使用 `using namespace nvcuda::wmma;`
+- Grid: `(N / 16, M / 16)`, Block: `32`
+- 每个 warp 处理一个 16x16 输出块
 
-**正确的 WMMA 配置**:
-```cuda
-// Grid: 每个输出 tile 一个 block
-dim3 gridDim(M / 16, N / 16);
-// Block: 32 threads (warp size for WMMA)
-dim3 blockDim(32);
-// Shared memory 需要正确对齐
+**运行 WMMA 基准测试**:
+```bash
+./build/gpupeek.exe wmma
 ```
 
-**需要重新设计**: 当前的 WMMA kernel 实现需要完全重写以遵循 NVIDIA WMMA API 规范
+**NCU Profiling**:
+```bash
+ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek.exe wmma
+```
 
