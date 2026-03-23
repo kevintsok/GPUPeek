@@ -21,7 +21,7 @@
 // #include "../sm_120/atomic_benchmarks.cu"
 // #include "../sm_120/barrier_benchmarks.cu"
 // #include "../sm_120/warp_specialize_benchmarks.cu"
-// #include "../sm_120/mma_research_benchmarks.cu"
+// #include "../sm_120/mma_research_benchmarks.cu"  // DISABLED - WMMA kernel needs redesign
 // #include "../sm_120/tensor_mem_research_benchmarks.cu"
 // #include "../sm_120/wgmma_research_benchmarks.cu"
 // #include "../sm_120/dp4a_research_benchmarks.cu"
@@ -358,7 +358,7 @@ int main(int argc, char** argv) {
 
     // Run MMA (Tensor Core) research benchmarks
     if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "mma") == 0) {
-        printf("\n[MMA research disabled - requires compilation fix]\n");
+        printf("\n[MMA research disabled - kernel requires redesign]\n");
     }
 
     // Run Tensor Memory research benchmarks
