@@ -71,7 +71,15 @@
 | 512³ | 1.88 GFLOPS | 11.15 GFLOPS | **5.92x** |
 | 1024³ | 4.88 GFLOPS | 14.98 GFLOPS | **3.07x** |
 
-**关键洞察**: Shared Memory (Threadgroup Memory) 优化对大规模矩阵乘法至关重要
+#### Float MatMul Tile Size Optimization
+
+| Tile Size | Performance | Notes |
+|-----------|-------------|-------|
+| 8x8 | 7.28 GFLOPS | Small tile, more barrier overhead |
+| 16x16 | 7.46 GFLOPS | **Best** |
+| 32x32 | - | Shared memory limit |
+
+**关键洞察**: 16x16 tile是最优选择，平衡了共享内存利用率和 barrier 开销
 
 ### 3. 深度架构特性分析
 
@@ -83,12 +91,14 @@
 | **Branch Divergence** | 0.07 vs 0.07 GOPS | **1.0x 无成本** |
 | **Atomic Contention** | 0.027 vs 0.030 GOPS | **1.0x 无影响** |
 | **Register Pressure** | 0.10 vs 0.10 GOPS | **1.0x 无影响** |
+| **Constant Memory** | 0.09 vs 0.09 GOPS | **1.0x 无差异** |
 
 **关键洞察**:
 - **内存合并 (Coalescing)** 是最重要的优化 - 5.3x性能差异
 - **延迟隐藏 (Latency Hiding)** 通过多内存操作实现5.5x加速
 - **Bank冲突** 产生1.8x成本 - 共享内存访问需优化
 - **Apple M2对分支分歧和寄存器压力有极好的硬件处理**
+- **Constant Memory** 在当前测试中无明显优势
 
 ### 4. 并行计算
 

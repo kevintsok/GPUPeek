@@ -129,7 +129,126 @@ kernel void constant_scattered(device const float* dev [[buffer(0)]],
 }
 
 // ============================================================
-// 4. TEXTURE VS BUFFER PERFORMANCE
+// 3b. CONSTANT MEMORY BROADCAST TEST
+// ============================================================
+
+kernel void constant_broadcast(device const float* dev [[buffer(0)]],
+                             constant float4& cst [[buffer(1)]],
+                             device float* out [[buffer(2)]],
+                             constant uint& size [[buffer(3)]],
+                             uint id [[thread_position_in_grid]]) {
+    // All threads read same float4 value - optimal for constant cache
+    out[id] = cst[0] + dev[id];
+}
+
+// ============================================================
+// 4. OPTIMAL TILE SIZE FOR MATMUL
+// ============================================================
+
+kernel void matmul_tiled_8(device const float* a [[buffer(0)]],
+                         device const float* b [[buffer(1)]],
+                         device float* c [[buffer(2)]],
+                         constant uint& M [[buffer(3)]],
+                         constant uint& K [[buffer(4)]],
+                         constant uint& N [[buffer(5)]],
+                         threadgroup float* As [[threadgroup(0)]],
+                         threadgroup float* Bs [[threadgroup(1)]],
+                         uint2 gid [[thread_position_in_grid]],
+                         uint2 tid [[thread_position_in_threadgroup]]) {
+    constexpr uint TILE_SIZE = 8;
+    uint cRow = gid.y;
+    uint cCol = gid.x;
+    uint cRowTile = tid.y;
+    uint cColTile = tid.x;
+    float sum = 0.0f;
+    for (uint kTile = 0; kTile < (K + TILE_SIZE - 1) / TILE_SIZE; kTile++) {
+        uint aRow = cRow;
+        uint aCol = kTile * TILE_SIZE + cColTile;
+        if (aRow < M && aCol < K) As[cRowTile * TILE_SIZE + cColTile] = a[aRow * K + aCol];
+        else As[cRowTile * TILE_SIZE + cColTile] = 0.0f;
+        uint bRow = kTile * TILE_SIZE + cRowTile;
+        uint bCol = cCol;
+        if (bRow < K && bCol < N) Bs[cRowTile * TILE_SIZE + cColTile] = b[bRow * N + bCol];
+        else Bs[cRowTile * TILE_SIZE + cColTile] = 0.0f;
+        threadgroup_barrier(mem_flags::mem_none);
+        for (uint k = 0; k < TILE_SIZE; k++) {
+            sum += As[cRowTile * TILE_SIZE + k] * Bs[k * TILE_SIZE + cColTile];
+        }
+        threadgroup_barrier(mem_flags::mem_none);
+    }
+    if (cRow < M && cCol < N) c[cRow * N + cCol] = sum;
+}
+
+kernel void matmul_tiled_16(device const float* a [[buffer(0)]],
+                          device const float* b [[buffer(1)]],
+                          device float* c [[buffer(2)]],
+                          constant uint& M [[buffer(3)]],
+                          constant uint& K [[buffer(4)]],
+                          constant uint& N [[buffer(5)]],
+                          threadgroup float* As [[threadgroup(0)]],
+                          threadgroup float* Bs [[threadgroup(1)]],
+                          uint2 gid [[thread_position_in_grid]],
+                          uint2 tid [[thread_position_in_threadgroup]]) {
+    constexpr uint TILE_SIZE = 16;
+    uint cRow = gid.y;
+    uint cCol = gid.x;
+    uint cRowTile = tid.y;
+    uint cColTile = tid.x;
+    float sum = 0.0f;
+    for (uint kTile = 0; kTile < (K + TILE_SIZE - 1) / TILE_SIZE; kTile++) {
+        uint aRow = cRow;
+        uint aCol = kTile * TILE_SIZE + cColTile;
+        if (aRow < M && aCol < K) As[cRowTile * TILE_SIZE + cColTile] = a[aRow * K + aCol];
+        else As[cRowTile * TILE_SIZE + cColTile] = 0.0f;
+        uint bRow = kTile * TILE_SIZE + cRowTile;
+        uint bCol = cCol;
+        if (bRow < K && bCol < N) Bs[cRowTile * TILE_SIZE + cColTile] = b[bRow * N + bCol];
+        else Bs[cRowTile * TILE_SIZE + cColTile] = 0.0f;
+        threadgroup_barrier(mem_flags::mem_none);
+        for (uint k = 0; k < TILE_SIZE; k++) {
+            sum += As[cRowTile * TILE_SIZE + k] * Bs[k * TILE_SIZE + cColTile];
+        }
+        threadgroup_barrier(mem_flags::mem_none);
+    }
+    if (cRow < M && cCol < N) c[cRow * N + cCol] = sum;
+}
+
+kernel void matmul_tiled_32(device const float* a [[buffer(0)]],
+                          device const float* b [[buffer(1)]],
+                          device float* c [[buffer(2)]],
+                          constant uint& M [[buffer(3)]],
+                          constant uint& K [[buffer(4)]],
+                          constant uint& N [[buffer(5)]],
+                          threadgroup float* As [[threadgroup(0)]],
+                          threadgroup float* Bs [[threadgroup(1)]],
+                          uint2 gid [[thread_position_in_grid]],
+                          uint2 tid [[thread_position_in_threadgroup]]) {
+    constexpr uint TILE_SIZE = 32;
+    uint cRow = gid.y;
+    uint cCol = gid.x;
+    uint cRowTile = tid.y;
+    uint cColTile = tid.x;
+    float sum = 0.0f;
+    for (uint kTile = 0; kTile < (K + TILE_SIZE - 1) / TILE_SIZE; kTile++) {
+        uint aRow = cRow;
+        uint aCol = kTile * TILE_SIZE + cColTile;
+        if (aRow < M && aCol < K) As[cRowTile * TILE_SIZE + cColTile] = a[aRow * K + aCol];
+        else As[cRowTile * TILE_SIZE + cColTile] = 0.0f;
+        uint bRow = kTile * TILE_SIZE + cRowTile;
+        uint bCol = cCol;
+        if (bRow < K && bCol < N) Bs[cRowTile * TILE_SIZE + cColTile] = b[bRow * N + bCol];
+        else Bs[cRowTile * TILE_SIZE + cColTile] = 0.0f;
+        threadgroup_barrier(mem_flags::mem_none);
+        for (uint k = 0; k < TILE_SIZE; k++) {
+            sum += As[cRowTile * TILE_SIZE + k] * Bs[k * TILE_SIZE + cColTile];
+        }
+        threadgroup_barrier(mem_flags::mem_none);
+    }
+    if (cRow < M && cCol < N) c[cRow * N + cCol] = sum;
+}
+
+// ============================================================
+// 5. TEXTURE VS BUFFER PERFORMANCE
 // ============================================================
 
 // Note: Textures require special setup - testing buffer operations
@@ -1409,6 +1528,192 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     print("Low Register:    \(String(format: "%.2f", gopsLowReg)) GOPS")
     print("High Register:   \(String(format: "%.2f", gopsHighReg)) GOPS")
     print("Register Cost:   \(String(format: "%.1fx", gopsLowReg / gopsHighReg))")
+
+    // 7. CONSTANT MEMORY TEST
+    print("\n--- 7. Constant Memory Broadcast Analysis ---")
+
+    guard let constReadFunc = deepLibrary.makeFunction(name: "constant_read"),
+          let constScatteredFunc = deepLibrary.makeFunction(name: "constant_scattered"),
+          let constBroadcastFunc = deepLibrary.makeFunction(name: "constant_broadcast"),
+          let constReadPipeline = try? device.makeComputePipelineState(function: constReadFunc),
+          let constScatteredPipeline = try? device.makeComputePipelineState(function: constScatteredFunc),
+          let constBroadcastPipeline = try? device.makeComputePipelineState(function: constBroadcastFunc) else {
+        print("Failed to create constant memory pipelines")
+        return
+    }
+
+    let constSize = 1024 * 1024
+
+    guard let devBuffer = device.makeBuffer(length: constSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let cstBuffer = device.makeBuffer(length: 1024 * MemoryLayout<Float>.size, options: .storageModeShared),
+          let outBufferC = device.makeBuffer(length: constSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+
+    let devPtr = devBuffer.contents().assumingMemoryBound(to: Float.self)
+    for i in 0..<constSize { devPtr[i] = Float(i % 256) / 256.0 }
+    let cstPtr = cstBuffer.contents().assumingMemoryBound(to: Float.self)
+    for i in 0..<1024 { cstPtr[i] = 1.5 }
+
+    var constSz = UInt32(constSize)
+
+    // Constant broadcast (all threads same value)
+    let startBroadcast = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(constBroadcastPipeline)
+        encoder.setBuffer(devBuffer, offset: 0, index: 0)
+        encoder.setBuffer(cstBuffer, offset: 0, index: 1)
+        encoder.setBuffer(outBufferC, offset: 0, index: 2)
+        encoder.setBytes(&constSz, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: constSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endBroadcast = getTimeNanos()
+    let elapsedBroadcast = getElapsedSeconds(start: startBroadcast, end: endBroadcast)
+    let gopsBroadcast = Double(constSize) * Double(iterations) / elapsedBroadcast / 1e9
+
+    // Constant scattered (different values per thread)
+    let startScattered = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(constScatteredPipeline)
+        encoder.setBuffer(devBuffer, offset: 0, index: 0)
+        encoder.setBuffer(cstBuffer, offset: 0, index: 1)
+        encoder.setBuffer(outBufferC, offset: 0, index: 2)
+        encoder.setBytes(&constSz, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: constSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endScattered = getTimeNanos()
+    let elapsedScattered = getElapsedSeconds(start: startScattered, end: endScattered)
+    let gopsScattered = Double(constSize) * Double(iterations) / elapsedScattered / 1e9
+
+    print("Constant Broadcast (same value): \(String(format: "%.2f", gopsBroadcast)) GOPS")
+    print("Constant Scattered (diff values): \(String(format: "%.2f", gopsScattered)) GOPS")
+    print("Constant Cache Efficiency: \(String(format: "%.1fx", gopsBroadcast / gopsScattered))")
+
+    // 8. MATMUL TILE SIZE OPTIMIZATION
+    print("\n--- 8. MatMul Optimal Tile Size Analysis ---")
+
+    guard let tile8Func = deepLibrary.makeFunction(name: "matmul_tiled_8"),
+          let tile16Func = deepLibrary.makeFunction(name: "matmul_tiled_16"),
+          let tile32Func = deepLibrary.makeFunction(name: "matmul_tiled_32"),
+          let tile8Pipeline = try? device.makeComputePipelineState(function: tile8Func),
+          let tile16Pipeline = try? device.makeComputePipelineState(function: tile16Func),
+          let tile32Pipeline = try? device.makeComputePipelineState(function: tile32Func) else {
+        print("Failed to create tile pipelines")
+        return
+    }
+
+    let matSize: UInt32 = 512
+    let matSizeInt = Int(matSize)
+    let matmulIterations = 10
+
+    let aSize = matSizeInt * matSizeInt
+    guard let aBuffer = device.makeBuffer(length: aSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let bBuffer = device.makeBuffer(length: aSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let cBuffer = device.makeBuffer(length: aSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let sharedA8 = device.makeBuffer(length: 8 * 8 * MemoryLayout<Float>.size, options: .storageModeShared),
+          let sharedB8 = device.makeBuffer(length: 8 * 8 * MemoryLayout<Float>.size, options: .storageModeShared),
+          let sharedA16 = device.makeBuffer(length: 16 * 16 * MemoryLayout<Float>.size, options: .storageModeShared),
+          let sharedB16 = device.makeBuffer(length: 16 * 16 * MemoryLayout<Float>.size, options: .storageModeShared),
+          let sharedA32 = device.makeBuffer(length: 32 * 32 * MemoryLayout<Float>.size, options: .storageModeShared),
+          let sharedB32 = device.makeBuffer(length: 32 * 32 * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+
+    var M = matSize, K = matSize, N = matSize
+
+    // Tile 8
+    let start8 = getTimeNanos()
+    for _ in 0..<matmulIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(tile8Pipeline)
+        encoder.setBuffer(aBuffer, offset: 0, index: 0)
+        encoder.setBuffer(bBuffer, offset: 0, index: 1)
+        encoder.setBuffer(cBuffer, offset: 0, index: 2)
+        encoder.setBytes(&M, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.setBytes(&K, length: MemoryLayout<UInt32>.size, index: 4)
+        encoder.setBytes(&N, length: MemoryLayout<UInt32>.size, index: 5)
+        encoder.setBuffer(sharedA8, offset: 0, index: 6)
+        encoder.setBuffer(sharedB8, offset: 0, index: 7)
+        encoder.dispatchThreads(MTLSize(width: Int(N), height: Int(M), depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 8, height: 8, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let end8 = getTimeNanos()
+    let elapsed8 = getElapsedSeconds(start: start8, end: end8)
+    let flops8 = 2.0 * Double(M) * Double(K) * Double(N) * Double(matmulIterations)
+    let gflops8 = flops8 / elapsed8 / 1e9
+
+    // Tile 16
+    let start16 = getTimeNanos()
+    for _ in 0..<matmulIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(tile16Pipeline)
+        encoder.setBuffer(aBuffer, offset: 0, index: 0)
+        encoder.setBuffer(bBuffer, offset: 0, index: 1)
+        encoder.setBuffer(cBuffer, offset: 0, index: 2)
+        encoder.setBytes(&M, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.setBytes(&K, length: MemoryLayout<UInt32>.size, index: 4)
+        encoder.setBytes(&N, length: MemoryLayout<UInt32>.size, index: 5)
+        encoder.setBuffer(sharedA16, offset: 0, index: 6)
+        encoder.setBuffer(sharedB16, offset: 0, index: 7)
+        encoder.dispatchThreads(MTLSize(width: Int(N), height: Int(M), depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let end16 = getTimeNanos()
+    let elapsed16 = getElapsedSeconds(start: start16, end: end16)
+    let flops16 = 2.0 * Double(M) * Double(K) * Double(N) * Double(matmulIterations)
+    let gflops16 = flops16 / elapsed16 / 1e9
+
+    // Tile 32
+    let start32 = getTimeNanos()
+    for _ in 0..<matmulIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(tile32Pipeline)
+        encoder.setBuffer(aBuffer, offset: 0, index: 0)
+        encoder.setBuffer(bBuffer, offset: 0, index: 1)
+        encoder.setBuffer(cBuffer, offset: 0, index: 2)
+        encoder.setBytes(&M, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.setBytes(&K, length: MemoryLayout<UInt32>.size, index: 4)
+        encoder.setBytes(&N, length: MemoryLayout<UInt32>.size, index: 5)
+        encoder.setBuffer(sharedA32, offset: 0, index: 6)
+        encoder.setBuffer(sharedB32, offset: 0, index: 7)
+        encoder.dispatchThreads(MTLSize(width: Int(N), height: Int(M), depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let end32 = getTimeNanos()
+    let elapsed32 = getElapsedSeconds(start: start32, end: end32)
+    let flops32 = 2.0 * Double(M) * Double(K) * Double(N) * Double(matmulIterations)
+    let gflops32 = flops32 / elapsed32 / 1e9
+
+    print("Tile Size 8:  \(String(format: "%.2f", gflops8)) GFLOPS")
+    print("Tile Size 16: \(String(format: "%.2f", gflops16)) GFLOPS")
+    print("Tile Size 32: \(String(format: "%.2f", gflops32)) GFLOPS")
+    let bestTile = max(gflops8, max(gflops16, gflops32))
+    let bestName = bestTile == gflops8 ? "8" : (bestTile == gflops16 ? "16" : "32")
+    print("Best Tile: \(bestName) with \(String(format: "%.2f", bestTile)) GFLOPS")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")
