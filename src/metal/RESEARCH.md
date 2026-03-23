@@ -94,6 +94,11 @@
 | **Constant Memory** | 0.09 vs 0.09 GOPS | **1.0x 无差异** |
 | **Command Buffer Batching** | 0.16 vs 0.08 GOPS | **1.88x 加速** |
 | **Occupancy (Shared Mem)** | ~0.06 GOPS all | **无显著差异** |
+| **FP64 Double Precision** | 不支持 | Metal不支持双精度 |
+| **Vectorization (Float2)** | 0.09 GOPS | **优于Float4** |
+| **Vectorization (Half2)** | 0.19 GOPS | **2x快于Float2** |
+| **Memory Fence Overhead** | 0.17 vs 0.16 GOPS | **1.0x 无开销** |
+| **Kernel Fusion** | 0.10 vs 0.05 GOPS | **1.98x 加速** |
 
 **关键洞察**:
 - **内存合并 (Coalescing)** 是最重要的优化 - 5.3x性能差异
@@ -103,6 +108,10 @@
 - **Constant Memory** 在当前测试中无明显优势
 - **Command Buffer批处理** 可实现1.88x加速 - 多个kernel合并到单个命令缓冲区
 - **Occupancy对性能影响小** - 共享内存大小在当前测试中不是瓶颈
+- **FP64不支持** - Apple M2 Metal不支持双精度运算
+- **Half2向量最优** - Half2比Float2快2x，Half4比Float4快2x
+- **Memory Fence无开销** - Threadgroup屏障在当前测试中无显著性能损失
+- **Kernel Fusion效果显著** - 融合操作比分离kernel快2x
 
 ### 4. 并行计算
 

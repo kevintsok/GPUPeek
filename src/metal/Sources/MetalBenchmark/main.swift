@@ -614,6 +614,160 @@ kernel void mem_double_buffer_read(device const float* in1 [[buffer(0)]],
     bool use_first = (id / 256) % 2 == 0;
     out[id] = use_first ? in1[id] : in2[id];
 }
+
+// ============================================================
+// 13. FP64 NOT SUPPORTED IN METAL ON APPLE M2
+// Note: Apple M2 does not support double precision in Metal shaders
+// ============================================================
+
+// ============================================================
+// 14. VECTORIZATION WIDTH COMPARISON (float2/float4)
+// Metal supports float2 and float4, but NOT float8
+// ============================================================
+
+kernel void vec_float2_op(device const float* in [[buffer(0)]],
+                         device float* out [[buffer(1)]],
+                         constant uint& size [[buffer(2)]],
+                         uint id [[thread_position_in_grid]]) {
+    float2 v = float2(in[id*2], in[id*2+1]);
+    v = v * 2.0f + 1.0f;
+    out[id*2] = v.x;
+    out[id*2+1] = v.y;
+}
+
+kernel void vec_float4_op(device const float* in [[buffer(0)]],
+                         device float* out [[buffer(1)]],
+                         constant uint& size [[buffer(2)]],
+                         uint id [[thread_position_in_grid]]) {
+    float4 v = float4(in[id*4], in[id*4+1], in[id*4+2], in[id*4+3]);
+    v = v * 2.0f + 1.0f;
+    out[id*4] = v.x;
+    out[id*4+1] = v.y;
+    out[id*4+2] = v.z;
+    out[id*4+3] = v.w;
+}
+
+// ============================================================
+// 15. HALF-PRECISION VECTORIZATION (half2/half4)
+// Metal supports half2 and half4, but NOT half8
+// ============================================================
+
+kernel void vec_half2_op(device const half* in [[buffer(0)]],
+                        device half* out [[buffer(1)]],
+                        constant uint& size [[buffer(2)]],
+                        uint id [[thread_position_in_grid]]) {
+    half2 v = half2(in[id*2], in[id*2+1]);
+    v = v * 2.0h + 1.0h;
+    out[id*2] = v[0];
+    out[id*2+1] = v[1];
+}
+
+kernel void vec_half4_op(device const half* in [[buffer(0)]],
+                        device half* out [[buffer(1)]],
+                        constant uint& size [[buffer(2)]],
+                        uint id [[thread_position_in_grid]]) {
+    half4 v = half4(in[id*4], in[id*4+1], in[id*4+2], in[id*4+3]);
+    v = v * 2.0h + 1.0h;
+    out[id*4] = v[0]; out[id*4+1] = v[1]; out[id*4+2] = v[2]; out[id*4+3] = v[3];
+}
+
+// ============================================================
+// 16. MEMORY FENCE IMPACT
+// ============================================================
+
+kernel void mem_fence_none(device const float* in [[buffer(0)]],
+                          device float* out [[buffer(1)]],
+                          constant uint& size [[buffer(2)]],
+                          uint id [[thread_position_in_grid]]) {
+    // No fence - aggressive optimization possible
+    float val = in[id];
+    for (int i = 0; i < 8; i++) {
+        val = val * 2.0f + 1.0f;
+    }
+    out[id] = val;
+}
+
+kernel void mem_fence_device(device const float* in [[buffer(0)]],
+                             device float* out [[buffer(1)]],
+                             constant uint& size [[buffer(2)]],
+                             uint id [[thread_position_in_grid]]) {
+    // Device memory fence
+    float val = in[id];
+    for (int i = 0; i < 8; i++) {
+        val = val * 2.0f + 1.0f;
+    }
+    out[id] = val;
+    threadgroup_barrier(mem_flags::mem_none);
+}
+
+kernel void mem_fence_threadgroup(device const float* in [[buffer(0)]],
+                                  device float* out [[buffer(1)]],
+                                  constant uint& size [[buffer(2)]],
+                                  uint id [[thread_position_in_grid]]) {
+    // Threadgroup memory fence
+    float val = in[id];
+    for (int i = 0; i < 8; i++) {
+        val = val * 2.0f + 1.0f;
+    }
+    out[id] = val;
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+}
+
+// ============================================================
+// 17. INDIRECT COMPUTE DISPATCH
+// ============================================================
+
+kernel void indirect_count(device const float* in [[buffer(0)]],
+                          device atomic_uint* counter [[buffer(1)]],
+                          device uint* out [[buffer(2)]],
+                          constant uint& size [[buffer(3)]],
+                          uint id [[thread_position_in_grid]]) {
+    if (in[id] > 0.5f) {
+        atomic_fetch_add_explicit(&counter[0], 1, memory_order_relaxed);
+    }
+}
+
+kernel void indirect_execute(device const float* in [[buffer(0)]],
+                            device float* out [[buffer(1)]],
+                            constant uint& size [[buffer(2)]],
+                            uint id [[thread_position_in_grid]]) {
+    out[id] = in[id] * 2.0f + 1.0f;
+}
+
+// ============================================================
+// 18. KERNEL FUSION STUDY (multi-op in single kernel)
+// ============================================================
+
+kernel void fused_ops(device const float* a [[buffer(0)]],
+                    device const float* b [[buffer(1)]],
+                    device float* out [[buffer(2)]],
+                    constant uint& size [[buffer(3)]],
+                    uint id [[thread_position_in_grid]]) {
+    // Fused: mul, add, sqrt, div in single kernel
+    float v = a[id] * b[id];
+    v = v + 1.0f;
+    v = sqrt(v);
+    v = v / (b[id] + 0.001f);
+    out[id] = v;
+}
+
+kernel void separate_ops_a(device const float* a [[buffer(0)]],
+                           device const float* b [[buffer(1)]],
+                           device float* temp [[buffer(2)]],
+                           constant uint& size [[buffer(3)]],
+                           uint id [[thread_position_in_grid]]) {
+    temp[id] = a[id] * b[id];
+}
+
+kernel void separate_ops_b(device const float* temp [[buffer(2)]],
+                           device const float* b [[buffer(1)]],
+                           device float* out [[buffer(3)]],
+                           constant uint& size [[buffer(0)]],
+                           uint id [[thread_position_in_grid]]) {
+    float v = temp[id] + 1.0f;
+    v = sqrt(v);
+    out[id] = v / (b[id] + 0.001f);
+}
 """
 
 // MARK: - FP16 Deep Dive Shader Library
@@ -1791,6 +1945,330 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     let bestTile = max(gflops8, max(gflops16, gflops32))
     let bestName = bestTile == gflops8 ? "8" : (bestTile == gflops16 ? "16" : "32")
     print("Best Tile: \(bestName) with \(String(format: "%.2f", bestTile)) GFLOPS")
+
+    // 9. FP64 DOUBLE PRECISION TEST
+    print("\n--- 9. FP64 Double Precision Performance ---")
+
+    if let fp64MulFunc = deepLibrary.makeFunction(name: "fp64_vec_mul"),
+       let fp64AddFunc = deepLibrary.makeFunction(name: "fp64_vec_add"),
+       let fp64MulPipeline = try? device.makeComputePipelineState(function: fp64MulFunc),
+       let fp64AddPipeline = try? device.makeComputePipelineState(function: fp64AddFunc) {
+        let fp64Size = 1024 * 1024
+        let fp64Iter = 50
+        guard let fp64In1 = device.makeBuffer(length: fp64Size * MemoryLayout<Double>.size, options: .storageModeShared),
+              let fp64In2 = device.makeBuffer(length: fp64Size * MemoryLayout<Double>.size, options: .storageModeShared),
+              let fp64Out = device.makeBuffer(length: fp64Size * MemoryLayout<Double>.size, options: .storageModeShared) else {
+            print("Failed to create FP64 buffers")
+            return
+        }
+
+        let fp64In1Ptr = fp64In1.contents().assumingMemoryBound(to: Double.self)
+        let fp64In2Ptr = fp64In2.contents().assumingMemoryBound(to: Double.self)
+        for i in 0..<fp64Size { fp64In1Ptr[i] = Double(i % 256) / 256.0; fp64In2Ptr[i] = 0.5 }
+
+        var fp64Sz = UInt32(fp64Size)
+
+        let startMul = getTimeNanos()
+        for _ in 0..<fp64Iter {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(fp64MulPipeline)
+            encoder.setBuffer(fp64In1, offset: 0, index: 0)
+            encoder.setBuffer(fp64In2, offset: 0, index: 1)
+            encoder.setBuffer(fp64Out, offset: 0, index: 2)
+            encoder.setBytes(&fp64Sz, length: MemoryLayout<UInt32>.size, index: 3)
+            encoder.dispatchThreads(MTLSize(width: fp64Size, height: 1, depth: 1),
+                               threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endMul = getTimeNanos()
+        let gopsFp64Mul = Double(fp64Size) * Double(fp64Iter) / getElapsedSeconds(start: startMul, end: endMul) / 1e9
+
+        let startAdd = getTimeNanos()
+        for _ in 0..<fp64Iter {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(fp64AddPipeline)
+            encoder.setBuffer(fp64In1, offset: 0, index: 0)
+            encoder.setBuffer(fp64In2, offset: 0, index: 1)
+            encoder.setBuffer(fp64Out, offset: 0, index: 2)
+            encoder.setBytes(&fp64Sz, length: MemoryLayout<UInt32>.size, index: 3)
+            encoder.dispatchThreads(MTLSize(width: fp64Size, height: 1, depth: 1),
+                               threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endAdd = getTimeNanos()
+        let gopsFp64Add = Double(fp64Size) * Double(fp64Iter) / getElapsedSeconds(start: startAdd, end: endAdd) / 1e9
+
+        print("FP64 Vec Multiply: \(String(format: "%.2f", gopsFp64Mul)) GOPS")
+        print("FP64 Vec Add:      \(String(format: "%.2f", gopsFp64Add)) GOPS")
+    } else {
+        print("FP64 not supported or failed to compile")
+    }
+
+    // 10. VECTORIZATION WIDTH COMPARISON
+    print("\n--- 10. Vectorization Width Comparison (Float) ---")
+
+    guard let float2Func = deepLibrary.makeFunction(name: "vec_float2_op"),
+          let float4Func = deepLibrary.makeFunction(name: "vec_float4_op"),
+          let float2Pipeline = try? device.makeComputePipelineState(function: float2Func),
+          let float4Pipeline = try? device.makeComputePipelineState(function: float4Func) else {
+        print("Failed to create vectorization pipelines")
+        return
+    }
+
+    let vecSize = 8 * 1024 * 1024
+    let vecIter = 100
+    guard let vecIn = device.makeBuffer(length: vecSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let vecOut = device.makeBuffer(length: vecSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+    var vecSz = UInt32(vecSize)
+
+    // Float2
+    let startF2 = getTimeNanos()
+    for _ in 0..<vecIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(float2Pipeline)
+        encoder.setBuffer(vecIn, offset: 0, index: 0)
+        encoder.setBuffer(vecOut, offset: 0, index: 1)
+        encoder.setBytes(&vecSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: vecSize/2, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endF2 = getTimeNanos()
+    let gopsF2 = Double(vecSize/2) * Double(vecIter) / getElapsedSeconds(start: startF2, end: endF2) / 1e9
+
+    // Float4
+    let startF4 = getTimeNanos()
+    for _ in 0..<vecIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(float4Pipeline)
+        encoder.setBuffer(vecIn, offset: 0, index: 0)
+        encoder.setBuffer(vecOut, offset: 0, index: 1)
+        encoder.setBytes(&vecSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: vecSize/4, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endF4 = getTimeNanos()
+    let gopsF4 = Double(vecSize/4) * Double(vecIter) / getElapsedSeconds(start: startF4, end: endF4) / 1e9
+
+    print("Float2 (width=2):  \(String(format: "%.2f", gopsF2)) GOPS")
+    print("Float4 (width=4):  \(String(format: "%.2f", gopsF4)) GOPS")
+    let bestVecF = max(gopsF2, gopsF4)
+    let bestVecFName = bestVecF == gopsF2 ? "Float2" : "Float4"
+    print("Best Float Vector: \(bestVecFName) with \(String(format: "%.2f", bestVecF)) GOPS")
+
+    // 11. HALF-PRECISION VECTORIZATION
+    print("\n--- 11. Vectorization Width Comparison (Half) ---")
+
+    guard let half2Func = deepLibrary.makeFunction(name: "vec_half2_op"),
+          let half4Func = deepLibrary.makeFunction(name: "vec_half4_op"),
+          let half2Pipeline = try? device.makeComputePipelineState(function: half2Func),
+          let half4Pipeline = try? device.makeComputePipelineState(function: half4Func) else {
+        print("Failed to create half pipelines")
+        return
+    }
+
+    let halfSize = 16 * 1024 * 1024
+    guard let halfIn = device.makeBuffer(length: halfSize * MemoryLayout<UInt16>.size, options: .storageModeShared),
+          let halfOut = device.makeBuffer(length: halfSize * MemoryLayout<UInt16>.size, options: .storageModeShared) else {
+        return
+    }
+    var halfSz = UInt32(halfSize)
+
+    // Half2
+    let startH2 = getTimeNanos()
+    for _ in 0..<vecIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(half2Pipeline)
+        encoder.setBuffer(halfIn, offset: 0, index: 0)
+        encoder.setBuffer(halfOut, offset: 0, index: 1)
+        encoder.setBytes(&halfSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: halfSize/2, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endH2 = getTimeNanos()
+    let gopsH2 = Double(halfSize/2) * Double(vecIter) / getElapsedSeconds(start: startH2, end: endH2) / 1e9
+
+    // Half4
+    let startH4 = getTimeNanos()
+    for _ in 0..<vecIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(half4Pipeline)
+        encoder.setBuffer(halfIn, offset: 0, index: 0)
+        encoder.setBuffer(halfOut, offset: 0, index: 1)
+        encoder.setBytes(&halfSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: halfSize/4, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endH4 = getTimeNanos()
+    let gopsH4 = Double(halfSize/4) * Double(vecIter) / getElapsedSeconds(start: startH4, end: endH4) / 1e9
+
+    print("Half2 (width=2):   \(String(format: "%.2f", gopsH2)) GOPS")
+    print("Half4 (width=4):   \(String(format: "%.2f", gopsH4)) GOPS")
+    let bestVecH = max(gopsH2, gopsH4)
+    let bestVecHName = bestVecH == gopsH2 ? "Half2" : "Half4"
+    print("Best Half Vector: \(bestVecHName) with \(String(format: "%.2f", bestVecH)) GOPS")
+
+    // 12. MEMORY FENCE IMPACT
+    print("\n--- 12. Memory Fence Impact ---")
+
+    guard let fenceNoneFunc = deepLibrary.makeFunction(name: "mem_fence_none"),
+          let fenceDeviceFunc = deepLibrary.makeFunction(name: "mem_fence_device"),
+          let fenceTGFunc = deepLibrary.makeFunction(name: "mem_fence_threadgroup"),
+          let fenceNonePipeline = try? device.makeComputePipelineState(function: fenceNoneFunc),
+          let fenceDevicePipeline = try? device.makeComputePipelineState(function: fenceDeviceFunc),
+          let fenceTGPipeline = try? device.makeComputePipelineState(function: fenceTGFunc) else {
+        print("Failed to create fence pipelines")
+        return
+    }
+
+    let fenceSize = 4 * 1024 * 1024
+    let fenceIter = 100
+    guard let fenceIn = device.makeBuffer(length: fenceSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let fenceOut = device.makeBuffer(length: fenceSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+    var fenceSz = UInt32(fenceSize)
+
+    // No fence
+    let startNoFence = getTimeNanos()
+    for _ in 0..<fenceIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(fenceNonePipeline)
+        encoder.setBuffer(fenceIn, offset: 0, index: 0)
+        encoder.setBuffer(fenceOut, offset: 0, index: 1)
+        encoder.setBytes(&fenceSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: fenceSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endNoFence = getTimeNanos()
+    let gopsNoFence = Double(fenceSize) * Double(fenceIter) / getElapsedSeconds(start: startNoFence, end: endNoFence) / 1e9
+
+    // Threadgroup fence
+    let startTGFence = getTimeNanos()
+    for _ in 0..<fenceIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(fenceTGPipeline)
+        encoder.setBuffer(fenceIn, offset: 0, index: 0)
+        encoder.setBuffer(fenceOut, offset: 0, index: 1)
+        encoder.setBytes(&fenceSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: fenceSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endTGFence = getTimeNanos()
+    let gopsTGFence = Double(fenceSize) * Double(fenceIter) / getElapsedSeconds(start: startTGFence, end: endTGFence) / 1e9
+
+    print("No Fence:           \(String(format: "%.2f", gopsNoFence)) GOPS")
+    print("Threadgroup Fence:  \(String(format: "%.2f", gopsTGFence)) GOPS")
+    print("Fence Overhead:     \(String(format: "%.1fx", gopsNoFence / gopsTGFence))")
+
+    // 13. KERNEL FUSION STUDY
+    print("\n--- 13. Kernel Fusion Analysis ---")
+
+    guard let fusedFunc = deepLibrary.makeFunction(name: "fused_ops"),
+          let sepAFunc = deepLibrary.makeFunction(name: "separate_ops_a"),
+          let sepBFunc = deepLibrary.makeFunction(name: "separate_ops_b"),
+          let fusedPipeline = try? device.makeComputePipelineState(function: fusedFunc),
+          let sepAPipeline = try? device.makeComputePipelineState(function: sepAFunc),
+          let sepBPipeline = try? device.makeComputePipelineState(function: sepBFunc) else {
+        print("Failed to create fusion pipelines")
+        return
+    }
+
+    let fuseSize = 2 * 1024 * 1024
+    let fuseIter = 50
+    guard let fuseA = device.makeBuffer(length: fuseSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let fuseB = device.makeBuffer(length: fuseSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let fuseOut = device.makeBuffer(length: fuseSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let fuseTemp = device.makeBuffer(length: fuseSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+    var fuseSz = UInt32(fuseSize)
+
+    // Fused (single kernel)
+    let startFused = getTimeNanos()
+    for _ in 0..<fuseIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(fusedPipeline)
+        encoder.setBuffer(fuseA, offset: 0, index: 0)
+        encoder.setBuffer(fuseB, offset: 0, index: 1)
+        encoder.setBuffer(fuseOut, offset: 0, index: 2)
+        encoder.setBytes(&fuseSz, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: fuseSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endFused = getTimeNanos()
+    let gopsFused = Double(fuseSize) * Double(fuseIter) / getElapsedSeconds(start: startFused, end: endFused) / 1e9
+
+    // Separate (2 kernels)
+    let startSep = getTimeNanos()
+    for _ in 0..<fuseIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(sepAPipeline)
+        encoder.setBuffer(fuseA, offset: 0, index: 0)
+        encoder.setBuffer(fuseB, offset: 0, index: 1)
+        encoder.setBuffer(fuseTemp, offset: 0, index: 2)
+        encoder.setBytes(&fuseSz, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: fuseSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+
+        guard let cmd2 = queue.makeCommandBuffer(),
+              let enc2 = cmd2.makeComputeCommandEncoder() else { continue }
+        enc2.setComputePipelineState(sepBPipeline)
+        enc2.setBuffer(fuseTemp, offset: 0, index: 2)
+        enc2.setBuffer(fuseB, offset: 0, index: 1)
+        enc2.setBuffer(fuseOut, offset: 0, index: 3)
+        enc2.setBytes(&fuseSz, length: MemoryLayout<UInt32>.size, index: 0)
+        enc2.dispatchThreads(MTLSize(width: fuseSize, height: 1, depth: 1),
+                         threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        enc2.endEncoding()
+        cmd2.commit()
+        cmd2.waitUntilCompleted()
+    }
+    let endSep = getTimeNanos()
+    let gopsSep = Double(fuseSize) * Double(fuseIter) / getElapsedSeconds(start: startSep, end: endSep) / 1e9
+
+    print("Fused (1 kernel):    \(String(format: "%.2f", gopsFused)) GOPS")
+    print("Separate (2 kernels): \(String(format: "%.2f", gopsSep)) GOPS")
+    print("Fusion Speedup:      \(String(format: "%.2fx", gopsFused / gopsSep))")
 
     // 9. COMMAND BUFFER BATCHING TEST
     print("\n--- 9. Command Buffer Batching Analysis ---")
