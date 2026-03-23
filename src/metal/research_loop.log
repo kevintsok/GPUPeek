@@ -1,0 +1,73 @@
+[2026-03-23 21:40:52] === Deep Research Loop Started ===
+[2026-03-23 21:40:52] --- Iteration Start ---
+[2026-03-23 21:40:52] Building benchmark...
+[0/1] Planning build
+Building for production...
+[0/2] Write swift-version--1AB21518FC5DEDBE.txt
+Build complete! (0.17s)
+[2026-03-23 21:40:54] Running benchmark...
+Apple Metal GPU Benchmark - Thread Occupancy Deep Dive
+======================================
+
+=== Apple Metal GPU Info ===
+Device Name: Apple M2
+Max Threadgroup Memory: 32 KB
+Max Threads Per Threadgroup: 1024
+GPU Family: Apple 7+
+
+Shader compilation: SUCCESS
+
+=== Thread Group Size Scaling ===
+Same workload with different thread group sizes:
+  TG-  64: 0.85 GB/s
+  TG- 128: 0.92 GB/s
+  TG- 256: 0.96 GB/s
+  TG- 512: 0.91 GB/s
+  TG-1024: 0.93 GB/s
+
+=== Register Pressure ===
+  Low Pressure: 0.73 GB/s
+  Medium Pressure: 0.83 GB/s
+  High Pressure: 0.84 GB/s
+
+=== Occupancy vs Performance ===
+  Memory Intensive: 0.85 GB/s
+  Compute Intensive: 0.04 GB/s
+
+=== Shared Memory Impact ===
+  Without shared: 0.77 GB/s
+  With shared: 0.86 GB/s
+  Ratio: 1.12x
+
+Thread Occupancy Deep Dive completed.
+[2026-03-23 21:40:57] Checking for changes...
+On branch feature/apple-metal-research
+Your branch is up to date with 'origin/feature/apple-metal-research'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .build/arm64-apple-macosx/release/MetalBenchmark
+	modified:   .build/arm64-apple-macosx/release/MetalBenchmark.build/MetalBenchmark.d
+	modified:   .build/arm64-apple-macosx/release/MetalBenchmark.build/main.swift.o
+	modified:   .build/arm64-apple-macosx/release/MetalBenchmark.build/master.swiftdeps
+	modified:   .build/arm64-apple-macosx/release/MetalBenchmark.dSYM/Contents/Resources/DWARF/MetalBenchmark
+	modified:   .build/arm64-apple-macosx/release/MetalBenchmark.dSYM/Contents/Resources/Relocations/aarch64/MetalBenchmark.yml
+	modified:   .build/arm64-apple-macosx/release/Modules/MetalBenchmark.swiftmodule
+	modified:   .build/arm64-apple-macosx/release/Modules/MetalBenchmark.swiftsourceinfo
+	modified:   .build/build.db
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	../../.claude/
+	.build/arm64-apple-macosx/debug/ModuleCache/3TR4JF4P5CGU6/
+	.build/arm64-apple-macosx/debug/index/db/
+	.build/arm64-apple-macosx/release/ModuleCache/3H3G7ZME8UHBB/_Builtin_intrinsics-3PGQF5YETHUX5.pcm
+	.build/arm64-apple-macosx/release/ModuleCache/3H3G7ZME8UHBB/simd-3AMDRIPXTSEBA.pcm
+	.build/arm64-apple-macosx/release/ModuleCache/AIS4WIA9LSQY/_Builtin_intrinsics-3PGQF5YETHUX5.pcm
+	.build/arm64-apple-macosx/release/ModuleCache/AIS4WIA9LSQY/simd-3AMDRIPXTSEBA.pcm
+	.build/arm64-apple-macosx/release/ModuleCache/simd-1SMNQO6YG2GZD.swiftmodule
+	research_loop.log
+	research_loop.sh
+
+no changes added to commit (use "git add" and/or "git commit -a")
