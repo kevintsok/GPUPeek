@@ -2,12 +2,20 @@
 triple:          'arm64-apple-darwin'
 binary-path:     '/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/MetalBenchmark'
 relocations:
-  - { offset: 0xEB2D8, size: 0x8, addend: 0x0, symName: _MetalBenchmark_main, symObjAddr: 0x0, symBinAddr: 0x100000C20, symSize: 0x560 }
-  - { offset: 0xEB2FC, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark12shaderSourceSSvp', symObjAddr: 0x117C8, symBinAddr: 0x10000C168, symSize: 0x0 }
-  - { offset: 0xEB317, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark7librarySo10MTLLibrary_pvp', symObjAddr: 0x117D8, symBinAddr: 0x10000C178, symSize: 0x0 }
-  - { offset: 0xEB351, size: 0x8, addend: 0x0, symName: _MetalBenchmark_main, symObjAddr: 0x0, symBinAddr: 0x100000C20, symSize: 0x560 }
-  - { offset: 0xEB7E1, size: 0x8, addend: 0x0, symName: ___swift_instantiateConcreteTypeFromMangledName, symObjAddr: 0x560, symBinAddr: 0x100001180, symSize: 0x44 }
-  - { offset: 0xEB816, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark15printDeviceInfo6deviceySo9MTLDevice_p_tF', symObjAddr: 0x5A4, symBinAddr: 0x1000011C4, symSize: 0x430 }
-  - { offset: 0xEBE12, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark20testMatmulFP16vsFP326device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x9D4, symBinAddr: 0x1000015F4, symSize: 0x103C }
-  - { offset: 0xECC87, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark20testVectorFP16vsFP326device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1A10, symBinAddr: 0x100002630, symSize: 0xD20 }
+  - { offset: 0xEB2D8, size: 0x8, addend: 0x0, symName: _MetalBenchmark_main, symObjAddr: 0x0, symBinAddr: 0x100000C20, symSize: 0x8A0 }
+  - { offset: 0xEB2FC, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16deepShaderSourceSSvp', symObjAddr: 0xEFA40, symBinAddr: 0x100024178, symSize: 0x0 }
+  - { offset: 0xEB317, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark12shaderSourceSSvp', symObjAddr: 0xEFA50, symBinAddr: 0x100024188, symSize: 0x0 }
+  - { offset: 0xEB332, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark7librarySo10MTLLibrary_pvp', symObjAddr: 0xEFA60, symBinAddr: 0x100024198, symSize: 0x0 }
+  - { offset: 0xEB36C, size: 0x8, addend: 0x0, symName: _MetalBenchmark_main, symObjAddr: 0x0, symBinAddr: 0x100000C20, symSize: 0x8A0 }
+  - { offset: 0xEBAAD, size: 0x8, addend: 0x0, symName: ___swift_instantiateConcreteTypeFromMangledName, symObjAddr: 0x8A0, symBinAddr: 0x1000014C0, symSize: 0x44 }
+  - { offset: 0xEBAE2, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark15printDeviceInfo6deviceySo9MTLDevice_p_tF', symObjAddr: 0x8E4, symBinAddr: 0x100001504, symSize: 0x430 }
+  - { offset: 0xECB15, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark20testMatmulFP16vsFP326device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0xD14, symBinAddr: 0x100001934, symSize: 0x173C }
+  - { offset: 0xEDFD9, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark20testVectorFP16vsFP326device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x2450, symBinAddr: 0x100003070, symSize: 0xD1C }
+  - { offset: 0xEEB93, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark25testConversionPerformance6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x316C, symBinAddr: 0x100003D8C, symSize: 0xB18 }
+  - { offset: 0xEF640, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24testReductionPerformance6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x3C84, symBinAddr: 0x1000048A4, symSize: 0xBE0 }
+  - { offset: 0xF01A3, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark19testDeepGPUResearch6device5queueySo9MTLDevice_p_So15MTLCommandQueue_ptKF', symObjAddr: 0x4864, symBinAddr: 0x100005484, symSize: 0x73B0 }
+  - { offset: 0xF5BD2, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark23testDeepMemoryBandwidth6device5queueySo9MTLDevice_p_So15MTLCommandQueue_ptKF', symObjAddr: 0xBC14, symBinAddr: 0x10000C834, symSize: 0x4B08 }
+  - { offset: 0xFA299, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark28testHighPerformanceBandwidth6device5queueySo9MTLDevice_p_So15MTLCommandQueue_ptKF', symObjAddr: 0x1071C, symBinAddr: 0x10001133C, symSize: 0x3038 }
+  - { offset: 0xFD03B, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark12getTimeNanoss6UInt64VyF', symObjAddr: 0x13754, symBinAddr: 0x100014374, symSize: 0x7C }
+  - { offset: 0xFD0AC, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark17getElapsedSeconds5start3endSds6UInt64V_AFtF', symObjAddr: 0x137D0, symBinAddr: 0x1000143F0, symSize: 0x94 }
 ...

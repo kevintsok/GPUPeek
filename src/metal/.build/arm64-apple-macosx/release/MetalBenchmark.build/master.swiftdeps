@@ -1,6 +1,6 @@
 version: "Apple Swift version 6.1.2 (swiftlang-6.1.2.1.2 clang-1700.0.13.5)"
 options: "c993eb51760426afd59380d5f281a27540a648ddf677f56fd6be02254a2c16ba"
-build_start_time: [1774273393, 396090000]
-build_end_time: [1774273394, 342629000]
+build_start_time: [1774276669, 517579000]
+build_end_time: [1774276672, 640067000]
 inputs:
-  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/main.swift": [1774273389, 570903330]
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/main.swift": [1774276667, 132249741]
