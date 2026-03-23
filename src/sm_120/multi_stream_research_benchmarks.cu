@@ -18,6 +18,7 @@
 // - Stream dependencies
 // =============================================================================
 
+#ifndef CHECK_CUDA
 #define CHECK_CUDA(call) \
     do { \
         cudaError_t err = call; \
@@ -26,6 +27,7 @@
                     cudaGetErrorString(err)); \
         } \
     } while(0)
+#endif
 
 // =============================================================================
 // Utility Functions
