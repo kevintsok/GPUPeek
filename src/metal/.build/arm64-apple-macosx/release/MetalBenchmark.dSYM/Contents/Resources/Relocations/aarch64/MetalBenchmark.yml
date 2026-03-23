@@ -1,0 +1,16 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/MetalBenchmark'
+relocations:
+  - { offset: 0xE88F3, size: 0x8, addend: 0x0, symName: _MetalBenchmark_main, symObjAddr: 0x0, symBinAddr: 0x100000BE0, symSize: 0x668 }
+  - { offset: 0xE8917, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark12shaderSourceSSvp', symObjAddr: 0x14A28, symBinAddr: 0x10000C0A8, symSize: 0x0 }
+  - { offset: 0xE8932, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark7librarySo10MTLLibrary_pvp', symObjAddr: 0x14A38, symBinAddr: 0x10000C0B8, symSize: 0x0 }
+  - { offset: 0xE896C, size: 0x8, addend: 0x0, symName: _MetalBenchmark_main, symObjAddr: 0x0, symBinAddr: 0x100000BE0, symSize: 0x668 }
+  - { offset: 0xE8EC9, size: 0x8, addend: 0x0, symName: ___swift_instantiateConcreteTypeFromMangledName, symObjAddr: 0x668, symBinAddr: 0x100001248, symSize: 0x44 }
+  - { offset: 0xE8EFE, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark15printDeviceInfo6deviceySo9MTLDevice_p_tF', symObjAddr: 0x6AC, symBinAddr: 0x10000128C, symSize: 0x518 }
+  - { offset: 0xE9646, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark17testBandwidthCopy6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0xBC4, symBinAddr: 0x1000017A4, symSize: 0xA94 }
+  - { offset: 0xE9FF1, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16testBandwidthSet6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1658, symBinAddr: 0x100002238, symSize: 0x614 }
+  - { offset: 0xEA614, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark13testVectorAdd6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1C6C, symBinAddr: 0x10000284C, symSize: 0x848 }
+  - { offset: 0xEAD67, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark14testMatmulFP326device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x24B4, symBinAddr: 0x100003094, symSize: 0xAD4 }
+  - { offset: 0xEB766, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16testTrigFunction6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x2F88, symBinAddr: 0x100003B68, symSize: 0x7E8 }
+...

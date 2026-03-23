@@ -21,6 +21,11 @@ GPUPeek/
     │   ├── bandwidth_kernel.cu   # Memory bandwidth kernels
     │   ├── compute_kernel.cu     # Compute throughput kernels
     │   └── warp_kernel.cu       # Warp-level operation kernels
+    ├── metal/                    # Apple Metal GPU (M1/M2/M3/M4 series)
+    │   ├── RESEARCH.md           # Research documentation
+    │   ├── bandwidth_test.metal  # Memory bandwidth kernels
+    │   ├── bandwidth_host.mm     # Host code for bandwidth tests
+    │   └── compute_test.metal    # Compute throughput kernels
     └── sm_120/                  # SM 12.0 (Blackwell) specific
         ├── arch.cu               # Architecture info & utilities
         ├── arch_kernels.cu       # Architecture-specific kernels
@@ -70,6 +75,7 @@ GPUPeek/
 ## Architecture-Specific Directories
 
 Each GPU architecture (compute capability) has its own directory:
+- `metal/` - Apple Metal GPU (M1/M2/M3/M4 series)
 - `sm_120/` - Blackwell (RTX 5080, RTX 5070, etc.)
 - `sm_90/` - Ada Lovelace (RTX 4090, RTX 4080, etc.)
 - `sm_80/` - Ampere (RTX 3090, A100, etc.)

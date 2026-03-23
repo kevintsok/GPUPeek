@@ -16,6 +16,7 @@ GPUPeek/
 └── src/
     ├── common/            # 通用代码
     ├── generic/           # 通用内核（所有GPU可用）
+    ├── metal/             # Apple Metal GPU (M系列) 研究代码
     └── sm_120/            # SM 12.0 (Blackwell) 特定代码
 ```
 
@@ -47,6 +48,7 @@ GPUPeek/
 
 ## 架构支持
 
+- `metal/` - Apple Metal (M1/M2/M3/M4系列)
 - `sm_120/` - Blackwell (RTX 5080, RTX 5070等)
 - `sm_90/` - Ada Lovelace (RTX 4090, RTX 4080等)
 - `sm_80/` - Ampere (RTX 3090, A100等)

@@ -1,0 +1,81 @@
+client:
+  name: basic
+  file-system: device-agnostic
+tools: {}
+targets:
+  "MetalBenchmark-arm64-apple-macosx16.0-debug.exe": ["<MetalBenchmark-arm64-apple-macosx16.0-debug.exe>"]
+  "MetalBenchmark-arm64-apple-macosx16.0-debug.module": ["<MetalBenchmark-arm64-apple-macosx16.0-debug.module>"]
+  "PackageStructure": ["<PackageStructure>"]
+  "main": ["<MetalBenchmark-arm64-apple-macosx16.0-debug.exe>","<MetalBenchmark-arm64-apple-macosx16.0-debug.module>"]
+  "test": ["<MetalBenchmark-arm64-apple-macosx16.0-debug.exe>","<MetalBenchmark-arm64-apple-macosx16.0-debug.module>"]
+default: "main"
+nodes:
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+  "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark":
+    is-mutated: true
+commands:
+  "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark-entitlement.plist":
+    tool: write-auxiliary-file
+    inputs: ["<entitlement-plist>","<com.apple.security.get-task-allow>"]
+    outputs: ["/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark-entitlement.plist"]
+    description: "Write auxiliary file /Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark-entitlement.plist"
+
+  "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/sources":
+    tool: write-auxiliary-file
+    inputs: ["<sources-file-list>","/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/main.swift"]
+    outputs: ["/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/sources"]
+    description: "Write auxiliary file /Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/sources"
+
+  "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.product/Objects.LinkFileList":
+    tool: write-auxiliary-file
+    inputs: ["<link-file-list>","/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/main.swift.o"]
+    outputs: ["/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.product/Objects.LinkFileList"]
+    description: "Write auxiliary file /Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.product/Objects.LinkFileList"
+
+  "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt":
+    tool: write-auxiliary-file
+    inputs: ["<swift-get-version>","/Library/Developer/CommandLineTools/usr/bin/swiftc"]
+    outputs: ["/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"]
+    always-out-of-date: "true"
+    description: "Write auxiliary file /Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
+
+  "<MetalBenchmark-arm64-apple-macosx16.0-debug.exe>":
+    tool: phony
+    inputs: ["<MetalBenchmark-arm64-apple-macosx16.0-debug.exe-CodeSigning>"]
+    outputs: ["<MetalBenchmark-arm64-apple-macosx16.0-debug.exe>"]
+
+  "<MetalBenchmark-arm64-apple-macosx16.0-debug.module>":
+    tool: phony
+    inputs: ["/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/main.swift.o","/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/Modules/MetalBenchmark.swiftmodule"]
+    outputs: ["<MetalBenchmark-arm64-apple-macosx16.0-debug.module>"]
+
+  "C.MetalBenchmark-arm64-apple-macosx16.0-debug.exe":
+    tool: shell
+    inputs: ["/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/main.swift.o","/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.product/Objects.LinkFileList"]
+    outputs: ["/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark"]
+    description: "Linking ./.build/arm64-apple-macosx/debug/MetalBenchmark"
+    args: ["/Library/Developer/CommandLineTools/usr/bin/swiftc","-L","/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug","-o","/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark","-module-name","MetalBenchmark","-Xlinker","-no_warn_duplicate_libraries","-emit-executable","-Xlinker","-alias","-Xlinker","_MetalBenchmark_main","-Xlinker","_main","-Xlinker","-rpath","-Xlinker","@loader_path","@/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.product/Objects.LinkFileList","-target","arm64-apple-macosx13.0","-Xlinker","-add_ast_path","-Xlinker","/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/Modules/MetalBenchmark.swiftmodule","-F","/Library/Developer/CommandLineTools/Library/Developer/Frameworks","-sdk","/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk","-g","-Xlinker","-rpath","-Xlinker","/Library/Developer/CommandLineTools/Library/Developer/Frameworks"]
+
+  "C.MetalBenchmark-arm64-apple-macosx16.0-debug.exe-entitlements":
+    tool: shell
+    inputs: ["/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark","/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark-entitlement.plist"]
+    outputs: ["<MetalBenchmark-arm64-apple-macosx16.0-debug.exe-CodeSigning>"]
+    description: "Applying debug entitlements to ./.build/arm64-apple-macosx/debug/MetalBenchmark"
+    args: ["codesign","--force","--sign","-","--entitlements","/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark-entitlement.plist","/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark"]
+
+  "C.MetalBenchmark-arm64-apple-macosx16.0-debug.module":
+    tool: shell
+    inputs: ["/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/main.swift","/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt","/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/sources"]
+    outputs: ["/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/main.swift.o","/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/Modules/MetalBenchmark.swiftmodule"]
+    description: "Compiling Swift Module 'MetalBenchmark' (1 sources)"
+    args: ["/Library/Developer/CommandLineTools/usr/bin/swiftc","-module-name","MetalBenchmark","-emit-dependencies","-emit-module","-emit-module-path","/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/Modules/MetalBenchmark.swiftmodule","-output-file-map","/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/output-file-map.json","-incremental","-c","@/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/sources","-I","/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/Modules","-target","arm64-apple-macosx13.0","-enable-batch-mode","-index-store-path","/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/index/store","-Onone","-enable-testing","-j8","-DSWIFT_PACKAGE","-DDEBUG","-module-cache-path","/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/ModuleCache","-parseable-output","-Xfrontend","-entry-point-function-name","-Xfrontend","MetalBenchmark_main","-swift-version","6","-F","/Library/Developer/CommandLineTools/Library/Developer/Frameworks","-sdk","/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk","-g","-Xcc","-isysroot","-Xcc","/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk","-Xcc","-fPIC","-Xcc","-g","-package-name","metal"]
+
+  "PackageStructure":
+    tool: package-structure-tool
+    inputs: ["/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/","/Users/longxia/Projects/GPUPeek/src/metal/Package.swift","/Users/longxia/Projects/GPUPeek/src/metal/Package.resolved"]
+    outputs: ["<PackageStructure>"]
+    description: "Planning build"
+    allow-missing-inputs: true
+

@@ -1,0 +1,202 @@
+{
+  "builtTestProducts" : [
+
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.MetalBenchmark-arm64-apple-macosx16.0-release.module" : {
+      "executable" : "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "fileList" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/MetalBenchmark.build/sources",
+      "importPath" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/main.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/swift-version--1AB21518FC5DEDBE.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/MetalBenchmark.build/sources"
+        }
+      ],
+      "isLibrary" : false,
+      "moduleName" : "MetalBenchmark",
+      "moduleOutputPath" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/Modules/MetalBenchmark.swiftmodule",
+      "objects" : [
+        "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/MetalBenchmark.build/main.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx13.0",
+        "-O",
+        "-j8",
+        "-DSWIFT_PACKAGE",
+        "-module-cache-path",
+        "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/ModuleCache",
+        "-parseable-output",
+        "-Xfrontend",
+        "-entry-point-function-name",
+        "-Xfrontend",
+        "MetalBenchmark_main",
+        "-swift-version",
+        "6",
+        "-F",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-sdk",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "metal"
+      ],
+      "outputFileMapPath" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/MetalBenchmark.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/MetalBenchmark.build/main.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/Modules/MetalBenchmark.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/main.swift"
+      ],
+      "tempsPath" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/MetalBenchmark.build",
+      "wholeModuleOptimization" : true
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "MetalBenchmark" : [
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "-module-name",
+      "MetalBenchmark",
+      "-package-name",
+      "metal",
+      "-whole-module-optimization",
+      "-num-threads",
+      "8",
+      "-c",
+      "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/main.swift",
+      "-I",
+      "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/Modules",
+      "-target",
+      "arm64-apple-macosx13.0",
+      "-O",
+      "-j8",
+      "-DSWIFT_PACKAGE",
+      "-module-cache-path",
+      "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/ModuleCache",
+      "-parseable-output",
+      "-Xfrontend",
+      "-entry-point-function-name",
+      "-Xfrontend",
+      "MetalBenchmark_main",
+      "-swift-version",
+      "6",
+      "-F",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-sdk",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "metal",
+      "-driver-use-frontend-path",
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "MetalBenchmark" : [
+
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+
+  },
+  "traitConfiguration" : {
+    "enableAllTraits" : false
+  },
+  "writeCommands" : {
+    "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/MetalBenchmark.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/main.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/MetalBenchmark.build/sources"
+    },
+    "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/MetalBenchmark.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/MetalBenchmark.build/main.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/MetalBenchmark.product/Objects.LinkFileList"
+    },
+    "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/swift-version--1AB21518FC5DEDBE.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Library/Developer/CommandLineTools/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/release/swift-version--1AB21518FC5DEDBE.txt"
+    }
+  }
+}
