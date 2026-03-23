@@ -1829,7 +1829,7 @@ ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek fp4
 - ❌ atomic - 原子操作 (待查)
 - ❌ barrier - Barrier 同步 (cooperative groups API 问题)
 - ❌ warp - Warp 特化 (cooperative groups API 问题)
-- ❌ mma - MMA/Tensor Core (WMMA fragment 类型未定义)
+- ❌ mma - MMA/Tensor Core (WMMA 运行时错误，需内核重新设计)
 - ❌ tensor_mem - Tensor 内存 (WMMA fragment 类型未定义)
 - ❌ wgmma - WGMMA (WMMA fragment 类型未定义)
 - ❌ dp4a - DP4A (待查)
@@ -1847,4 +1847,24 @@ ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek fp4
 2. **Cooperative Groups API**: `cuda::thread_block` 等类型找不到
 3. **CHECK_CUDA 重定义**: 多个 benchmark 文件定义了各自的 CHECK_CUDA 宏
 4. **缺少头文件**: `cuda_bf16.h` 等在某些模块中未包含
+
+### WMMA 内核问题 (2026-03-23)
+
+**问题**: WMMA 内核在运行时出现 "illegal memory access" 错误
+
+**原因分析**:
+- WMMA API 需要特定的线程组织方式
+- m16n16k16 形状需要 32 线程 (warp) 每 block
+- 共享内存索引和矩阵加载模式需要严格匹配
+
+**正确的 WMMA 配置**:
+```cuda
+// Grid: 每个输出 tile 一个 block
+dim3 gridDim(M / 16, N / 16);
+// Block: 32 threads (warp size for WMMA)
+dim3 blockDim(32);
+// Shared memory 需要正确对齐
+```
+
+**需要重新设计**: 当前的 WMMA kernel 实现需要完全重写以遵循 NVIDIA WMMA API 规范
 
