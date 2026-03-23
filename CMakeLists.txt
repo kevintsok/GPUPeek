@@ -14,16 +14,16 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --resource-usage")
 
 # Source files
 set(COMMON_SOURCES
-    src/common/main.cu
-    src/common/gpu_info.cu
+    NVIDIA_GPU/common/main.cu
+    NVIDIA_GPU/common/gpu_info.cu
 )
 
 # Generic kernels (included in main.cu)
 # Architecture-specific sources (conditionally included based on target)
 set(ARCH_SOURCES
-    src/sm_120/arch_kernels.cu
-    src/sm_120/benchmarks.cu
-    src/sm_120/arch.cu
+    NVIDIA_GPU/sm_120/arch_kernels.cu
+    NVIDIA_GPU/sm_120/benchmarks.cu
+    NVIDIA_GPU/sm_120/arch.cu
 )
 
 # Target
@@ -33,7 +33,8 @@ add_executable(gpupeek
 )
 
 target_include_directories(gpupeek PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/common
+    ${CMAKE_SOURCE_DIR}/NVIDIA_GPU/common
+    ${CMAKE_SOURCE_DIR}/NVIDIA_GPU/sm_120
     ${CMAKE_SOURCE_DIR}/include
     ${CUDAToolkit_INCLUDE_DIRS}
 )

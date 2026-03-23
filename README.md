@@ -1,102 +1,93 @@
 # GPUPeek
 
 A CUDA benchmark framework for exploring GPU mechanisms and metrics.
-Uses compute capability-specific directories for architecture-specific code.
 
 ## Project Structure
 
 ```
 GPUPeek/
-├── CMakeLists.txt
+├── CMakeLists.txt              # Global build configuration
 ├── README.md
-├── CLAUDE.md                     # Project rules and conventions
-├── ref/                         # NVIDIA official documentation
-│   └── README.md                 # Documentation index
-└── src/
-    ├── common/                   # Architecture-agnostic code
-    │   ├── main.cu              # Main program (auto-detects GPU)
-    │   ├── gpu_info.h/cu        # GPU information utilities
-    │   └── timer.h              # GPU/CPU timing utilities
-    ├── generic/                  # Generic kernels (work on all GPUs)
-    │   ├── bandwidth_kernel.cu   # Memory bandwidth kernels
-    │   ├── compute_kernel.cu     # Compute throughput kernels
-    │   └── warp_kernel.cu       # Warp-level operation kernels
-    └── sm_120/                  # SM 12.0 (Blackwell) specific
-        ├── arch.cu               # Architecture info & utilities
-        ├── arch_kernels.cu       # Architecture-specific kernels
-        ├── benchmarks.cu          # Architecture-specific benchmark runner
-        ├── memory_research_kernel.cu    # Memory research kernels
-        ├── memory_research_benchmarks.cu
-        ├── deep_research_kernel.cu      # Deep research kernels
-        ├── deep_research_benchmarks.cu
-        ├── advanced_research_kernel.cu   # Advanced research kernels
-        ├── advanced_research_benchmarks.cu
-        ├── ncu_profiling_kernel.cu      # NCU profiling kernels
-        ├── ncu_profiling_benchmarks.cu
-        ├── cuda_core_kernels.cu         # CUDA Core arithmetic kernels
-        ├── cuda_core_benchmarks.cu
-        ├── atomic_kernels.cu            # Atomic research kernels
-        ├── atomic_benchmarks.cu
-        ├── barrier_kernels.cu           # Barrier sync kernels
-        ├── barrier_benchmarks.cu
-        ├── warp_specialize_kernels.cu   # Warp specialization kernels
-        ├── warp_specialize_benchmarks.cu
-        ├── mma_research_kernel.cu      # MMA research kernels
-        ├── mma_research_benchmarks.cu
-        ├── tensor_mem_research_kernel.cu   # Tensor memory kernels
-        ├── tensor_mem_research_benchmarks.cu
-        ├── dp4a_research_kernel.cu        # DP4A (INT8 dot) kernels
-        ├── dp4a_research_benchmarks.cu
-        ├── wgmma_research_kernel.cu       # WGMMA (Async warpgroup MMA) kernels
-        ├── wgmma_research_benchmarks.cu
-        ├── fp8_research_kernel.cu        # FP8 / TCGen05 Block Scaling kernels
-        ├── fp8_research_benchmarks.cu
-        ├── cuda_graph_research_kernel.cu   # CUDA Graph kernels
-        ├── cuda_graph_research_benchmarks.cu
-        ├── unified_memory_research_kernel.cu   # Unified Memory kernels
-        ├── unified_memory_research_benchmarks.cu
-        ├── multi_stream_research_kernel.cu   # Multi-Stream kernels
-        ├── multi_stream_research_benchmarks.cu
-        ├── mbarrier_research_kernel.cu   # Mbarrier (memory barrier) kernels
-        ├── mbarrier_research_benchmarks.cu
-        ├── cooperative_groups_research_kernel.cu   # Cooperative Groups kernels
-        ├── cooperative_groups_research_benchmarks.cu
-        ├── redux_sync_research_kernel.cu   # Redux.sync warp reduction kernels
-        ├── redux_sync_research_benchmarks.cu
-        ├── fp4_fp6_research_kernel.cu   # FP4/FP6 low-precision MMA kernels
-        └── fp4_fp6_research_benchmarks.cu
+├── CLAUDE.md                  # Project rules and conventions
+├── docs/                      # Research reports
+├── include/                   # Header files
+├── NVIDIA_GPU/               # NVIDIA GPU code
+│   ├── ref/                  # NVIDIA official documentation
+│   ├── common/               # Architecture-agnostic code
+│   │   ├── main.cu          # Main program (auto-detects GPU)
+│   │   ├── gpu_info.h/cu   # GPU information utilities
+│   │   └── timer.h         # GPU/CPU timing utilities
+│   ├── generic/              # Generic kernels (work on all GPUs)
+│   │   ├── bandwidth_kernel.cu
+│   │   ├── compute_kernel.cu
+│   │   └── warp_kernel.cu
+│   └── sm_120/              # SM 12.0 (Blackwell)
+│       ├── arch.cu          # Architecture info
+│       ├── arch_kernels.cu  # Architecture-specific kernels
+│       ├── benchmarks.cu    # Benchmark runner
+│       └── [modules]/        # Independent research modules
+│           ├── CMakeLists.txt # Each module can build independently
+│           ├── main.cu       # Module entry point
+│           ├── README.md     # Module documentation
+│           ├── RESEARCH.md    # Research findings
+│           └── *_kernel.cu   # Module source code
+└── APPLE_GPU/               # Apple GPU support (future)
 ```
 
-## Architecture-Specific Directories
+## GPU Architecture Support
 
-Each GPU architecture (compute capability) has its own directory:
-- `sm_120/` - Blackwell (RTX 5080, RTX 5070, etc.)
-- `sm_90/` - Ada Lovelace (RTX 4090, RTX 4080, etc.)
-- `sm_80/` - Ampere (RTX 3090, A100, etc.)
-- `sm_70/` - Volta/Vega (V100, etc.)
-- ... (can be extended as needed)
+- `NVIDIA_GPU/sm_120/` - Blackwell (RTX 5080, RTX 5070, etc.)
+- `NVIDIA_GPU/sm_90/` - Ada Lovelace (RTX 4090, RTX 4080, etc.)
+- `NVIDIA_GPU/sm_80/` - Ampere (RTX 3090, A100, etc.)
+- `NVIDIA_GPU/sm_70/` - Volta/Vega (V100, etc.)
 
 ## Building
 
-### Prerequisites
+### Build Individual Modules (Recommended)
 
-- NVIDIA CUDA Toolkit 13.0+
-- Visual Studio 2022 with C++ toolchain (Windows)
-- NVIDIA Driver 535+
-
-### Compile (Windows with Visual Studio)
+Each research module can be built independently:
 
 ```bash
-export PATH="/c/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.29.30133/bin/HostX64/x64:$PATH"
+# Build memory module
+cd NVIDIA_GPU/sm_120/memory
+mkdir -p build && cd build
+cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
+cmake --build . --config Release
+./gpupeek_memory
 
-"/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v13.0/bin/nvcc.exe" \
-    -o build/gpupeek \
-    src/common/main.cu src/common/gpu_info.cu \
-    -Isrc/common -Iinclude \
-    -O3 -arch=sm_90 --use_fast_math
+# Build wmma module
+cd ../wmma && mkdir -p build && cd build
+cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
+cmake --build . --config Release
+./gpupeek_wmma
 ```
 
-### CMake (alternative)
+### Available Modules
+
+| Module | Path | Description |
+|--------|------|-------------|
+| memory | `sm_120/memory/` | Memory subsystem research |
+| wmma | `sm_120/wmma/` | WMMA/Tensor Core research |
+| cuda_core | `sm_120/cuda_core/` | CUDA Core compute research |
+| atomic | `sm_120/atomic/` | Atomic operations research |
+| barrier | `sm_120/barrier/` | Barrier synchronization research |
+| warp_specialize | `sm_120/warp_specialize/` | Warp specialization |
+| tensor_mem | `sm_120/tensor_mem/` | Tensor memory operations |
+| wgmma | `sm_120/wgmma/` | WGMMA (Hopper only) |
+| dp4a | `sm_120/dp4a/` | DP4A research |
+| fp8 | `sm_120/fp8/` | FP8 research |
+| fp4_fp6 | `sm_120/fp4_fp6/` | FP4/FP6 research |
+| deep | `sm_120/deep/` | Deep research (L2, TMA) |
+| advanced | `sm_120/advanced/` | Advanced research |
+| cooperative_groups | `sm_120/cooperative_groups/` | Cooperative Groups |
+| mbarrier | `sm_120/mbarrier/` | MBarrier research |
+| redux_sync | `sm_120/redux_sync/` | Redux.sync research |
+| cuda_graph | `sm_120/cuda_graph/` | CUDA Graph research |
+| unified_memory | `sm_120/unified_memory/` | Unified Memory research |
+| multi_stream | `sm_120/multi_stream/` | Multi-Stream concurrency |
+| ncu_profiling | `sm_120/ncu_profiling/` | NCU profiling research |
+
+### CMake Build (Optional)
 
 ```bash
 mkdir -p build && cd build
@@ -104,279 +95,30 @@ cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
 cmake --build . --config Release
 ```
 
-## Running
+## Running Benchmarks
 
 ```bash
-# Run all benchmarks (generic + architecture-specific)
-./build/gpupeek
+# Run a specific module
+./gpupeek_memory [elements]
+./gpupeek_wmma [elements]
 
-# Run only generic benchmarks (work on all architectures)
-./build/gpupeek generic
-
-# Run only architecture-specific benchmarks (auto-detects GPU)
-./build/gpupeek arch
-
-# Run with custom size
-./build/gpupeek all 10000000
-
-# Research benchmarks (comprehensive analysis)
-./build/gpupeek memory    # Memory research (L1/L2, TMA, access patterns)
-./build/gpupeek deep      # Deep research (Tensor Core, L2 cache, etc.)
-./build/gpupeek advanced   # Advanced research (Occupancy, PCIe, atomics)
-./build/gpupeek cuda      # CUDA Core arithmetic (FP64/32/16, INT, vectors)
-./build/gpupeek atomic    # Atomic operations deep research
-./build/gpupeek barrier   # Barrier synchronization research
-./build/gpupeek warp      # Warp specialization and producer/consumer patterns
-./build/gpupeek mma      # MMA (Tensor Core) research (WMMA/MMA/WGMMA/TCGen05)
-./build/gpupeek tensor_mem # Tensor memory (LDMATRIX/STMATRIX/cp.async)
-./build/gpupeek dp4a      # DP4A (INT8 dot product of 4 bytes)
-./build/gpupeek wgmma     # WGMMA (Warpgroup MMA Async)
-./build/gpupeek fp8      # FP8 / TCGen05 Block Scaling (E4M3/E5M2)
-./build/gpupeek graph    # CUDA Graph (kernel launch optimization)
-./build/gpupeek unified  # Unified Memory (managed memory, prefetch, page faults)
-./build/gpupeek multi_stream  # Multi-Stream concurrency (priorities, events, overlap)
-./build/gpupeek mbarrier    # Mbarrier (async sync, transactions, fences)
-./build/gpupeek coop        # Cooperative Groups (grid sync, broadcast, reduce)
-./build/gpupeek redux     # Redux.sync warp-level reduction (ADD/MIN/MAX/AND/OR/XOR)
-./build/gpupeek fp4      # FP4/FP6 low-precision MMA (Blackwell new formats)
-
-# NCU profiling (for Nsight Compute analysis)
-./build/gpupeek ncu
+# Example: Run memory research with 1M elements
+./gpupeek_memory 1048576
 ```
 
-## Benchmarks
+## NCU Profiling
 
-### Generic (All Architectures)
+```bash
+# Profile a module
+ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek_wmma
 
-**Memory Bandwidth**
-- Sequential Read
-- Sequential Write
-- Read-Modify-Write
-
-**Compute Throughput**
-- FP32 FMA (fused multiply-add)
-- INT32 Arithmetic
-
-**Warp-Level Operations**
-- Warp Shuffle
-- Warp Reduction
-- Warp Vote
-
-### SM 12.0 (Blackwell) Specific
-
-**Enhanced Warp Operations**
-- Enhanced Shuffle
-
-**Memory Operations**
-- Async Copy
-- L2 Streaming
-- Register Bandwidth
-- Software Prefetch
-- Reduced Precision
-
-### Comprehensive Research Benchmarks
-
-**Memory Research (`./gpupeek memory`)**
-- Global Memory Bandwidth vs Data Size
-- Global -> L1 -> L2 Memory Hierarchy
-- TMA (Tensor Memory Accelerator) Copy
-- Memory Access Patterns (Sequential, Strided, Random)
-
-**Deep Research (`./gpupeek deep`)**
-- L2 Cache Analysis
-- Tensor Core WMMA Operations
-- Warp-Level Operations Deep Dive
-- Instruction Throughput Analysis
-
-**Advanced Research (`./gpupeek advanced`)**
-- Occupancy Analysis
-- Memory Clock and Theoretical Bandwidth
-- PCIe Bandwidth Test
-- Bank Conflict Analysis
-- Branch Divergence Analysis
-- Atomic Operations Performance
-- Constant Memory Bandwidth
-- Instruction Latency Analysis
-
-**CUDA Core Arithmetic (`./gpupeek cuda`)**
-- Data Type Throughput (FP64/FP32/FP16/BF16/INT8/INT32)
-- Instruction Latency vs Throughput
-- Vector Instructions (float2/float4/double2)
-- Transcendental Functions (sin/cos/exp/log)
-- Mixed Precision (FP32->FP16->FP32)
-
-**Atomic Operations (`./gpupeek atomic`)**
-- Warp-Level Atomic Operations
-- Block-Level Atomic Operations
-- Grid-Level Atomic Operations (High Contention)
-- Atomic Add vs CAS vs Min/Max Comparison
-- Atomic Operations by Data Type
-
-**Barrier Synchronization (`./gpupeek barrier`)**
-- __syncthreads() Overhead Measurement
-- Barrier Stall Analysis
-- Block Size vs Barrier Efficiency
-- Multi-Block Synchronization Patterns
-- Warp-Level Synchronization Primitives
-
-**Warp Specialization (`./gpupeek warp`)**
-- Warp Specialization Basic (2-Warp Producer/Consumer)
-- TMA + Barrier Synchronization
-- Multi-Stage Pipeline (Load/Compute/Store)
-- Block Specialization
-- Warp-Level Mutex/Barrier/Reduction/Scan
-
-**MMA Research (`./gpupeek mma`)**
-- WMMA (Warp-level MMA) - m16n16k16 shape
-- MMA Shapes (m16n8k8, m8n8k4, m16n8k16, etc.)
-- TF32 MMA (m16n8k4)
-- BF16 MMA (m16n8k8)
-- FP64 MMA (m8n8k4)
-- INT8 MMA (m16n8k16)
-- Sparse MMA (2:4 structured sparsity)
-- WGMMA Async (warpgroup-level async MMA)
-- TCGen05 MMA (5th gen Tensor Core)
-- LDMATRIX/STMATRIX operations
-- Block Scaling (Weight-only quantization)
-
-**Tensor Memory (`./gpupeek tensor_mem`)**
-- LDMATRIX - Warp-level matrix load (8x8 tiles)
-- STMATRIX - Warp-level matrix store
-- cp.async - Asynchronous copy operations
-- cp.async.bulk - Bulk async copy with reduction
-- cp.async group patterns (commit/wait)
-- LDMATRIX + MMA + STMATRIX pipeline
-- Baseline comparisons (naive, shared, cp.async, TMA)
-
-**DP4A Research (`./gpupeek dp4a`)**
-- DP4A (INT8 dot product of 4 bytes)
-- DP4A with saturation (satfinite variant)
-- Accumulation and batch processing
-- Quantized inference patterns (INT8 -> FP32)
-- Block scaling for weight-only quantization
-- Baseline comparisons (FP32, FP16, naive)
-
-**CUDA Graph (`./gpupeek graph`)**
-- Graph lifecycle (create, instantiate, launch, destroy)
-- Stream capture (begin/end capture)
-- Kernel launch overhead reduction
-- Pipeline / inference benchmarks
-- Graph vs regular launch comparison
-
-**Multi-Stream (`./gpupeek multi_stream`)**
-- Stream priorities (high/low)
-- Event-based synchronization (cudaStreamWaitEvent)
-- Concurrent kernel execution
-- Memory transfer + compute overlap
-- 3-stage pipeline with event chaining
-- Stream query vs synchronize
-
-**Mbarrier (`./gpupeek mbarrier`)**
-- Mbarrier initialization and wait
-- Async copy synchronization
-- Pipeline synchronization patterns
-- Producer-consumer with mbarrier
-- Transaction counting
-- Memory fence comparison (__threadfence_block vs __threadfence)
-- Grid dependency control
-
-**Cooperative Groups (`./gpupeek coop`)**
-- Thread block synchronization
-- Grid-level reduction and sync
-- Cooperative load/store
-- Grid barrier patterns
-- Multi-block reduction
-- Two-phase cooperative kernels
-- Broadcast from specific thread
-- Even-odd synchronization pattern
-- Barrier efficiency analysis
-
-**Redux.sync (`./gpupeek redux`)**
-- Warp-level reduction (ADD/MIN/MAX/AND/OR/XOR)
-- Shuffle-based vs redux performance comparison
-- Redux + atomic operations
-- Warp vote operations (any/all)
-- Match.sync pattern matching
-- Block-level reduction with redux
-
-**FP4/FP6 (`./gpupeek fp4`)**
-- FP4 (e2m1) and FP6 (e2m3/e3m2) formats
-- FP4/FP6 conversion kernels
-- FP4/FP6-style GEMM simulation
-- Block scaling for weight-only quantization
-- LLM inference patterns with quantized weights
-
-## Sample Output
-
-```
-=== GPU Info (Device 0) ===
-  Name:                  NVIDIA GeForce RTX 5080 Laptop GPU
-  Compute Capability:    12.0
-  Number of SMs:         60
-  Cores per SM:          128
-  Total Cores:           7680
-  Global Memory:         15.92 GB
-  Shared Mem per Block:   48 KB
-  Max Threads per Block: 1024
-  Max Threads per SM:    1536
-  Registers per Block:   65536
-  Warp Size:             32
-===========================
-
-Detected Compute Capability: SM 12.0 (0x78)
-
-=== Memory Bandwidth Benchmarks (Generic) ===
-Config: 4096 blocks x 256 threads = 1048576 threads, 4.00 MB
-Sequential Read:    3.84 GB/s (1.091 ms per kernel)
-Sequential Write:   366.53 GB/s (0.011 ms per kernel)
-Read-Modify-Write:  402.18 GB/s (0.010 ms per kernel)
-
-=== Compute Throughput Benchmarks (Generic) ===
-FP32 FMA:           88.55 GFLOPS (0.012 ms per kernel)
-INT32 Arithmetic:   106.38 GIOPS (0.010 ms per kernel)
-
-=== Warp-Level Benchmarks (Generic) ===
-Warp Shuffle:       305.59 GB/s (0.014 ms per kernel)
-Warp Reduction:     0.015 ms per kernel
-Warp Vote:          0.015 ms per kernel
-
-[Using SM 12.0 (Blackwell) specific benchmarks]
-
-=== SM 12.0 (Blackwell) Specific Benchmarks ===
-  Architecture:         Blackwell (SM 12.0)
-  L2 Cache Size:       5 MB
-  Max Threads/SM:      1536
-  Max Registers/SM:   65536
-
---- Enhanced Warp Operations ---
-Enhanced Shuffle:    418.49 GB/s (0.010 ms)
-
---- Memory Operations ---
-Async Copy:          422.69 GB/s (0.010 ms)
-L2 Streaming:        316.46 GB/s (0.013 ms)
-Register Bandwidth:  298.96 GB/s (0.014 ms)
-Software Prefetch:   251.10 GB/s (0.017 ms)
-Reduced Precision:   303.11 GB/s (0.014 ms)
+# Memory bandwidth analysis
+ncu --set full --metrics dram__bytes.sum ./gpupeek_memory
 ```
 
-## Adding Support for a New Architecture
-
-1. Create a new directory: `src/sm_XX/` where XX is the compute capability * 10
-   e.g., `src/sm_90/` for SM 9.0 (Ada Lovelace)
-
-2. Create architecture-specific files:
-   - `arch.cu` - Architecture info and utilities
-   - `arch_kernels.cu` - Architecture-specific kernel implementations
-   - `benchmarks.cu` - Architecture-specific benchmark runner
-
-3. Update `src/common/main.cu`:
-   - Add include for the new architecture's benchmarks
-   - Add case in the switch statement for the new architecture
-
-## GPU Target
+## Target GPU
 
 - **GPU**: NVIDIA GeForce RTX 5080 Laptop GPU
 - **Architecture**: Blackwell (Compute Capability 12.0)
 - **CUDA**: 13.0
 - **Driver**: 595.79
-
