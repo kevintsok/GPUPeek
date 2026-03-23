@@ -14,11 +14,12 @@
 4. [Tensor Core (MMA)](#4-tensor-core-mma)
 5. [Warp-Level Operations](#5-warp-level-operations)
 6. [Memory Operations](#6-memory-operations)
-7. [Cross-Generation Comparison](#7-cross-generation-comparison)
-8. [NCU Profiling Metrics](#8-ncu-profiling-metrics)
-9. [Test Environment](#9-test-environment)
-10. [Benchmark Commands](#10-benchmark-commands)
-11. [References](#11-references)
+7. [NCU Profiling Metrics](#7-ncu-profiling-metrics)
+8. [Test Environment](#8-test-environment)
+9. [Benchmark Commands](#9-benchmark-commands)
+10. [References](#10-references)
+
+> **Cross-Generation Comparison**: See [src/COMPARISON.md](../../COMPARISON.md) for detailed GPU architecture comparison (Blackwell vs Hopper vs Ampere).
 
 ---
 
@@ -44,22 +45,6 @@
 | Warp Size | 32 |
 | Memory Type | GDDR7 |
 | Memory Bandwidth | ~8.2 TB/s |
-
-### 1.2 Cross-Generation GPU Comparison
-
-| Parameter | Blackwell (GB203) | Hopper (GH100) | Ampere (GA100) |
-|-----------|-------------------|----------------|----------------|
-| Compute Capability | 12.0 | 9.0 | 8.0 |
-| SM Count | 60 (full: 84) | 132 | 108 |
-| CUDA Cores/SM | 128 | 128 | 64 |
-| Memory Type | GDDR7 | HBM2e | HBM2e |
-| Memory Bandwidth | 8.2 TB/s | 15.8 TB/s | 2.0 TB/s |
-| L1 Cache/SM | 128 KB | 256 KB | 192 KB |
-| Shared Memory/SM | ~99 KB | ~227 KB | ~227 KB |
-| L2 Cache | 65 MB | 50 MB | 80 MB |
-| L2 Architecture | Monolithic | 2-partition | 2-partition |
-| Tensor Core Gen | 5th | 4th | 3rd |
-| FP64 Units/SM | 2 (limited) | 64 (full) | 64 (full) |
 
 ---
 
@@ -659,71 +644,9 @@ Matrix load/store operations for Tensor Core data (Section 9.7.14.5.15-16).
 
 ---
 
-## 7. Cross-Generation Comparison
+## 7. NCU Profiling Metrics
 
-### 7.1 Compute Performance
-
-| Metric | Blackwell (GB203) | Hopper (GH100) | Ampere (GA100) |
-|--------|-------------------|----------------|----------------|
-| FP32 Performance | ~17.6 TFLOPS | ~19.5 TFLOPS | ~19.5 TFLOPS |
-| FP16 Performance | ~89.2 TFLOPS | ~99.8 TFLOPS | ~39.7 TFLOPS |
-| FP64 Performance | **Limited** | Full | Full |
-| Tensor Core Gen | 5th | 4th | 3rd |
-
-### 7.2 Memory System
-
-| Metric | Blackwell | Hopper | Ampere |
-|--------|-----------|--------|--------|
-| Memory Type | GDDR7 | HBM2e | HBM2e |
-| Bandwidth | 8.2 TB/s | 15.8 TB/s | 2.0 TB/s |
-| L1 Cache/SM | 128 KB | 256 KB | 192 KB |
-| Shared Memory/SM | ~99 KB | ~227 KB | ~227 KB |
-| L2 Cache | 65 MB | 50 MB | 80 MB |
-| L2 Architecture | Monolithic | 2-partition | 2-partition |
-
-### 7.3 Tensor Core Feature Comparison
-
-| Feature | Blackwell (5th) | Hopper (4th) | Ampere (3rd) |
-|---------|-----------------|--------------|--------------|
-| WGMMA | ❌ | ✅ | ❌ |
-| FP4 Support | ✅ | ❌ | ❌ |
-| FP6 Support | ✅ | ❌ | ❌ |
-| FP8 Support | ✅ | ✅ | ❌ |
-| Block Scaling | ✅ (HW) | ❌ | ❌ |
-| 2:4 Sparse | ✅ | ✅ | ✅ |
-
-### 7.4 Latency Comparison
-
-| Operation | Blackwell | Hopper |
-|-----------|-----------|--------|
-| FP32 True Latency | 15.96 cycles | 31.62 cycles |
-| INT32 Latency | 14 cycles | 16 cycles |
-| FP64 True Latency | **~63 cycles** | ~8 cycles |
-| L2 Cache Hit | ~358 cycles | ~273 cycles |
-| Global Memory | ~877 cycles | ~659 cycles |
-| MMA Completion | 1.21 cycles | 1.66 cycles |
-
-### 7.5 Power Efficiency (FP8/FP4/FP6)
-
-| Precision | Blackwell | Hopper |
-|-----------|-----------|--------|
-| FP8 | ~46W | ~55W |
-| FP4 | ~16.75W | N/A |
-| FP6 e2m3 | ~39.38W | N/A |
-| FP6 e3m2 | ~46.72W | N/A |
-
-### 7.6 Transformer Engine Support
-
-| Version | Supported Precisions | Architecture |
-|---------|---------------------|--------------|
-| TE 1st Gen | FP8, FP16, BF16, FP32, FP64 | Hopper |
-| **TE 2nd Gen** | **FP4, FP6** + above | **Blackwell** |
-
----
-
-## 8. NCU Profiling Metrics
-
-### 8.1 Key Metrics Reference
+### 7.1 Key Metrics Reference
 
 | Metric | Meaning | Use Case |
 |--------|---------|----------|
@@ -734,7 +657,7 @@ Matrix load/store operations for Tensor Core data (Section 9.7.14.5.15-16).
 | sm__warp_divergence_efficiency | Warp divergence efficiency | Divergence tests |
 | sm__average_active_warps_per_sm | Active warps/SM | Occupancy |
 
-### 8.2 Kernel Code Coverage
+### 7.2 Kernel Code Coverage
 
 | Benchmark | Kernels | PTX Instructions |
 |-----------|---------|------------------|
@@ -766,9 +689,9 @@ Matrix load/store operations for Tensor Core data (Section 9.7.14.5.15-16).
 
 ---
 
-## 10. Benchmark Commands
+## 9. Benchmark Commands
 
-### 10.1 GPUPeek Benchmark Commands
+### 9.1 GPUPeek Benchmark Commands
 
 ```bash
 # All benchmarks
@@ -798,7 +721,7 @@ Matrix load/store operations for Tensor Core data (Section 9.7.14.5.15-16).
 ./build/gpupeek.exe redux    # Redux.sync
 ```
 
-### 10.2 NCU Profiling Commands
+### 9.2 NCU Profiling Commands
 
 ```bash
 # Full tensor core analysis
@@ -816,8 +739,9 @@ ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./gpupeek
 
 ---
 
-## 11. References
+## 10. References
 
+- [GPU Cross-Generation Comparison](../COMPARISON.md)
 - [CUDA Programming Guide](../ref/cuda_programming_guide.html)
 - [PTX ISA](../ref/ptx_isa.html)
 - [Inline PTX Assembly](../ref/inline_ptx.html)

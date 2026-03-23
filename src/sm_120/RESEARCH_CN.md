@@ -14,11 +14,12 @@
 4. [Tensor Core (MMA)](#4-tensor-core-mma)
 5. [Warp 级操作](#5-warp-级操作)
 6. [内存操作](#6-内存操作)
-7. [跨代对比](#7-跨代对比)
-8. [NCU 性能分析指标](#8-ncu-性能分析指标)
-9. [测试环境](#9-测试环境)
-10. [基准测试命令](#10-基准测试命令)
-11. [参考文献](#11-参考文献)
+7. [NCU 性能分析指标](#7-ncu-性能分析指标)
+8. [测试环境](#8-测试环境)
+9. [基准测试命令](#9-基准测试命令)
+10. [参考文献](#10-参考文献)
+
+> **跨代对比**: 详见 [src/COMPARISON_CN.md](../../COMPARISON_CN.md) 查看 GPU 架构对比 (Blackwell vs Hopper vs Ampere)。
 
 ---
 
@@ -44,22 +45,6 @@
 | Warp 大小 | 32 |
 | 内存类型 | GDDR7 |
 | 内存带宽 | ~8.2 TB/s |
-
-### 1.2 跨代 GPU 对比
-
-| 参数 | Blackwell (GB203) | Hopper (GH100) | Ampere (GA100) |
-|------|------------------|----------------|----------------|
-| Compute Capability | 12.0 | 9.0 | 8.0 |
-| SM 数量 | 60 (完整: 84) | 132 | 108 |
-| 每 SM CUDA 核心数 | 128 | 128 | 64 |
-| 内存类型 | GDDR7 | HBM2e | HBM2e |
-| 内存带宽 | 8.2 TB/s | 15.8 TB/s | 2.0 TB/s |
-| 每 SM L1 缓存 | 128 KB | 256 KB | 192 KB |
-| 每 SM 共享内存 | ~99 KB | ~227 KB | ~227 KB |
-| L2 缓存 | 65 MB | 50 MB | 80 MB |
-| L2 架构 | 单体 | 2 分区 | 2 分区 |
-| Tensor Core 代数 | 5th | 4th | 3rd |
-| 每 SM FP64 单元数 | 2 (有限) | 64 (完整) | 64 (完整) |
 
 ---
 
@@ -659,71 +644,9 @@ Tensor Core 数据的矩阵加载/存储操作 (Section 9.7.14.5.15-16)。
 
 ---
 
-## 7. 跨代对比
+## 7. NCU 性能分析指标
 
-### 7.1 计算性能
-
-| 指标 | Blackwell (GB203) | Hopper (GH100) | Ampere (GA100) |
-|------|-------------------|----------------|----------------|
-| FP32 性能 | ~17.6 TFLOPS | ~19.5 TFLOPS | ~19.5 TFLOPS |
-| FP16 性能 | ~89.2 TFLOPS | ~99.8 TFLOPS | ~39.7 TFLOPS |
-| FP64 性能 | **有限** | 完整 | 完整 |
-| Tensor Core 代数 | 5th | 4th | 3rd |
-
-### 7.2 内存系统
-
-| 指标 | Blackwell | Hopper | Ampere |
-|------|-----------|--------|--------|
-| 内存类型 | GDDR7 | HBM2e | HBM2e |
-| 带宽 | 8.2 TB/s | 15.8 TB/s | 2.0 TB/s |
-| 每 SM L1 缓存 | 128 KB | 256 KB | 192 KB |
-| 每 SM 共享内存 | ~99 KB | ~227 KB | ~227 KB |
-| L2 缓存 | 65 MB | 50 MB | 80 MB |
-| L2 架构 | 单体 | 2 分区 | 2 分区 |
-
-### 7.3 Tensor Core 特性对比
-
-| 特性 | Blackwell (5th) | Hopper (4th) | Ampere (3rd) |
-|------|-----------------|--------------|--------------|
-| WGMMA | ❌ | ✅ | ❌ |
-| FP4 支持 | ✅ | ❌ | ❌ |
-| FP6 支持 | ✅ | ❌ | ❌ |
-| FP8 支持 | ✅ | ✅ | ❌ |
-| Block Scaling | ✅ (硬件) | ❌ | ❌ |
-| 2:4 稀疏 | ✅ | ✅ | ✅ |
-
-### 7.4 延迟对比
-
-| 操作 | Blackwell | Hopper |
-|------|-----------|--------|
-| FP32 True Latency | 15.96 cycles | 31.62 cycles |
-| INT32 Latency | 14 cycles | 16 cycles |
-| FP64 True Latency | **~63 cycles** | ~8 cycles |
-| L2 缓存命中 | ~358 cycles | ~273 cycles |
-| 全局内存 | ~877 cycles | ~659 cycles |
-| MMA Completion | 1.21 cycles | 1.66 cycles |
-
-### 7.5 能效对比 (FP8/FP4/FP6)
-
-| 精度 | Blackwell | Hopper |
-|------|-----------|--------|
-| FP8 | ~46W | ~55W |
-| FP4 | ~16.75W | N/A |
-| FP6 e2m3 | ~39.38W | N/A |
-| FP6 e3m2 | ~46.72W | N/A |
-
-### 7.6 Transformer Engine 支持
-
-| 版本 | 支持的精度 | 架构 |
-|------|-----------|------|
-| TE 1st Gen | FP8, FP16, BF16, FP32, FP64 | Hopper |
-| **TE 2nd Gen** | **FP4, FP6** + 以上 | **Blackwell** |
-
----
-
-## 8. NCU 性能分析指标
-
-### 8.1 关键指标参考
+### 7.1 关键指标参考
 
 | 指标 | 含义 | 用途 |
 |------|------|------|
@@ -734,7 +657,7 @@ Tensor Core 数据的矩阵加载/存储操作 (Section 9.7.14.5.15-16)。
 | sm__warp_divergence_efficiency | Warp 分歧效率 | 分歧测试 |
 | sm__average_active_warps_per_sm | 每 SM 活跃 warp | Occupancy |
 
-### 8.2 Kernel 代码覆盖
+### 7.2 Kernel 代码覆盖
 
 | Benchmark | Kernels | PTX 指令 |
 |-----------|---------|----------|
@@ -752,7 +675,7 @@ Tensor Core 数据的矩阵加载/存储操作 (Section 9.7.14.5.15-16)。
 
 ---
 
-## 9. 测试环境
+## 8. 测试环境
 
 | 组件 | 版本 |
 |------|------|
@@ -766,9 +689,9 @@ Tensor Core 数据的矩阵加载/存储操作 (Section 9.7.14.5.15-16)。
 
 ---
 
-## 10. 基准测试命令
+## 9. 基准测试命令
 
-### 10.1 GPUPeek 基准测试命令
+### 9.1 GPUPeek 基准测试命令
 
 ```bash
 # 所有基准测试
@@ -798,7 +721,7 @@ Tensor Core 数据的矩阵加载/存储操作 (Section 9.7.14.5.15-16)。
 ./build/gpupeek.exe redux    # Redux.sync
 ```
 
-### 10.2 NCU Profiling 命令
+### 9.2 NCU Profiling 命令
 
 ```bash
 # 完整 tensor core 分析
@@ -816,8 +739,9 @@ ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./gpupeek
 
 ---
 
-## 11. 参考文献
+## 10. 参考文献
 
+- [GPU 跨代对比](../COMPARISON_CN.md)
 - [CUDA Programming Guide](../ref/cuda_programming_guide.html)
 - [PTX ISA](../ref/ptx_isa.html)
 - [Inline PTX Assembly](../ref/inline_ptx.html)
