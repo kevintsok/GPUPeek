@@ -176,6 +176,17 @@ ReadWriteTextureSupport: MTLReadWriteTextureTier2
 | 缓存行跨越 | stride-64B | 6-15x慢 | 跨缓存行访问惩罚 |
 | 写合并 | 顺序vs交错 | 1.40 vs 1.26 GB/s | 合并效果极小 |
 
+### FP16 vs FP32 深度分析
+
+| 操作类型 | FP16 | FP32 | 比率 | 备注 |
+|---------|------|------|------|------|
+| MatMul 256³ | 1.08 GFLOPS | 1.12 GFLOPS | 0.97x | 相近 |
+| MatMul 512³ | 2.06 GFLOPS | 3.70 GFLOPS | 0.56x | FP32更快 |
+| MatMul 1024³ | 4.91 GFLOPS | 4.67 GFLOPS | 1.05x | 相近 |
+| 向量加法 | 0.25 GOPS | 0.08 GOPS | 3.01x | **FP16快3倍** |
+| 向量乘法 | 0.25 GOPS | 0.07 GOPS | 3.78x | **FP16快3.8倍** |
+| FMA | 0.20 GOPS | 0.07 GOPS | 2.79x | **FP16快2.8倍** |
+
 ### Phase 6: 跨架构对比
 
 | 指标 | Apple M2 | NVIDIA RTX 4090 | 备注 |

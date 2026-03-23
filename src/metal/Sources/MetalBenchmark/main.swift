@@ -20,153 +20,215 @@ func getElapsedSeconds(start: UInt64, end: UInt64) -> Double {
     return elapsedTicks * ticksPerNanosec / 1e9
 }
 
-// MARK: - Thread Occupancy Shader Library
+// MARK: - FP16 Deep Dive Shader Library
 
 let shaderSource = """
 #include <metal_stdlib>
 using namespace metal;
 
-// Occupancy test - compute intensive kernel with known register usage
-kernel void occupancy_test(device const float4* src [[buffer(0)]],
-                         device float4* dst [[buffer(1)]],
-                         constant uint& size [[buffer(2)]],
-                         uint id [[thread_position_in_grid]]) {
-    float4 val = src[id];
+// FP16 Matrix Multiply - Naive
+kernel void matmul_fp16_naive(device const half* a [[buffer(0)]],
+                             device const half* b [[buffer(1)]],
+                             device half* c [[buffer(2)]],
+                             constant uint& M [[buffer(3)]],
+                             constant uint& K [[buffer(4)]],
+                             constant uint& N [[buffer(5)]],
+                             uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= N || gid.y >= M) return;
 
-    // Force register pressure with multiple variables
-    float a = val.x;
-    float b = val.y;
-    float c = val.z;
-    float d = val.w;
-
-    // Compute intensive - use all variables
-    for (int i = 0; i < 10; i++) {
-        a = a * 1.001f + 0.0001f;
-        b = b * 1.001f + 0.0001f;
-        c = c * 1.001f + 0.0001f;
-        d = d * 1.001f + 0.0001f;
+    half sum = 0.0h;
+    for (uint k = 0; k < K; k++) {
+        uint a_idx = gid.y * K + k;
+        uint b_idx = k * N + gid.x;
+        sum += a[a_idx] * b[b_idx];
     }
-
-    dst[id] = float4(a, b, c, d);
+    c[gid.y * N + gid.x] = sum;
 }
 
-// Low register pressure kernel
-kernel void low_reg_pressure(device const float4* src [[buffer(0)]],
-                            device float4* dst [[buffer(1)]],
-                            constant uint& size [[buffer(2)]],
-                            uint id [[thread_position_in_grid]]) {
-    float4 val = src[id];
-    val = val * 1.001f;
-    dst[id] = val;
+// FP32 Matrix Multiply - Naive (baseline)
+kernel void matmul_fp32_naive(device const float* a [[buffer(0)]],
+                             device const float* b [[buffer(1)]],
+                             device float* c [[buffer(2)]],
+                             constant uint& M [[buffer(3)]],
+                             constant uint& K [[buffer(4)]],
+                             constant uint& N [[buffer(5)]],
+                             uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= N || gid.y >= M) return;
+
+    float sum = 0.0f;
+    for (uint k = 0; k < K; k++) {
+        uint a_idx = gid.y * K + k;
+        uint b_idx = k * N + gid.x;
+        sum += a[a_idx] * b[b_idx];
+    }
+    c[gid.y * N + gid.x] = sum;
 }
 
-// High register pressure - many live variables
-kernel void high_reg_pressure(device const float4* src [[buffer(0)]],
-                             device float4* dst [[buffer(1)]],
-                             constant uint& size [[buffer(2)]],
-                             uint id [[thread_position_in_grid]]) {
-    float4 v0 = src[id];
-    float4 v1 = v0 * 1.1f;
-    float4 v2 = v1 * 1.2f;
-    float4 v3 = v2 * 1.3f;
-    float4 v4 = v3 * 1.4f;
-    float4 v5 = v4 * 1.5f;
-    float4 v6 = v5 * 1.6f;
-    float4 v7 = v6 * 1.7f;
-    float4 v8 = v7 * 1.8f;
-    float4 v9 = v8 * 1.9f;
-
-    // Mix them together
-    float4 result = (v0 + v1 + v2 + v3 + v4 + v5 + v6 + v7 + v8 + v9) * 0.1f;
-    dst[id] = result;
+// FP16 Vector Add
+kernel void vec_add_fp16(device const half* a [[buffer(0)]],
+                       device const half* b [[buffer(1)]],
+                       device half* c [[buffer(2)]],
+                       constant uint& size [[buffer(3)]],
+                       uint id [[thread_position_in_grid]]) {
+    c[id] = a[id] + b[id];
 }
 
-// Occupancy test with shared memory
-kernel void occupancy_shared_test(device const float4* src [[buffer(0)]],
-                                 device float4* dst [[buffer(1)]],
-                                 threadgroup float4* shared [[threadgroup(0)]],
-                                 constant uint& size [[buffer(2)]],
-                                 uint id [[thread_position_in_grid]],
-                                 uint lid [[thread_position_in_threadgroup]]) {
-    // Load into shared
+// FP32 Vector Add (baseline)
+kernel void vec_add_fp32(device const float* a [[buffer(0)]],
+                        device const float* b [[buffer(1)]],
+                        device float* c [[buffer(2)]],
+                        constant uint& size [[buffer(3)]],
+                        uint id [[thread_position_in_grid]]) {
+    c[id] = a[id] + b[id];
+}
+
+// FP16 Vector Multiply
+kernel void vec_mul_fp16(device const half* a [[buffer(0)]],
+                        device const half* b [[buffer(1)]],
+                        device half* c [[buffer(2)]],
+                        constant uint& size [[buffer(3)]],
+                        uint id [[thread_position_in_grid]]) {
+    c[id] = a[id] * b[id];
+}
+
+// FP32 Vector Multiply (baseline)
+kernel void vec_mul_fp32(device const float* a [[buffer(0)]],
+                        device const float* b [[buffer(1)]],
+                        device float* c [[buffer(2)]],
+                        constant uint& size [[buffer(3)]],
+                        uint id [[thread_position_in_grid]]) {
+    c[id] = a[id] * b[id];
+}
+
+// FP16 FMA (Fused Multiply-Add)
+kernel void fma_fp16(device const half* a [[buffer(0)]],
+                    device const half* b [[buffer(1)]],
+                    device half* c [[buffer(2)]],
+                    constant uint& size [[buffer(3)]],
+                    uint id [[thread_position_in_grid]]) {
+    c[id] = fma(a[id], b[id], c[id]);
+}
+
+// FP32 FMA (baseline)
+kernel void fma_fp32(device const float* a [[buffer(0)]],
+                    device const float* b [[buffer(1)]],
+                    device float* c [[buffer(2)]],
+                    constant uint& size [[buffer(3)]],
+                    uint id [[thread_position_in_grid]]) {
+    c[id] = fma(a[id], b[id], c[id]);
+}
+
+// FP16 Reduction (sum)
+kernel void reduce_fp16(device const half* src [[buffer(0)]],
+                      device half* dst [[buffer(1)]],
+                      threadgroup half* shared [[threadgroup(0)]],
+                      constant uint& size [[buffer(2)]],
+                      uint id [[thread_position_in_grid]],
+                      uint lid [[thread_position_in_threadgroup]]) {
+    constexpr uint THREADGROUP_SIZE = 256;
     shared[lid] = src[id];
     threadgroup_barrier(mem_flags::mem_none);
 
-    // Process
-    float4 val = shared[lid];
-    for (int i = 0; i < 5; i++) {
-        val = val * 1.001f;
+    for (uint s = THREADGROUP_SIZE / 2; s > 0; s >>= 1) {
+        if (lid < s) {
+            shared[lid] += shared[lid + s];
+        }
+        threadgroup_barrier(mem_flags::mem_none);
     }
 
-    threadgroup_barrier(mem_flags::mem_none);
-    shared[lid] = val;
-
-    threadgroup_barrier(mem_flags::mem_none);
-    dst[id] = shared[lid];
+    if (lid == 0) {
+        dst[0] = shared[0];
+    }
 }
 
-// Memory intensive kernel - fewer registers
-kernel void memory_intensive(device const float4* src [[buffer(0)]],
-                           device float4* dst [[buffer(1)]],
-                           constant uint& size [[buffer(2)]],
-                           uint id [[thread_position_in_grid]]) {
-    // Simple memory operation - should achieve high occupancy
-    dst[id] = src[id] * 2.0f;
-}
+// FP32 Reduction (baseline)
+kernel void reduce_fp32(device const float* src [[buffer(0)]],
+                      device float* dst [[buffer(1)]],
+                      threadgroup float* shared [[threadgroup(0)]],
+                      constant uint& size [[buffer(2)]],
+                      uint id [[thread_position_in_grid]],
+                      uint lid [[thread_position_in_threadgroup]]) {
+    constexpr uint THREADGROUP_SIZE = 256;
+    shared[lid] = src[id];
+    threadgroup_barrier(mem_flags::mem_none);
 
-// Compute intensive kernel - fewer threads may be better
-kernel void compute_intensive(device const float4* src [[buffer(0)]],
-                             device float4* dst [[buffer(1)]],
-                             constant uint& size [[buffer(2)]],
-                             uint id [[thread_position_in_grid]]) {
-    float4 val = src[id];
-
-    // Heavy computation
-    for (int i = 0; i < 100; i++) {
-        val.x = metal::sin(val.x) * metal::cos(val.x);
-        val.y = metal::sin(val.y) * metal::cos(val.y);
-        val.z = metal::sin(val.z) * metal::cos(val.z);
-        val.w = metal::sin(val.w) * metal::cos(val.w);
+    for (uint s = THREADGROUP_SIZE / 2; s > 0; s >>= 1) {
+        if (lid < s) {
+            shared[lid] += shared[lid + s];
+        }
+        threadgroup_barrier(mem_flags::mem_none);
     }
 
-    dst[id] = val;
+    if (lid == 0) {
+        dst[0] = shared[0];
+    }
 }
 
-// Different thread group sizes for same workload
-kernel void tg_64(device const float4* src [[buffer(0)]],
-                  device float4* dst [[buffer(1)]],
-                  constant uint& size [[buffer(2)]],
-                  uint id [[thread_position_in_grid]]) {
-    // All work done by small thread groups
-    dst[id] = src[id] * 2.0f;
+// FP16 to FP32 conversion test
+kernel void convert_fp16_to_fp32(device const half* src [[buffer(0)]],
+                               device float* dst [[buffer(1)]],
+                               constant uint& size [[buffer(2)]],
+                               uint id [[thread_position_in_grid]]) {
+    dst[id] = (float)src[id];
 }
 
-kernel void tg_128(device const float4* src [[buffer(0)]],
-                   device float4* dst [[buffer(1)]],
-                   constant uint& size [[buffer(2)]],
-                   uint id [[thread_position_in_grid]]) {
-    dst[id] = src[id] * 2.0f;
+// FP32 to FP16 conversion test
+kernel void convert_fp32_to_fp16(device const float* src [[buffer(0)]],
+                               device half* dst [[buffer(1)]],
+                               constant uint& size [[buffer(2)]],
+                               uint id [[thread_position_in_grid]]) {
+    dst[id] = (half)src[id];
 }
 
-kernel void tg_256(device const float4* src [[buffer(0)]],
-                   device float4* dst [[buffer(1)]],
-                   constant uint& size [[buffer(2)]],
-                   uint id [[thread_position_in_grid]]) {
-    dst[id] = src[id] * 2.0f;
-}
+// FP16 with shared memory tile for matrix multiply
+kernel void matmul_fp16_tiled(device const half* a [[buffer(0)]],
+                             device const half* b [[buffer(1)]],
+                             device half* c [[buffer(2)]],
+                             constant uint& M [[buffer(3)]],
+                             constant uint& K [[buffer(4)]],
+                             constant uint& N [[buffer(5)]],
+                             threadgroup half* As [[threadgroup(0)]],
+                             threadgroup half* Bs [[threadgroup(1)]],
+                             uint2 gid [[thread_position_in_grid]],
+                             uint2 tid [[thread_position_in_threadgroup]]) {
+    constexpr uint TILE_SIZE = 16;
 
-kernel void tg_512(device const float4* src [[buffer(0)]],
-                   device float4* dst [[buffer(1)]],
-                   constant uint& size [[buffer(2)]],
-                   uint id [[thread_position_in_grid]]) {
-    dst[id] = src[id] * 2.0f;
-}
+    uint cRow = gid.y;
+    uint cCol = gid.x;
+    uint cRowTile = tid.y;
+    uint cColTile = tid.x;
 
-kernel void tg_1024(device const float4* src [[buffer(0)]],
-                    device float4* dst [[buffer(1)]],
-                    constant uint& size [[buffer(2)]],
-                    uint id [[thread_position_in_grid]]) {
-    dst[id] = src[id] * 2.0f;
+    half sum = 0.0h;
+
+    for (uint kTile = 0; kTile < (K + TILE_SIZE - 1) / TILE_SIZE; kTile++) {
+        uint aRow = cRow;
+        uint aCol = kTile * TILE_SIZE + cColTile;
+        if (aRow < M && aCol < K) {
+            As[cRowTile * TILE_SIZE + cColTile] = a[aRow * K + aCol];
+        } else {
+            As[cRowTile * TILE_SIZE + cColTile] = 0.0h;
+        }
+
+        uint bRow = kTile * TILE_SIZE + cRowTile;
+        uint bCol = cCol;
+        if (bRow < K && bCol < N) {
+            Bs[cRowTile * TILE_SIZE + cColTile] = b[bRow * N + bCol];
+        } else {
+            Bs[cRowTile * TILE_SIZE + cColTile] = 0.0h;
+        }
+
+        threadgroup_barrier(mem_flags::mem_none);
+
+        for (uint k = 0; k < TILE_SIZE; k++) {
+            sum += As[cRowTile * TILE_SIZE + k] * Bs[k * TILE_SIZE + cColTile];
+        }
+
+        threadgroup_barrier(mem_flags::mem_none);
+    }
+
+    if (cRow < M && cCol < N) {
+        c[cRow * N + cCol] = sum;
+    }
 }
 """
 
@@ -178,233 +240,209 @@ func printDeviceInfo(device: MTLDevice) {
     print("Max Threadgroup Memory: \(device.maxThreadgroupMemoryLength / 1024) KB")
     print("Max Threads Per Threadgroup: \(device.maxThreadsPerThreadgroup.width)")
     if device.supportsFamily(.apple7) { print("GPU Family: Apple 7+") }
+    if device.supportsFamily(.apple8) { print("GPU Family: Apple 8+") }
     print("")
 }
 
-// MARK: - Test: Thread Group Size Scaling
+// MARK: - Test: FP16 vs FP32 Matrix Multiply
 
-func testThreadGroupScaling(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
-    print("=== Thread Group Size Scaling ===")
+func testMatmulFP16vsFP32(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("=== FP16 vs FP32 Matrix Multiply ===")
 
-    let sizes = [64, 128, 256, 512, 1024]
-    let iterations = 50
-
-    let functions = [
-        "tg_64", "tg_128", "tg_256", "tg_512", "tg_1024"
-    ]
-
-    let bufferSize = 8 * 1024 * 1024 * MemoryLayout<SIMD4<Float>>.size
-    let elementCount = 8 * 1024 * 1024
-
-    guard let srcBuf = device.makeBuffer(length: bufferSize, options: .storageModeShared),
-          let dstBuf = device.makeBuffer(length: bufferSize, options: .storageModeShared) else {
+    guard let func_fp16 = library.makeFunction(name: "matmul_fp16_naive"),
+          let func_fp32 = library.makeFunction(name: "matmul_fp32_naive"),
+          let func_fp16_tiled = library.makeFunction(name: "matmul_fp16_tiled"),
+          let pipeline_fp16 = try? device.makeComputePipelineState(function: func_fp16),
+          let pipeline_fp32 = try? device.makeComputePipelineState(function: func_fp32),
+          let pipeline_fp16_tiled = try? device.makeComputePipelineState(function: func_fp16_tiled) else {
+        print("Failed to create pipelines")
         return
     }
 
-    print("Same workload with different thread group sizes:")
+    let sizes: [UInt32] = [256, 512, 1024]
 
-    for (i, funcName) in functions.enumerated() {
-        guard let function = library.makeFunction(name: funcName),
-              let pipeline = try? device.makeComputePipelineState(function: function) else {
+    for M in sizes {
+        let K = M
+        let N = M
+        let iterations = 10
+
+        let fp16Size = Int(M * K)
+        let fp32Size = Int(M * K)
+
+        guard let aBufferF16 = device.makeBuffer(length: fp16Size * MemoryLayout<UInt16>.size, options: .storageModeShared),
+              let bBufferF16 = device.makeBuffer(length: fp16Size * MemoryLayout<UInt16>.size, options: .storageModeShared),
+              let cBufferF16 = device.makeBuffer(length: Int(M * N) * MemoryLayout<UInt16>.size, options: .storageModeShared),
+              let aBufferF32 = device.makeBuffer(length: fp32Size * MemoryLayout<Float>.size, options: .storageModeShared),
+              let bBufferF32 = device.makeBuffer(length: fp32Size * MemoryLayout<Float>.size, options: .storageModeShared),
+              let cBufferF32 = device.makeBuffer(length: Int(M * N) * MemoryLayout<Float>.size, options: .storageModeShared) else {
             continue
         }
 
-        var size = UInt32(elementCount)
+        // Initialize FP16 data
+        let aF16 = aBufferF16.contents().assumingMemoryBound(to: UInt16.self)
+        let bF16 = bBufferF16.contents().assumingMemoryBound(to: UInt16.self)
+        for i in 0..<fp16Size { aF16[i] = UInt16((i % 256) << 8) }
+        for i in 0..<fp16Size { bF16[i] = UInt16(((i + 1) % 256) << 8) }
 
-        let start = getTimeNanos()
+        // Initialize FP32 data
+        let aF32 = aBufferF32.contents().assumingMemoryBound(to: Float.self)
+        let bF32 = bBufferF32.contents().assumingMemoryBound(to: Float.self)
+        for i in 0..<fp32Size { aF32[i] = Float(i % 256) / 256.0 }
+        for i in 0..<fp32Size { bF32[i] = Float((i + 1) % 256) / 256.0 }
+
+        var m = M, k = K, n = N
+
+        // FP16 Naive
+        let start_fp16 = getTimeNanos()
         for _ in 0..<iterations {
             guard let cmd = queue.makeCommandBuffer(),
                   let encoder = cmd.makeComputeCommandEncoder() else { continue }
-            encoder.setComputePipelineState(pipeline)
-            encoder.setBuffer(srcBuf, offset: 0, index: 0)
-            encoder.setBuffer(dstBuf, offset: 0, index: 1)
-            encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 2)
-            encoder.dispatchThreads(MTLSize(width: elementCount, height: 1, depth: 1),
-                                 threadsPerThreadgroup: MTLSize(width: sizes[i], height: 1, depth: 1))
+            encoder.setComputePipelineState(pipeline_fp16)
+            encoder.setBuffer(aBufferF16, offset: 0, index: 0)
+            encoder.setBuffer(bBufferF16, offset: 0, index: 1)
+            encoder.setBuffer(cBufferF16, offset: 0, index: 2)
+            encoder.setBytes(&m, length: MemoryLayout<UInt32>.size, index: 3)
+            encoder.setBytes(&k, length: MemoryLayout<UInt32>.size, index: 4)
+            encoder.setBytes(&n, length: MemoryLayout<UInt32>.size, index: 5)
+            encoder.dispatchThreads(MTLSize(width: Int(N), height: Int(M), depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
             encoder.endEncoding()
             cmd.commit()
             cmd.waitUntilCompleted()
         }
-        let end = getTimeNanos()
-        let elapsed = getElapsedSeconds(start: start, end: end)
-        let bytes = Double(bufferSize) * Double(iterations)
-        let bw = bytes / elapsed / 1e9
+        let end_fp16 = getTimeNanos()
+        let elapsed_fp16 = getElapsedSeconds(start: start_fp16, end: end_fp16)
+        let flops_fp16 = 2.0 * Double(M) * Double(K) * Double(N) * Double(iterations)
+        let gflops_fp16 = flops_fp16 / elapsed_fp16 / 1e9
 
-        print("  TG-\(String(format: "%4d", sizes[i])): \(String(format: "%.2f", bw)) GB/s")
-    }
-}
-
-// MARK: - Test: Register Pressure
-
-func testRegisterPressure(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
-    print("\n=== Register Pressure ===")
-
-    let iterations = 30
-    let bufferSize = 4 * 1024 * 1024 * MemoryLayout<SIMD4<Float>>.size
-    let elementCount = 4 * 1024 * 1024
-
-    let kernels = [
-        ("low_reg_pressure", "Low Pressure"),
-        ("occupancy_test", "Medium Pressure"),
-        ("high_reg_pressure", "High Pressure")
-    ]
-
-    for (name, desc) in kernels {
-        guard let function = library.makeFunction(name: name),
-              let pipeline = try? device.makeComputePipelineState(function: function) else {
-            continue
-        }
-
-        guard let srcBuf = device.makeBuffer(length: bufferSize, options: .storageModeShared),
-              let dstBuf = device.makeBuffer(length: bufferSize, options: .storageModeShared) else {
-            continue
-        }
-
-        var size = UInt32(elementCount)
-
-        let start = getTimeNanos()
+        // FP32 Naive
+        let start_fp32 = getTimeNanos()
         for _ in 0..<iterations {
             guard let cmd = queue.makeCommandBuffer(),
                   let encoder = cmd.makeComputeCommandEncoder() else { continue }
-            encoder.setComputePipelineState(pipeline)
-            encoder.setBuffer(srcBuf, offset: 0, index: 0)
-            encoder.setBuffer(dstBuf, offset: 0, index: 1)
-            encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 2)
-            encoder.dispatchThreads(MTLSize(width: elementCount, height: 1, depth: 1),
+            encoder.setComputePipelineState(pipeline_fp32)
+            encoder.setBuffer(aBufferF32, offset: 0, index: 0)
+            encoder.setBuffer(bBufferF32, offset: 0, index: 1)
+            encoder.setBuffer(cBufferF32, offset: 0, index: 2)
+            encoder.setBytes(&m, length: MemoryLayout<UInt32>.size, index: 3)
+            encoder.setBytes(&k, length: MemoryLayout<UInt32>.size, index: 4)
+            encoder.setBytes(&n, length: MemoryLayout<UInt32>.size, index: 5)
+            encoder.dispatchThreads(MTLSize(width: Int(N), height: Int(M), depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let end_fp32 = getTimeNanos()
+        let elapsed_fp32 = getElapsedSeconds(start: start_fp32, end: end_fp32)
+        let flops_fp32 = 2.0 * Double(M) * Double(K) * Double(N) * Double(iterations)
+        let gflops_fp32 = flops_fp32 / elapsed_fp32 / 1e9
+
+        print("Size \(M)x\(K)x\(N): FP16=\(String(format: "%.2f", gflops_fp16)) GFLOPS, FP32=\(String(format: "%.2f", gflops_fp32)) GFLOPS, Ratio=\(String(format: "%.2fx", gflops_fp16 / gflops_fp32))")
+    }
+    print("")
+}
+
+// MARK: - Test: FP16 vs FP32 Vector Operations
+
+func testVectorFP16vsFP32(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("=== FP16 vs FP32 Vector Operations ===")
+
+    let bufferSize = 32 * 1024 * 1024
+    let iterations = 50
+
+    let ops = [
+        ("vec_add_fp16", "vec_add_fp32", "Vector Add"),
+        ("vec_mul_fp16", "vec_mul_fp32", "Vector Multiply"),
+        ("fma_fp16", "fma_fp32", "FMA")
+    ]
+
+    for (name_fp16, name_fp32, desc) in ops {
+        guard let func_fp16 = library.makeFunction(name: name_fp16),
+              let func_fp32 = library.makeFunction(name: name_fp32),
+              let pipeline_fp16 = try? device.makeComputePipelineState(function: func_fp16),
+              let pipeline_fp32 = try? device.makeComputePipelineState(function: func_fp32) else {
+            continue
+        }
+
+        // FP16
+        guard let aBufferF16 = device.makeBuffer(length: bufferSize * MemoryLayout<UInt16>.size, options: .storageModeShared),
+              let bBufferF16 = device.makeBuffer(length: bufferSize * MemoryLayout<UInt16>.size, options: .storageModeShared),
+              let cBufferF16 = device.makeBuffer(length: bufferSize * MemoryLayout<UInt16>.size, options: .storageModeShared) else {
+            continue
+        }
+
+        let aF16 = aBufferF16.contents().assumingMemoryBound(to: UInt16.self)
+        let bF16 = bBufferF16.contents().assumingMemoryBound(to: UInt16.self)
+        for i in 0..<(bufferSize / 2) {
+            aF16[i] = UInt16((i % 256) << 8)
+            bF16[i] = UInt16(((i + 1) % 256) << 8)
+        }
+
+        var size16 = UInt32(bufferSize / 2)
+
+        let start_fp16 = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(pipeline_fp16)
+            encoder.setBuffer(aBufferF16, offset: 0, index: 0)
+            encoder.setBuffer(bBufferF16, offset: 0, index: 1)
+            encoder.setBuffer(cBufferF16, offset: 0, index: 2)
+            encoder.setBytes(&size16, length: MemoryLayout<UInt32>.size, index: 3)
+            encoder.dispatchThreads(MTLSize(width: bufferSize / 2, height: 1, depth: 1),
                                  threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
             encoder.endEncoding()
             cmd.commit()
             cmd.waitUntilCompleted()
         }
-        let end = getTimeNanos()
-        let elapsed = getElapsedSeconds(start: start, end: end)
-        let bytes = Double(bufferSize) * Double(iterations)
-        let bw = bytes / elapsed / 1e9
+        let end_fp16 = getTimeNanos()
+        let elapsed_fp16 = getElapsedSeconds(start: start_fp16, end: end_fp16)
+        let gflops_fp16 = Double(bufferSize / 2 * iterations) / elapsed_fp16 / 1e9
 
-        print("  \(desc): \(String(format: "%.2f", bw)) GB/s")
-    }
-}
-
-// MARK: - Test: Occupancy vs Performance
-
-func testOccupancyVsPerformance(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
-    print("\n=== Occupancy vs Performance ===")
-
-    let iterations = 30
-    let bufferSize = 4 * 1024 * 1024 * MemoryLayout<SIMD4<Float>>.size
-    let elementCount = 4 * 1024 * 1024
-
-    let kernels = [
-        ("memory_intensive", "Memory Intensive", 256),
-        ("compute_intensive", "Compute Intensive", 256)
-    ]
-
-    for (name, desc, tgSize) in kernels {
-        guard let function = library.makeFunction(name: name),
-              let pipeline = try? device.makeComputePipelineState(function: function) else {
+        // FP32
+        guard let aBufferF32 = device.makeBuffer(length: bufferSize * MemoryLayout<Float>.size, options: .storageModeShared),
+              let bBufferF32 = device.makeBuffer(length: bufferSize * MemoryLayout<Float>.size, options: .storageModeShared),
+              let cBufferF32 = device.makeBuffer(length: bufferSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
             continue
         }
 
-        guard let srcBuf = device.makeBuffer(length: bufferSize, options: .storageModeShared),
-              let dstBuf = device.makeBuffer(length: bufferSize, options: .storageModeShared) else {
-            continue
+        let aF32 = aBufferF32.contents().assumingMemoryBound(to: Float.self)
+        let bF32 = bBufferF32.contents().assumingMemoryBound(to: Float.self)
+        for i in 0..<bufferSize / 4 {
+            aF32[i] = Float(i % 256) / 256.0
+            bF32[i] = Float((i + 1) % 256) / 256.0
         }
 
-        var size = UInt32(elementCount)
+        var size32 = UInt32(bufferSize / 4)
 
-        let start = getTimeNanos()
+        let start_fp32 = getTimeNanos()
         for _ in 0..<iterations {
             guard let cmd = queue.makeCommandBuffer(),
                   let encoder = cmd.makeComputeCommandEncoder() else { continue }
-            encoder.setComputePipelineState(pipeline)
-            encoder.setBuffer(srcBuf, offset: 0, index: 0)
-            encoder.setBuffer(dstBuf, offset: 0, index: 1)
-            encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 2)
-            encoder.dispatchThreads(MTLSize(width: elementCount, height: 1, depth: 1),
-                                 threadsPerThreadgroup: MTLSize(width: tgSize, height: 1, depth: 1))
+            encoder.setComputePipelineState(pipeline_fp32)
+            encoder.setBuffer(aBufferF32, offset: 0, index: 0)
+            encoder.setBuffer(bBufferF32, offset: 0, index: 1)
+            encoder.setBuffer(cBufferF32, offset: 0, index: 2)
+            encoder.setBytes(&size32, length: MemoryLayout<UInt32>.size, index: 3)
+            encoder.dispatchThreads(MTLSize(width: bufferSize / 4, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
             encoder.endEncoding()
             cmd.commit()
             cmd.waitUntilCompleted()
         }
-        let end = getTimeNanos()
-        let elapsed = getElapsedSeconds(start: start, end: end)
-        let bytes = Double(bufferSize) * Double(iterations)
-        let bw = bytes / elapsed / 1e9
+        let end_fp32 = getTimeNanos()
+        let elapsed_fp32 = getElapsedSeconds(start: start_fp32, end: end_fp32)
+        let gflops_fp32 = Double(bufferSize / 4 * iterations) / elapsed_fp32 / 1e9
 
-        print("  \(desc): \(String(format: "%.2f", bw)) GB/s")
+        print("\(desc): FP16=\(String(format: "%.2f", gflops_fp16)) GOPS, FP32=\(String(format: "%.2f", gflops_fp32)) GOPS, Ratio=\(String(format: "%.2fx", gflops_fp16 / gflops_fp32))")
     }
-}
-
-// MARK: - Test: Shared Memory Impact
-
-func testSharedMemoryImpact(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
-    print("\n=== Shared Memory Impact ===")
-
-    let iterations = 30
-    let bufferSize = 4 * 1024 * 1024 * MemoryLayout<SIMD4<Float>>.size
-    let elementCount = 4 * 1024 * 1024
-
-    guard let function_no_shared = library.makeFunction(name: "occupancy_test"),
-          let function_shared = library.makeFunction(name: "occupancy_shared_test"),
-          let pipeline_no_shared = try? device.makeComputePipelineState(function: function_no_shared),
-          let pipeline_shared = try? device.makeComputePipelineState(function: function_shared) else {
-        return
-    }
-
-    guard let srcBuf = device.makeBuffer(length: bufferSize, options: .storageModeShared),
-          let dstBuf = device.makeBuffer(length: bufferSize, options: .storageModeShared) else {
-        return
-    }
-
-    var size = UInt32(elementCount)
-
-    // Without shared memory
-    let start_no_shared = getTimeNanos()
-    for _ in 0..<iterations {
-        guard let cmd = queue.makeCommandBuffer(),
-              let encoder = cmd.makeComputeCommandEncoder() else { continue }
-        encoder.setComputePipelineState(pipeline_no_shared)
-        encoder.setBuffer(srcBuf, offset: 0, index: 0)
-        encoder.setBuffer(dstBuf, offset: 0, index: 1)
-        encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 2)
-        encoder.dispatchThreads(MTLSize(width: elementCount, height: 1, depth: 1),
-                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
-        encoder.endEncoding()
-        cmd.commit()
-        cmd.waitUntilCompleted()
-    }
-    let end_no_shared = getTimeNanos()
-    let elapsed_no_shared = getElapsedSeconds(start: start_no_shared, end: end_no_shared)
-    let bytes = Double(bufferSize) * Double(iterations)
-    let bw_no_shared = bytes / elapsed_no_shared / 1e9
-
-    // With shared memory
-    let start_shared = getTimeNanos()
-    for _ in 0..<iterations {
-        guard let cmd = queue.makeCommandBuffer(),
-              let encoder = cmd.makeComputeCommandEncoder() else { continue }
-        encoder.setComputePipelineState(pipeline_shared)
-        encoder.setBuffer(srcBuf, offset: 0, index: 0)
-        encoder.setBuffer(dstBuf, offset: 0, index: 1)
-        encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 2)
-        encoder.dispatchThreadgroups(MTLSize(width: elementCount / 256, height: 1, depth: 1),
-                                    threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
-        encoder.endEncoding()
-        cmd.commit()
-        cmd.waitUntilCompleted()
-    }
-    let end_shared = getTimeNanos()
-    let elapsed_shared = getElapsedSeconds(start: start_shared, end: end_shared)
-    let bw_shared = bytes / elapsed_shared / 1e9
-
-    print("  Without shared: \(String(format: "%.2f", bw_no_shared)) GB/s")
-    print("  With shared: \(String(format: "%.2f", bw_shared)) GB/s")
-    print("  Ratio: \(String(format: "%.2fx", bw_shared / bw_no_shared))")
+    print("")
 }
 
 // MARK: - Main
 
-print("Apple Metal GPU Benchmark - Thread Occupancy Deep Dive")
+print("Apple Metal GPU Benchmark - FP16 Deep Dive")
 print("======================================")
 
 guard let device = MTLCreateSystemDefaultDevice() else {
@@ -429,9 +467,7 @@ do {
 
 print("Shader compilation: SUCCESS\n")
 
-do { try testThreadGroupScaling(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
-do { try testRegisterPressure(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
-do { try testOccupancyVsPerformance(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
-do { try testSharedMemoryImpact(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testMatmulFP16vsFP32(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testVectorFP16vsFP32(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
-print("\nThread Occupancy Deep Dive completed.")
+print("FP16 Deep Dive completed.")
