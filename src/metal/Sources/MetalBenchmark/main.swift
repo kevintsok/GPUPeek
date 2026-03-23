@@ -20,117 +20,153 @@ func getElapsedSeconds(start: UInt64, end: UInt64) -> Double {
     return elapsedTicks * ticksPerNanosec / 1e9
 }
 
-// MARK: - Texture & Cache Deep Dive Shader Library
+// MARK: - Thread Occupancy Shader Library
 
 let shaderSource = """
 #include <metal_stdlib>
 using namespace metal;
 
-// Sequential 2D spatial access (for comparison with texture)
-kernel void buffer_2d_spatial(device const float4* src [[buffer(0)]],
-                             device float4* dst [[buffer(1)]],
-                             constant uint& width [[buffer(2)]],
-                             constant uint& height [[buffer(3)]],
-                             uint2 gid [[thread_position_in_grid]]) {
-    if (gid.x < width && gid.y < height) {
-        uint idx = gid.y * width + gid.x;
-        dst[idx] = src[idx] * 2.0f;
+// Occupancy test - compute intensive kernel with known register usage
+kernel void occupancy_test(device const float4* src [[buffer(0)]],
+                         device float4* dst [[buffer(1)]],
+                         constant uint& size [[buffer(2)]],
+                         uint id [[thread_position_in_grid]]) {
+    float4 val = src[id];
+
+    // Force register pressure with multiple variables
+    float a = val.x;
+    float b = val.y;
+    float c = val.z;
+    float d = val.w;
+
+    // Compute intensive - use all variables
+    for (int i = 0; i < 10; i++) {
+        a = a * 1.001f + 0.0001f;
+        b = b * 1.001f + 0.0001f;
+        c = c * 1.001f + 0.0001f;
+        d = d * 1.001f + 0.0001f;
     }
+
+    dst[id] = float4(a, b, c, d);
 }
 
-// Cache line access test - access every 64 bytes (typical cache line)
-kernel void cache_line_stride(device const float4* src [[buffer(0)]],
+// Low register pressure kernel
+kernel void low_reg_pressure(device const float4* src [[buffer(0)]],
+                            device float4* dst [[buffer(1)]],
+                            constant uint& size [[buffer(2)]],
+                            uint id [[thread_position_in_grid]]) {
+    float4 val = src[id];
+    val = val * 1.001f;
+    dst[id] = val;
+}
+
+// High register pressure - many live variables
+kernel void high_reg_pressure(device const float4* src [[buffer(0)]],
                              device float4* dst [[buffer(1)]],
                              constant uint& size [[buffer(2)]],
                              uint id [[thread_position_in_grid]]) {
-    // 16 floats = 64 bytes = 1 cache line
-    uint idx = id * 16;
-    if (idx < size) {
-        dst[id] = src[idx];
+    float4 v0 = src[id];
+    float4 v1 = v0 * 1.1f;
+    float4 v2 = v1 * 1.2f;
+    float4 v3 = v2 * 1.3f;
+    float4 v4 = v3 * 1.4f;
+    float4 v5 = v4 * 1.5f;
+    float4 v6 = v5 * 1.6f;
+    float4 v7 = v6 * 1.7f;
+    float4 v8 = v7 * 1.8f;
+    float4 v9 = v8 * 1.9f;
+
+    // Mix them together
+    float4 result = (v0 + v1 + v2 + v3 + v4 + v5 + v6 + v7 + v8 + v9) * 0.1f;
+    dst[id] = result;
+}
+
+// Occupancy test with shared memory
+kernel void occupancy_shared_test(device const float4* src [[buffer(0)]],
+                                 device float4* dst [[buffer(1)]],
+                                 threadgroup float4* shared [[threadgroup(0)]],
+                                 constant uint& size [[buffer(2)]],
+                                 uint id [[thread_position_in_grid]],
+                                 uint lid [[thread_position_in_threadgroup]]) {
+    // Load into shared
+    shared[lid] = src[id];
+    threadgroup_barrier(mem_flags::mem_none);
+
+    // Process
+    float4 val = shared[lid];
+    for (int i = 0; i < 5; i++) {
+        val = val * 1.001f;
     }
+
+    threadgroup_barrier(mem_flags::mem_none);
+    shared[lid] = val;
+
+    threadgroup_barrier(mem_flags::mem_none);
+    dst[id] = shared[lid];
 }
 
-// Half-cache-line stride (32 bytes)
-kernel void half_cache_line_stride(device const float4* src [[buffer(0)]],
-                                  device float4* dst [[buffer(1)]],
-                                  constant uint& size [[buffer(2)]],
-                                  uint id [[thread_position_in_grid]]) {
-    // 8 floats = 32 bytes = half cache line
-    uint idx = id * 8;
-    if (idx < size) {
-        dst[id] = src[idx];
+// Memory intensive kernel - fewer registers
+kernel void memory_intensive(device const float4* src [[buffer(0)]],
+                           device float4* dst [[buffer(1)]],
+                           constant uint& size [[buffer(2)]],
+                           uint id [[thread_position_in_grid]]) {
+    // Simple memory operation - should achieve high occupancy
+    dst[id] = src[id] * 2.0f;
+}
+
+// Compute intensive kernel - fewer threads may be better
+kernel void compute_intensive(device const float4* src [[buffer(0)]],
+                             device float4* dst [[buffer(1)]],
+                             constant uint& size [[buffer(2)]],
+                             uint id [[thread_position_in_grid]]) {
+    float4 val = src[id];
+
+    // Heavy computation
+    for (int i = 0; i < 100; i++) {
+        val.x = metal::sin(val.x) * metal::cos(val.x);
+        val.y = metal::sin(val.y) * metal::cos(val.y);
+        val.z = metal::sin(val.z) * metal::cos(val.z);
+        val.w = metal::sin(val.w) * metal::cos(val.w);
     }
+
+    dst[id] = val;
 }
 
-// Quarter-cache-line stride (16 bytes)
-kernel void quarter_cache_line_stride(device const float4* src [[buffer(0)]],
-                                     device float4* dst [[buffer(1)]],
-                                     constant uint& size [[buffer(2)]],
-                                     uint id [[thread_position_in_grid]]) {
-    // 4 floats = 16 bytes = quarter cache line
-    uint idx = id * 4;
-    if (idx < size) {
-        dst[id] = src[idx];
-    }
+// Different thread group sizes for same workload
+kernel void tg_64(device const float4* src [[buffer(0)]],
+                  device float4* dst [[buffer(1)]],
+                  constant uint& size [[buffer(2)]],
+                  uint id [[thread_position_in_grid]]) {
+    // All work done by small thread groups
+    dst[id] = src[id] * 2.0f;
 }
 
-// Sequential baseline - no stride
-kernel void sequential_baseline(device const float4* src [[buffer(0)]],
-                                device float4* dst [[buffer(1)]],
-                                constant uint& size [[buffer(2)]],
-                                uint id [[thread_position_in_grid]]) {
-    dst[id] = src[id];
+kernel void tg_128(device const float4* src [[buffer(0)]],
+                   device float4* dst [[buffer(1)]],
+                   constant uint& size [[buffer(2)]],
+                   uint id [[thread_position_in_grid]]) {
+    dst[id] = src[id] * 2.0f;
 }
 
-// Write combining test - sequential vs staggered writes
-kernel void write_combine_seq(device float* dst [[buffer(0)]],
-                            constant uint& size [[buffer(1)]],
-                            uint id [[thread_position_in_grid]]) {
-    dst[id] = float(id);
+kernel void tg_256(device const float4* src [[buffer(0)]],
+                   device float4* dst [[buffer(1)]],
+                   constant uint& size [[buffer(2)]],
+                   uint id [[thread_position_in_grid]]) {
+    dst[id] = src[id] * 2.0f;
 }
 
-kernel void write_combine_stagger(device float* dst [[buffer(0)]],
-                                 constant uint& size [[buffer(1)]],
-                                 uint id [[thread_position_in_grid]]) {
-    // Staggered: write to same cache line from all threads
-    uint line_base = (id / 16) * 16;
-    uint offset = id % 16;
-    if (line_base + offset < size) {
-        dst[line_base + offset] = float(id);
-    }
+kernel void tg_512(device const float4* src [[buffer(0)]],
+                   device float4* dst [[buffer(1)]],
+                   constant uint& size [[buffer(2)]],
+                   uint id [[thread_position_in_grid]]) {
+    dst[id] = src[id] * 2.0f;
 }
 
-// Streamed write - all threads write to sequential locations (write combining optimal)
-kernel void write_stream(device float* dst [[buffer(0)]],
-                        constant uint& size [[buffer(1)]],
-                        uint id [[thread_position_in_grid]]) {
-    dst[id] = float(id) * 0.001f;
-}
-
-// Random write within cache line
-kernel void write_random_in_line(device float* dst [[buffer(0)]],
-                                 constant uint& size [[buffer(1)]],
-                                 constant uint& seed [[buffer(2)]],
-                                 uint id [[thread_position_in_grid]]) {
-    uint line_base = (id / 16) * 16;
-    uint offset = (id * 1103515245 + seed) % 16;
-    if (line_base + offset < size) {
-        dst[line_base + offset] = float(id);
-    }
-}
-
-// Double-buffer style: alternating reads from two buffers
-kernel void double_buffer_read(device const float4* srcA [[buffer(0)]],
-                              device const float4* srcB [[buffer(1)]],
-                              device float4* dst [[buffer(2)]],
-                              constant uint& size [[buffer(3)]],
-                              constant uint& flip [[buffer(4)]],
-                              uint id [[thread_position_in_grid]]) {
-    if (flip == 0) {
-        dst[id] = srcA[id];
-    } else {
-        dst[id] = srcB[id];
-    }
+kernel void tg_1024(device const float4* src [[buffer(0)]],
+                    device float4* dst [[buffer(1)]],
+                    constant uint& size [[buffer(2)]],
+                    uint id [[thread_position_in_grid]]) {
+    dst[id] = src[id] * 2.0f;
 }
 """
 
@@ -142,203 +178,233 @@ func printDeviceInfo(device: MTLDevice) {
     print("Max Threadgroup Memory: \(device.maxThreadgroupMemoryLength / 1024) KB")
     print("Max Threads Per Threadgroup: \(device.maxThreadsPerThreadgroup.width)")
     if device.supportsFamily(.apple7) { print("GPU Family: Apple 7+") }
-    if device.supportsFamily(.apple8) { print("GPU Family: Apple 8+") }
-    print("ReadWriteTextureSupport: \(device.readWriteTextureSupport == .tier2 ? "Tier2" : "Tier1")")
     print("")
 }
 
-// MARK: - Test: Cache Line Behavior
+// MARK: - Test: Thread Group Size Scaling
 
-func testCacheLineBehavior(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
-    print("=== Cache Line Behavior ===")
+func testThreadGroupScaling(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("=== Thread Group Size Scaling ===")
 
-    let sizes = [64, 256, 1024, 4096, 16384] // KB
-    let iterations = 30
+    let sizes = [64, 128, 256, 512, 1024]
+    let iterations = 50
 
-    guard let func_seq = library.makeFunction(name: "sequential_baseline"),
-          let func_full = library.makeFunction(name: "cache_line_stride"),
-          let func_half = library.makeFunction(name: "half_cache_line_stride"),
-          let func_quarter = library.makeFunction(name: "quarter_cache_line_stride"),
-          let pipeline_seq = try? device.makeComputePipelineState(function: func_seq),
-          let pipeline_full = try? device.makeComputePipelineState(function: func_full),
-          let pipeline_half = try? device.makeComputePipelineState(function: func_half),
-          let pipeline_quarter = try? device.makeComputePipelineState(function: func_quarter) else {
+    let functions = [
+        "tg_64", "tg_128", "tg_256", "tg_512", "tg_1024"
+    ]
+
+    let bufferSize = 8 * 1024 * 1024 * MemoryLayout<SIMD4<Float>>.size
+    let elementCount = 8 * 1024 * 1024
+
+    guard let srcBuf = device.makeBuffer(length: bufferSize, options: .storageModeShared),
+          let dstBuf = device.makeBuffer(length: bufferSize, options: .storageModeShared) else {
         return
     }
 
-    print("\nCache Line Stride Test (64B = 1 cache line):")
-    for sizeKB in sizes {
-        let floatCount = (sizeKB * 1024) / MemoryLayout<Float>.size
-        let size = floatCount / 4 // 4 floats per float4
-        let bufferSize = size * MemoryLayout<SIMD4<Float>>.size
+    print("Same workload with different thread group sizes:")
+
+    for (i, funcName) in functions.enumerated() {
+        guard let function = library.makeFunction(name: funcName),
+              let pipeline = try? device.makeComputePipelineState(function: function) else {
+            continue
+        }
+
+        var size = UInt32(elementCount)
+
+        let start = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(pipeline)
+            encoder.setBuffer(srcBuf, offset: 0, index: 0)
+            encoder.setBuffer(dstBuf, offset: 0, index: 1)
+            encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: elementCount, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: sizes[i], height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let end = getTimeNanos()
+        let elapsed = getElapsedSeconds(start: start, end: end)
+        let bytes = Double(bufferSize) * Double(iterations)
+        let bw = bytes / elapsed / 1e9
+
+        print("  TG-\(String(format: "%4d", sizes[i])): \(String(format: "%.2f", bw)) GB/s")
+    }
+}
+
+// MARK: - Test: Register Pressure
+
+func testRegisterPressure(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n=== Register Pressure ===")
+
+    let iterations = 30
+    let bufferSize = 4 * 1024 * 1024 * MemoryLayout<SIMD4<Float>>.size
+    let elementCount = 4 * 1024 * 1024
+
+    let kernels = [
+        ("low_reg_pressure", "Low Pressure"),
+        ("occupancy_test", "Medium Pressure"),
+        ("high_reg_pressure", "High Pressure")
+    ]
+
+    for (name, desc) in kernels {
+        guard let function = library.makeFunction(name: name),
+              let pipeline = try? device.makeComputePipelineState(function: function) else {
+            continue
+        }
 
         guard let srcBuf = device.makeBuffer(length: bufferSize, options: .storageModeShared),
               let dstBuf = device.makeBuffer(length: bufferSize, options: .storageModeShared) else {
             continue
         }
 
-        var sz = UInt32(size)
+        var size = UInt32(elementCount)
 
-        // Sequential baseline
-        let start_seq = getTimeNanos()
+        let start = getTimeNanos()
         for _ in 0..<iterations {
             guard let cmd = queue.makeCommandBuffer(),
                   let encoder = cmd.makeComputeCommandEncoder() else { continue }
-            encoder.setComputePipelineState(pipeline_seq)
+            encoder.setComputePipelineState(pipeline)
             encoder.setBuffer(srcBuf, offset: 0, index: 0)
             encoder.setBuffer(dstBuf, offset: 0, index: 1)
-            encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
-            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+            encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: elementCount, height: 1, depth: 1),
                                  threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
             encoder.endEncoding()
             cmd.commit()
             cmd.waitUntilCompleted()
         }
-        let end_seq = getTimeNanos()
-        let elapsed_sec = getElapsedSeconds(start: start_seq, end: end_seq)
-        let bytes_seq = Double(bufferSize) * Double(iterations)
-        let bw_seq = bytes_seq / elapsed_sec / 1e9
+        let end = getTimeNanos()
+        let elapsed = getElapsedSeconds(start: start, end: end)
+        let bytes = Double(bufferSize) * Double(iterations)
+        let bw = bytes / elapsed / 1e9
 
-        // Full cache line stride (16 floats = 64B)
-        let start_full = getTimeNanos()
-        for _ in 0..<iterations {
-            guard let cmd = queue.makeCommandBuffer(),
-                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
-            encoder.setComputePipelineState(pipeline_full)
-            encoder.setBuffer(srcBuf, offset: 0, index: 0)
-            encoder.setBuffer(dstBuf, offset: 0, index: 1)
-            encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
-            encoder.dispatchThreads(MTLSize(width: size / 16, height: 1, depth: 1),
-                                 threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
-            encoder.endEncoding()
-            cmd.commit()
-            cmd.waitUntilCompleted()
-        }
-        let end_full = getTimeNanos()
-        let elapsed_full = getElapsedSeconds(start: start_full, end: end_full)
-        let bytes_full = Double(size * MemoryLayout<SIMD4<Float>>.size / 16) * Double(iterations)
-        let bw_full = bytes_full / elapsed_full / 1e9
-
-        print("  \(sizeKB) KB: Sequential \(String(format: "%.2f", bw_seq)) GB/s, Stride-64B \(String(format: "%.2f", bw_full)) GB/s (ratio: \(String(format: "%.1fx", bw_seq / bw_full)))")
+        print("  \(desc): \(String(format: "%.2f", bw)) GB/s")
     }
 }
 
-// MARK: - Test: Write Combining
+// MARK: - Test: Occupancy vs Performance
 
-func testWriteCombining(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
-    print("\n=== Write Combining Test ===")
+func testOccupancyVsPerformance(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n=== Occupancy vs Performance ===")
 
-    let size = 8 * 1024 * 1024
     let iterations = 30
+    let bufferSize = 4 * 1024 * 1024 * MemoryLayout<SIMD4<Float>>.size
+    let elementCount = 4 * 1024 * 1024
 
-    guard let func_seq = library.makeFunction(name: "write_combine_seq"),
-          let func_stagger = library.makeFunction(name: "write_combine_stagger"),
-          let func_stream = library.makeFunction(name: "write_stream"),
-          let func_random = library.makeFunction(name: "write_random_in_line"),
-          let pipeline_seq = try? device.makeComputePipelineState(function: func_seq),
-          let pipeline_stagger = try? device.makeComputePipelineState(function: func_stagger),
-          let pipeline_stream = try? device.makeComputePipelineState(function: func_stream),
-          let pipeline_random = try? device.makeComputePipelineState(function: func_random) else {
+    let kernels = [
+        ("memory_intensive", "Memory Intensive", 256),
+        ("compute_intensive", "Compute Intensive", 256)
+    ]
+
+    for (name, desc, tgSize) in kernels {
+        guard let function = library.makeFunction(name: name),
+              let pipeline = try? device.makeComputePipelineState(function: function) else {
+            continue
+        }
+
+        guard let srcBuf = device.makeBuffer(length: bufferSize, options: .storageModeShared),
+              let dstBuf = device.makeBuffer(length: bufferSize, options: .storageModeShared) else {
+            continue
+        }
+
+        var size = UInt32(elementCount)
+
+        let start = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(pipeline)
+            encoder.setBuffer(srcBuf, offset: 0, index: 0)
+            encoder.setBuffer(dstBuf, offset: 0, index: 1)
+            encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: elementCount, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: tgSize, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let end = getTimeNanos()
+        let elapsed = getElapsedSeconds(start: start, end: end)
+        let bytes = Double(bufferSize) * Double(iterations)
+        let bw = bytes / elapsed / 1e9
+
+        print("  \(desc): \(String(format: "%.2f", bw)) GB/s")
+    }
+}
+
+// MARK: - Test: Shared Memory Impact
+
+func testSharedMemoryImpact(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n=== Shared Memory Impact ===")
+
+    let iterations = 30
+    let bufferSize = 4 * 1024 * 1024 * MemoryLayout<SIMD4<Float>>.size
+    let elementCount = 4 * 1024 * 1024
+
+    guard let function_no_shared = library.makeFunction(name: "occupancy_test"),
+          let function_shared = library.makeFunction(name: "occupancy_shared_test"),
+          let pipeline_no_shared = try? device.makeComputePipelineState(function: function_no_shared),
+          let pipeline_shared = try? device.makeComputePipelineState(function: function_shared) else {
         return
     }
 
-    guard let buf_seq = device.makeBuffer(length: size * MemoryLayout<Float>.size, options: .storageModeShared),
-          let buf_stagger = device.makeBuffer(length: size * MemoryLayout<Float>.size, options: .storageModeShared),
-          let buf_stream = device.makeBuffer(length: size * MemoryLayout<Float>.size, options: .storageModeShared),
-          let buf_random = device.makeBuffer(length: size * MemoryLayout<Float>.size, options: .storageModeShared) else {
+    guard let srcBuf = device.makeBuffer(length: bufferSize, options: .storageModeShared),
+          let dstBuf = device.makeBuffer(length: bufferSize, options: .storageModeShared) else {
         return
     }
 
-    var sz = UInt32(size)
-    var seed: UInt32 = 12345
+    var size = UInt32(elementCount)
 
-    // Sequential writes
-    let start_seq = getTimeNanos()
+    // Without shared memory
+    let start_no_shared = getTimeNanos()
     for _ in 0..<iterations {
         guard let cmd = queue.makeCommandBuffer(),
               let encoder = cmd.makeComputeCommandEncoder() else { continue }
-        encoder.setComputePipelineState(pipeline_seq)
-        encoder.setBuffer(buf_seq, offset: 0, index: 0)
-        encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 1)
-        encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+        encoder.setComputePipelineState(pipeline_no_shared)
+        encoder.setBuffer(srcBuf, offset: 0, index: 0)
+        encoder.setBuffer(dstBuf, offset: 0, index: 1)
+        encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: elementCount, height: 1, depth: 1),
                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
         encoder.endEncoding()
         cmd.commit()
         cmd.waitUntilCompleted()
     }
-    let end_seq = getTimeNanos()
-    let elapsed_seq = getElapsedSeconds(start: start_seq, end: end_seq)
-    let bytes_seq = Double(size) * Double(iterations) * Double(MemoryLayout<Float>.size)
-    let bw_seq = bytes_seq / elapsed_seq / 1e9
+    let end_no_shared = getTimeNanos()
+    let elapsed_no_shared = getElapsedSeconds(start: start_no_shared, end: end_no_shared)
+    let bytes = Double(bufferSize) * Double(iterations)
+    let bw_no_shared = bytes / elapsed_no_shared / 1e9
 
-    // Staggered writes (all threads write to same cache line)
-    let start_stagger = getTimeNanos()
+    // With shared memory
+    let start_shared = getTimeNanos()
     for _ in 0..<iterations {
         guard let cmd = queue.makeCommandBuffer(),
               let encoder = cmd.makeComputeCommandEncoder() else { continue }
-        encoder.setComputePipelineState(pipeline_stagger)
-        encoder.setBuffer(buf_stagger, offset: 0, index: 0)
-        encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 1)
-        encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
-                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.setComputePipelineState(pipeline_shared)
+        encoder.setBuffer(srcBuf, offset: 0, index: 0)
+        encoder.setBuffer(dstBuf, offset: 0, index: 1)
+        encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreadgroups(MTLSize(width: elementCount / 256, height: 1, depth: 1),
+                                    threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
         encoder.endEncoding()
         cmd.commit()
         cmd.waitUntilCompleted()
     }
-    let end_stagger = getTimeNanos()
-    let elapsed_stagger = getElapsedSeconds(start: start_stagger, end: end_stagger)
-    let bytes_stagger = Double(size) * Double(iterations) * Double(MemoryLayout<Float>.size)
-    let bw_stagger = bytes_stagger / elapsed_stagger / 1e9
+    let end_shared = getTimeNanos()
+    let elapsed_shared = getElapsedSeconds(start: start_shared, end: end_shared)
+    let bw_shared = bytes / elapsed_shared / 1e9
 
-    // Streamed writes
-    let start_stream = getTimeNanos()
-    for _ in 0..<iterations {
-        guard let cmd = queue.makeCommandBuffer(),
-              let encoder = cmd.makeComputeCommandEncoder() else { continue }
-        encoder.setComputePipelineState(pipeline_stream)
-        encoder.setBuffer(buf_stream, offset: 0, index: 0)
-        encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 1)
-        encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
-                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
-        encoder.endEncoding()
-        cmd.commit()
-        cmd.waitUntilCompleted()
-    }
-    let end_stream = getTimeNanos()
-    let elapsed_stream = getElapsedSeconds(start: start_stream, end: end_stream)
-    let bytes_stream = Double(size) * Double(iterations) * Double(MemoryLayout<Float>.size)
-    let bw_stream = bytes_stream / elapsed_stream / 1e9
-
-    // Random within cache line
-    let start_random = getTimeNanos()
-    for _ in 0..<iterations {
-        guard let cmd = queue.makeCommandBuffer(),
-              let encoder = cmd.makeComputeCommandEncoder() else { continue }
-        encoder.setComputePipelineState(pipeline_random)
-        encoder.setBuffer(buf_random, offset: 0, index: 0)
-        encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 1)
-        encoder.setBytes(&seed, length: MemoryLayout<UInt32>.size, index: 2)
-        encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
-                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
-        encoder.endEncoding()
-        cmd.commit()
-        cmd.waitUntilCompleted()
-    }
-    let end_random = getTimeNanos()
-    let elapsed_random = getElapsedSeconds(start: start_random, end: end_random)
-    let bytes_random = Double(size) * Double(iterations) * Double(MemoryLayout<Float>.size)
-    let bw_random = bytes_random / elapsed_random / 1e9
-
-    print("  Sequential writes: \(String(format: "%.2f", bw_seq)) GB/s")
-    print("  Staggered writes: \(String(format: "%.2f", bw_stagger)) GB/s")
-    print("  Streamed writes: \(String(format: "%.2f", bw_stream)) GB/s")
-    print("  Random in line: \(String(format: "%.2f", bw_random)) GB/s")
-    print("  Staggered/Sequential: \(String(format: "%.2fx", bw_stagger / bw_seq))")
+    print("  Without shared: \(String(format: "%.2f", bw_no_shared)) GB/s")
+    print("  With shared: \(String(format: "%.2f", bw_shared)) GB/s")
+    print("  Ratio: \(String(format: "%.2fx", bw_shared / bw_no_shared))")
 }
 
 // MARK: - Main
 
-print("Apple Metal GPU Benchmark - Cache & Memory Deep Dive")
+print("Apple Metal GPU Benchmark - Thread Occupancy Deep Dive")
 print("======================================")
 
 guard let device = MTLCreateSystemDefaultDevice() else {
@@ -363,8 +429,9 @@ do {
 
 print("Shader compilation: SUCCESS\n")
 
-// Run tests
-do { try testCacheLineBehavior(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
-do { try testWriteCombining(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testThreadGroupScaling(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testRegisterPressure(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testOccupancyVsPerformance(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testSharedMemoryImpact(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
-print("\nCache & Memory Deep Dive completed.")
+print("\nThread Occupancy Deep Dive completed.")
