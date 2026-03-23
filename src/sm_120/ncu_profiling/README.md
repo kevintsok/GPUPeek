@@ -4,23 +4,22 @@
 
 NCU 性能分析工具研究，指标收集和内核分析。
 
+## 独立编译和运行
+
+```bash
+cd src/sm_120/ncu_profiling
+mkdir -p build && cd build
+cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
+cmake --build . --config Release
+./gpupeek_ncu_profiling [元素数量]
+```
+
 ## 文件
 
 - `ncu_profiling_kernel.cu` - Profiling 内核
 - `ncu_profiling_benchmarks.cu` - Profiling 基准测试
-
-## 编译
-
-```bash
-cd D:/Projects/dissecting-sm110
-cmake --build build --config Release
-```
-
-## 运行
-
-```bash
-./build/gpupeek.exe ncu
-```
+- `main.cu` - 主程序入口
+- `CMakeLists.txt` - 构建配置
 
 ## NCU 关键指标
 
@@ -36,8 +35,8 @@ cmake --build build --config Release
 
 ```bash
 # 完整指标集
-ncu --set full ./build/gpupeek.exe ncu
+ncu --set full ./gpupeek_ncu_profiling
 
 # 指定指标
-ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./build/gpupeek.exe ncu
+ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./gpupeek_ncu_profiling
 ```

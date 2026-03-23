@@ -4,23 +4,22 @@
 
 张量内存操作研究，包括 LDMATRIX、STMATRIX、cp.async 等指令。
 
+## 独立编译和运行
+
+```bash
+cd src/sm_120/tensor_mem
+mkdir -p build && cd build
+cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
+cmake --build . --config Release
+./gpupeek_tensor_mem [元素数量]
+```
+
 ## 文件
 
 - `tensor_mem_research_kernel.cu` - 张量内存内核
 - `tensor_mem_research_benchmarks.cu` - 张量内存基准测试
-
-## 编译
-
-```bash
-cd D:/Projects/dissecting-sm110
-cmake --build build --config Release
-```
-
-## 运行
-
-```bash
-./build/gpupeek.exe tensor_mem
-```
+- `main.cu` - 主程序入口
+- `CMakeLists.txt` - 构建配置
 
 ## 测试内容
 
@@ -43,5 +42,5 @@ cmake --build build --config Release
 
 ```bash
 # SASS 指令分析
-ncu --set full --kernels-by-compute ./build/gpupeek.exe tensor_mem
+ncu --set full --kernels-by-compute ./gpupeek_tensor_mem
 ```

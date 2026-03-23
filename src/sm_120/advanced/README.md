@@ -4,23 +4,22 @@
 
 高级研究测试，包括 Constant Memory、Bank Conflict 分析等。
 
+## 独立编译和运行
+
+```bash
+cd src/sm_120/advanced
+mkdir -p build && cd build
+cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
+cmake --build . --config Release
+./gpupeek_advanced [元素数量]
+```
+
 ## 文件
 
 - `advanced_research_kernel.cu` - 高级研究内核
 - `advanced_research_benchmarks.cu` - 高级研究基准测试
-
-## 编译
-
-```bash
-cd D:/Projects/dissecting-sm110
-cmake --build build --config Release
-```
-
-## 运行
-
-```bash
-./build/gpupeek.exe advanced
-```
+- `main.cu` - 主程序入口
+- `CMakeLists.txt` - 构建配置
 
 ## 测试内容
 
@@ -35,5 +34,5 @@ cmake --build build --config Release
 
 ```bash
 # 共享内存银行冲突
-ncu --set full --metrics sm__shared_bank_conflict_throughput ./build/gpupeek.exe advanced
+ncu --set full --metrics sm__shared_bank_conflict_throughput ./gpupeek_advanced
 ```

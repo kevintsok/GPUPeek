@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../common/timer.h"
+#include "../../common/timer.h"
 #include "mma_research_kernel.cu"
 #include "wmma_mma_kernel.cu"
 

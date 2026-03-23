@@ -2,7 +2,7 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "../common/timer.h"
+#include "../../common/timer.h"
 
 // Forward declarations of all NCU profiling kernels
 // 这些内核专门设计用于 NCU (Nsight Compute) 分析

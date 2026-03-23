@@ -4,23 +4,22 @@
 
 Redux.sync 指令研究，单指令完成 warp 级归约。
 
+## 独立编译和运行
+
+```bash
+cd src/sm_120/redux_sync
+mkdir -p build && cd build
+cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
+cmake --build . --config Release
+./gpupeek_redux_sync [元素数量]
+```
+
 ## 文件
 
 - `redux_sync_research_kernel.cu` - Redux 内核
 - `redux_sync_research_benchmarks.cu` - Redux 基准测试
-
-## 编译
-
-```bash
-cd D:/Projects/dissecting-sm110
-cmake --build build --config Release
-```
-
-## 运行
-
-```bash
-./build/gpupeek.exe redux
-```
+- `main.cu` - 主程序入口
+- `CMakeLists.txt` - 构建配置
 
 ## Redux.sync 支持的操作
 
@@ -36,5 +35,5 @@ cmake --build build --config Release
 ## NCU 分析
 
 ```bash
-ncu --set full --kernels-by-compute ./build/gpupeek.exe redux
+ncu --set full --kernels-by-compute ./gpupeek_redux_sync
 ```

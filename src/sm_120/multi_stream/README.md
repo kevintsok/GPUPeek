@@ -4,23 +4,22 @@
 
 Multi-Stream 并发执行研究，流依赖、重叠执行、流优先级。
 
+## 独立编译和运行
+
+```bash
+cd src/sm_120/multi_stream
+mkdir -p build && cd build
+cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
+cmake --build . --config Release
+./gpupeek_multi_stream [元素数量]
+```
+
 ## 文件
 
 - `multi_stream_research_kernel.cu` - 多流内核
 - `multi_stream_research_benchmarks.cu` - 多流基准测试
-
-## 编译
-
-```bash
-cd D:/Projects/dissecting-sm110
-cmake --build build --config Release
-```
-
-## 运行
-
-```bash
-./build/gpupeek.exe multi_stream
-```
+- `main.cu` - 主程序入口
+- `CMakeLists.txt` - 构建配置
 
 ## 测试内容
 
@@ -33,5 +32,5 @@ cmake --build build --config Release
 ## NCU 分析
 
 ```bash
-ncu --set full --kernels-by-compute ./build/gpupeek.exe multi_stream
+ncu --set full --kernels-by-compute ./gpupeek_multi_stream
 ```

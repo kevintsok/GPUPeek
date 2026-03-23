@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../common/timer.h"
+#include "../../common/timer.h"
 #include "cuda_graph_research_kernel.cu"
 
 #define CHECK_CUDA(call) \

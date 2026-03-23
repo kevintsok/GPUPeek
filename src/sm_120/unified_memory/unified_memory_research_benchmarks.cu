@@ -1,7 +1,7 @@
 #pragma once
 #include <cuda_runtime.h>
 #include <stdio.h>
-#include "../common/timer.h"
+#include "../../common/timer.h"
 #include "unified_memory_research_kernel.cu"
 
 // =============================================================================

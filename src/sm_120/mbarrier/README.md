@@ -4,26 +4,25 @@
 
 MBarrier (Multi-Block Barrier) 研究，Hopper 架构的增强同步机制。
 
+## 独立编译和运行
+
+```bash
+cd src/sm_120/mbarrier
+mkdir -p build && cd build
+cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
+cmake --build . --config Release
+./gpupeek_mbarrier [元素数量]
+```
+
 ## 文件
 
 - `mbarrier_research_kernel.cu` - MBarrier 内核
 - `mbarrier_research_benchmarks.cu` - MBarrier 基准测试
-
-## 编译
-
-```bash
-cd D:/Projects/dissecting-sm110
-cmake --build build --config Release
-```
-
-## 运行
-
-```bash
-./build/gpupeek.exe mbarrier
-```
+- `main.cu` - 主程序入口
+- `CMakeLists.txt` - 构建配置
 
 ## NCU 分析
 
 ```bash
-ncu --set full --kernels-by-compute ./build/gpupeek.exe mbarrier
+ncu --set full --kernels-by-compute ./gpupeek_mbarrier
 ```

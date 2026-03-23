@@ -4,23 +4,22 @@
 
 深度研究测试，包括 L2 缓存、TMA、prefetch 等高级内存操作。
 
+## 独立编译和运行
+
+```bash
+cd src/sm_120/deep
+mkdir -p build && cd build
+cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
+cmake --build . --config Release
+./gpupeek_deep [元素数量]
+```
+
 ## 文件
 
 - `deep_research_kernel.cu` - 深度研究内核
 - `deep_research_benchmarks.cu` - 深度研究基准测试
-
-## 编译
-
-```bash
-cd D:/Projects/dissecting-sm110
-cmake --build build --config Release
-```
-
-## 运行
-
-```bash
-./build/gpupeek.exe deep
-```
+- `main.cu` - 主程序入口
+- `CMakeLists.txt` - 构建配置
 
 ## 测试内容
 
@@ -42,8 +41,8 @@ cmake --build build --config Release
 
 ```bash
 # L2 命中率分析
-ncu --set full --metrics lts__tcs_hit_rate.pct ./build/gpupeek.exe deep
+ncu --set full --metrics lts__tcs_hit_rate.pct ./gpupeek_deep
 
 # GPU 利用率
-ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./build/gpupeek.exe deep
+ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./gpupeek_deep
 ```

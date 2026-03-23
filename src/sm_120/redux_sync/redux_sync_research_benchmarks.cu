@@ -2,7 +2,7 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 #include <float.h>
-#include "../common/timer.h"
+#include "../../common/timer.h"
 #include "redux_sync_research_kernel.cu"
 
 // =============================================================================

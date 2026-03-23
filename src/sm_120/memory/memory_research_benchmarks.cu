@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../common/timer.h"
+#include "../../common/timer.h"
 #include "memory_research_kernel.cu"
-#include "arch_kernels.cu"
+#include "../arch_kernels.cu"
 
 #define CHECK_CUDA(call) \
     do { \

@@ -4,29 +4,28 @@
 
 WGMMA (Warpgroup MMA) 是 Hopper 架构的异步 MMA 指令。**注意: Blackwell 不支持 WGMMA。**
 
-## 文件
-
-- `wgmma_research_kernel.cu` - WGMMA 内核
-- `wgmma_research_benchmarks.cu` - WGMMA 基准测试
-
-## 编译
-
-```bash
-cd D:/Projects/dissecting-sm110
-cmake --build build --config Release
-```
-
-## 运行
-
-```bash
-./build/gpupeek.exe wgmma
-```
-
 ## 警告
 
 **WGMMA 仅在 Hopper (sm_90) 上支持。Blackwell (sm_120) 不支持 WGMMA。**
 
 此模块主要用于研究和学习，实际运行会在不支持的 GPU 上失败。
+
+## 独立编译和运行
+
+```bash
+cd src/sm_120/wgmma
+mkdir -p build && cd build
+cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
+cmake --build . --config Release
+./gpupeek_wgmma [元素数量]
+```
+
+## 文件
+
+- `wgmma_research_kernel.cu` - WGMMA 内核
+- `wgmma_research_benchmarks.cu` - WGMMA 基准测试
+- `main.cu` - 主程序入口
+- `CMakeLists.txt` - 构建配置
 
 ## WGMMA Shape (Hopper)
 
@@ -43,5 +42,5 @@ cmake --build build --config Release
 
 ```bash
 # 指令分析
-ncu --set full --kernels-by-compute ./build/gpupeek.exe wgmma
+ncu --set full --kernels-by-compute ./gpupeek_wgmma
 ```

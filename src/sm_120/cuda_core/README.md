@@ -4,23 +4,22 @@
 
 CUDA Core 算力测试，研究不同数据类型的计算性能和指令吞吐量。
 
+## 独立编译和运行
+
+```bash
+cd src/sm_120/cuda_core
+mkdir -p build && cd build
+cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
+cmake --build . --config Release
+./gpupeek_cuda_core [元素数量]
+```
+
 ## 文件
 
 - `cuda_core_kernels.cu` - CUDA Core 算力内核
 - `cuda_core_benchmarks.cu` - CUDA Core 基准测试
-
-## 编译
-
-```bash
-cd D:/Projects/dissecting-sm110
-cmake --build build --config Release
-```
-
-## 运行
-
-```bash
-./build/gpupeek.exe cuda
-```
+- `main.cu` - 主程序入口
+- `CMakeLists.txt` - 构建配置
 
 ## 测试内容
 
@@ -45,8 +44,8 @@ cmake --build build --config Release
 
 ```bash
 # FP32 利用率
-ncu --set full --metrics sm__pipe_fp32_cycles_active.pct ./build/gpupeek.exe cuda
+ncu --set full --metrics sm__pipe_fp32_cycles_active.pct ./gpupeek_cuda_core
 
 # 指令级分析
-ncu --set full --kernels-by-compute ./build/gpupeek.exe cuda
+ncu --set full --kernels-by-compute ./gpupeek_cuda_core
 ```

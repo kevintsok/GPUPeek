@@ -4,23 +4,22 @@
 
 原子操作深入研究，测试不同粒度和类型的原子操作性能。
 
+## 独立编译和运行
+
+```bash
+cd src/sm_120/atomic
+mkdir -p build && cd build
+cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
+cmake --build . --config Release
+./gpupeek_atomic [元素数量]
+```
+
 ## 文件
 
 - `atomic_kernels.cu` - 原子操作内核
 - `atomic_benchmarks.cu` - 原子操作基准测试
-
-## 编译
-
-```bash
-cd D:/Projects/dissecting-sm110
-cmake --build build --config Release
-```
-
-## 运行
-
-```bash
-./build/gpupeek.exe atomic
-```
+- `main.cu` - 主程序入口
+- `CMakeLists.txt` - 构建配置
 
 ## 测试内容
 
@@ -51,5 +50,5 @@ cmake --build build --config Release
 
 ```bash
 # 原子操作冲突分析
-ncu --set full --metrics sm__average_active_warps_per_sm ./build/gpupeek.exe atomic
+ncu --set full --metrics sm__average_active_warps_per_sm ./gpupeek_atomic
 ```

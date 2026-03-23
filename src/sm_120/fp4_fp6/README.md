@@ -4,23 +4,22 @@
 
 FP4/FP6 低精度研究，Blackwell 支持的极低精度格式。
 
+## 独立编译和运行
+
+```bash
+cd src/sm_120/fp4_fp6
+mkdir -p build && cd build
+cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
+cmake --build . --config Release
+./gpupeek_fp4_fp6 [元素数量]
+```
+
 ## 文件
 
 - `fp4_fp6_research_kernel.cu` - FP4/FP6 内核
 - `fp4_fp6_research_benchmarks.cu` - FP4/FP6 基准测试
-
-## 编译
-
-```bash
-cd D:/Projects/dissecting-sm110
-cmake --build build --config Release
-```
-
-## 运行
-
-```bash
-./build/gpupeek.exe fp4
-```
+- `main.cu` - 主程序入口
+- `CMakeLists.txt` - 构建配置
 
 ## FP4/FP6 格式
 
@@ -33,5 +32,5 @@ cmake --build build --config Release
 ## NCU 分析
 
 ```bash
-ncu --set full --kernels-by-compute ./build/gpupeek.exe fp4
+ncu --set full --kernels-by-compute ./gpupeek_fp4_fp6
 ```

@@ -4,23 +4,22 @@
 
 DP4A (Dot Product of 4 Bytes Accumulated) 是 INT8 矩阵乘法指令。
 
+## 独立编译和运行
+
+```bash
+cd src/sm_120/dp4a
+mkdir -p build && cd build
+cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
+cmake --build . --config Release
+./gpupeek_dp4a [元素数量]
+```
+
 ## 文件
 
 - `dp4a_research_kernel.cu` - DP4A 内核
 - `dp4a_research_benchmarks.cu` - DP4A 基准测试
-
-## 编译
-
-```bash
-cd D:/Projects/dissecting-sm110
-cmake --build build --config Release
-```
-
-## 运行
-
-```bash
-./build/gpupeek.exe dp4a
-```
+- `main.cu` - 主程序入口
+- `CMakeLists.txt` - 构建配置
 
 ## DP4A 指令
 
@@ -31,5 +30,5 @@ dp4a.s32.s8 result, a, b, acc;
 ## NCU 分析
 
 ```bash
-ncu --set full --kernels-by-compute ./build/gpupeek.exe dp4a
+ncu --set full --kernels-by-compute ./gpupeek_dp4a
 ```
