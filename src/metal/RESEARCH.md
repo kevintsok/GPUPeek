@@ -26,9 +26,20 @@
 |------|------|------|
 | FP32 MatMul (朴素) | 4.30 GFLOPS | 内存受限 |
 | FP32 MatMul (分块) | 9.11 GFLOPS | 2.1x加速 |
-| FP16 MatMul | 4.92 GFLOPS | 仅5%优势 |
+| **FP16 MatMul (Tiled)** | **14.98 GFLOPS** | **Shared Memory 3x加速** |
+| FP16 MatMul (朴素) | 4.88 GFLOPS | 内存受限 |
 | FP16 向量操作 | 0.25 GOPS | **3x快于FP32** |
 | FMA | 0.22 GFLOPS | 融合乘加 |
+
+#### FP16 Tiled Matrix Multiply (Shared Memory)
+
+| Size | FP16 Naive | FP16 Tiled | 加速比 |
+|------|------------|------------|--------|
+| 256³ | 1.10 GFLOPS | 2.13 GFLOPS | 1.94x |
+| 512³ | 1.88 GFLOPS | 11.15 GFLOPS | **5.92x** |
+| 1024³ | 4.88 GFLOPS | 14.98 GFLOPS | **3.07x** |
+
+**关键洞察**: Shared Memory (Threadgroup Memory) 优化对大规模矩阵乘法至关重要
 
 ### 3. 并行计算
 
@@ -95,6 +106,7 @@
 
 ### 计算优化
 - ✅ 使用分块算法利用共享内存
+- ✅ **FP16 Tiled (Shared Memory) 达14.98 GFLOPS**, 3x快于Naive
 - ✅ FP16用于向量操作（3x加速）
 - ✅ 平衡计算与内存操作
 - ❌ 不要假设FP16在所有操作都快
@@ -124,7 +136,8 @@
 |------|------|------|
 | FP32 MatMul (朴素) | 1024³ | 4.30 GFLOPS |
 | FP32 MatMul (分块) | 1024³ | 9.11 GFLOPS |
-| FP16 MatMul | 1024³ | 4.92 GFLOPS |
+| **FP16 MatMul (Tiled)** | 1024³ | **14.98 GFLOPS** |
+| FP16 MatMul (朴素) | 1024³ | 4.88 GFLOPS |
 | FP16 向量加法 | 8M | 0.25 GOPS |
 
 ### 延迟特性

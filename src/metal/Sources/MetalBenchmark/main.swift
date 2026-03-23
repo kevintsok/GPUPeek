@@ -339,6 +339,46 @@ func testMatmulFP16vsFP32(device: MTLDevice, queue: MTLCommandQueue, library: MT
         let gflops_fp32 = flops_fp32 / elapsed_fp32 / 1e9
 
         print("Size \(M)x\(K)x\(N): FP16=\(String(format: "%.2f", gflops_fp16)) GFLOPS, FP32=\(String(format: "%.2f", gflops_fp32)) GFLOPS, Ratio=\(String(format: "%.2fx", gflops_fp16 / gflops_fp32))")
+
+        // FP16 Tiled (with shared memory)
+        guard let aBufferTiled = device.makeBuffer(length: fp16Size * MemoryLayout<UInt16>.size, options: .storageModeShared),
+              let bBufferTiled = device.makeBuffer(length: fp16Size * MemoryLayout<UInt16>.size, options: .storageModeShared),
+              let cBufferTiled = device.makeBuffer(length: Int(M * N) * MemoryLayout<UInt16>.size, options: .storageModeShared),
+              let sharedA = device.makeBuffer(length: 16 * 16 * MemoryLayout<UInt16>.size, options: .storageModeShared),
+              let sharedB = device.makeBuffer(length: 16 * 16 * MemoryLayout<UInt16>.size, options: .storageModeShared) else {
+            continue
+        }
+
+        let aT = aBufferTiled.contents().assumingMemoryBound(to: UInt16.self)
+        let bT = bBufferTiled.contents().assumingMemoryBound(to: UInt16.self)
+        for i in 0..<fp16Size { aT[i] = UInt16((i % 256) << 8) }
+        for i in 0..<fp16Size { bT[i] = UInt16(((i + 1) % 256) << 8) }
+
+        let start_tiled = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(pipeline_fp16_tiled)
+            encoder.setBuffer(aBufferTiled, offset: 0, index: 0)
+            encoder.setBuffer(bBufferTiled, offset: 0, index: 1)
+            encoder.setBuffer(cBufferTiled, offset: 0, index: 2)
+            encoder.setBytes(&m, length: MemoryLayout<UInt32>.size, index: 3)
+            encoder.setBytes(&k, length: MemoryLayout<UInt32>.size, index: 4)
+            encoder.setBytes(&n, length: MemoryLayout<UInt32>.size, index: 5)
+            encoder.setBuffer(sharedA, offset: 0, index: 6)
+            encoder.setBuffer(sharedB, offset: 0, index: 7)
+            encoder.dispatchThreads(MTLSize(width: Int(N), height: Int(M), depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let end_tiled = getTimeNanos()
+        let elapsed_tiled = getElapsedSeconds(start: start_tiled, end: end_tiled)
+        let flops_tiled = 2.0 * Double(M) * Double(K) * Double(N) * Double(iterations)
+        let gflops_tiled = flops_tiled / elapsed_tiled / 1e9
+
+        print("         FP16 Tiled (Shared Memory)=\(String(format: "%.2f", gflops_tiled)) GFLOPS, vs Naive=\(String(format: "%.2fx", gflops_tiled / gflops_fp16))")
     }
     print("")
 }
