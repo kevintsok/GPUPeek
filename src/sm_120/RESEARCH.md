@@ -1817,11 +1817,12 @@ ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek fp4
 
 ### 编译状态
 
-**正常工作的模块**:
+**正常工作的模块** (5/17):
 - ✅ memory - 内存研究
 - ✅ deep - 深度研究
 - ✅ advanced - 高级研究
 - ✅ fp4 - FP4/FP6 研究
+- ✅ multi_stream - 多流并发研究
 
 **禁用的模块** (编译错误):
 - ❌ ncu - NCU 分析 (编码问题)
