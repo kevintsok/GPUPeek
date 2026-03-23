@@ -618,6 +618,19 @@ ncu --set full \
 
 **注意**: 这是 WMMA (warp-level) 实测结果。TCGen05 (5th-gen Tensor Core) 需要不同的 API。
 
+**WMMA 测试文件** (2026-03-23 更新):
+- `wmma_test_kernel.cu`: WMMA FP16 kernels (m16n16k16)
+- `wmma_test_benchmarks.cu`: Benchmark runner with 256x256x256 and 512x512x512 tests
+- 命令: `./gpupeek.exe wmma`
+
+**参考文章** (Colfax Research):
+- CUTLASS Tutorial: TMEM GEMM - Blackwell TMEM (256KB/SM) for Tensor Cores
+- CUTLASS Tutorial: Block Scaling - TCGen05 hardware block scaling support
+- CUTLASS Tutorial: Sub-byte GEMM - FP4/FP6 on Blackwell
+- CUTLASS Tutorial: Cluster GEMM - Thread block clusters for collaborative MMA
+- DeepSeek FP8 Training - FP8 mixed precision training strategies
+- FlashAttention-4 - Advanced attention kernels for B200
+
 ### 11.7 MMA 优化建议
 
 1. **Shape 选择**: m16n8k8 通常是 FP16/BF16 的最佳平衡
