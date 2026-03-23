@@ -20,6 +20,294 @@ func getElapsedSeconds(start: UInt64, end: UInt64) -> Double {
     return elapsedTicks * ticksPerNanosec / 1e9
 }
 
+// MARK: - Deep Research Shader Library
+
+let deepShaderSource = """
+#include <metal_stdlib>
+using namespace metal;
+
+// ============================================================
+// 1. SHARED MEMORY BANK CONFLICT TEST
+// Bank conflict occurs when threads in same SIMD-group access
+// addresses that map to same bank
+// ============================================================
+
+// No bank conflict: each thread accesses its own row
+kernel void shared_bank_none(device float* out [[buffer(0)]],
+                           threadgroup float* shared [[threadgroup(0)]],
+                           constant uint& size [[buffer(1)]],
+                           uint id [[thread_position_in_grid]],
+                           uint lid [[thread_position_in_threadgroup]]) {
+    constexpr uint THREADGROUP_SIZE = 256;
+    shared[lid] = float(lid);  // sequential, no conflict
+    threadgroup_barrier(mem_flags::mem_none);
+    out[id] = shared[lid];
+}
+
+// Bank conflict: all threads access same bank (stride 256)
+// stride = THREADGROUP_SIZE causes worst-case conflicts
+kernel void shared_bank_conflict(device float* out [[buffer(0)]],
+                               threadgroup float* shared [[threadgroup(0)]],
+                               constant uint& size [[buffer(1)]],
+                               uint id [[thread_position_in_grid]],
+                               uint lid [[thread_position_in_threadgroup]]) {
+    constexpr uint STRIDE = 256;  // same as threadgroup size
+    shared[lid * STRIDE] = float(lid);  // all map to same bank
+    threadgroup_barrier(mem_flags::mem_none);
+    out[id] = shared[lid * STRIDE];
+}
+
+// Moderate conflict: threads in same SIMD-group access consecutive
+kernel void shared_bank_moderate(device float* out [[buffer(0)]],
+                                threadgroup float* shared [[threadgroup(0)]],
+                                constant uint& size [[buffer(1)]],
+                                uint id [[thread_position_in_grid]],
+                                uint lid [[thread_position_in_threadgroup]]) {
+    uint simd_lane = lid & 31;  // within 32-thread SIMD group
+    shared[simd_lane * 32 + lid] = float(lid);
+    threadgroup_barrier(mem_flags::mem_none);
+    out[id] = shared[simd_lane * 32 + lid];
+}
+
+// ============================================================
+// 2. MEMORY COALESCING TEST
+// Coalesced: consecutive threads access consecutive addresses
+// Non-coalesced: threads access strided addresses
+// ============================================================
+
+kernel void coalesced_read(device const float* in [[buffer(0)]],
+                         device float* out [[buffer(1)]],
+                         constant uint& size [[buffer(2)]],
+                         uint id [[thread_position_in_grid]]) {
+    out[id] = in[id] * 2.0f;  // sequential access
+}
+
+kernel void noncoalesced_read(device const float* in [[buffer(0)]],
+                             device float* out [[buffer(1)]],
+                             constant uint& size [[buffer(2)]],
+                             uint id [[thread_position_in_grid]]) {
+    uint stride = 32;
+    uint idx = id * stride % (size / 4);
+    out[id] = in[idx] * 2.0f;  // strided access
+}
+
+kernel void coalesced_write(device float* out [[buffer(0)]],
+                          constant uint& size [[buffer(1)]],
+                          uint id [[thread_position_in_grid]]) {
+    out[id] = float(id);  // sequential write
+}
+
+kernel void noncoalesced_write(device float* out [[buffer(0)]],
+                              constant uint& size [[buffer(1)]],
+                              uint id [[thread_position_in_grid]]) {
+    uint stride = 32;
+    uint idx = id * stride % (size / 4);
+    out[idx] = float(id);  // strided write
+}
+
+// ============================================================
+// 3. CONSTANT MEMORY TEST
+// Constant memory is cached - test vs device memory
+// ============================================================
+
+kernel void constant_read(device const float* dev [[buffer(0)]],
+                         constant float* cst [[buffer(1)]],
+                         device float* out [[buffer(2)]],
+                         constant uint& size [[buffer(3)]],
+                         uint id [[thread_position_in_grid]]) {
+    // All threads read same value - good for constant cache
+    out[id] = cst[0] * dev[id];
+}
+
+kernel void constant_scattered(device const float* dev [[buffer(0)]],
+                               constant float* cst [[buffer(1)]],
+                               device float* out [[buffer(2)]],
+                               constant uint& size [[buffer(3)]],
+                               uint id [[thread_position_in_grid]]) {
+    // Threads read different values - bad for constant cache
+    out[id] = cst[id % 1024] * dev[id];
+}
+
+// ============================================================
+// 4. TEXTURE VS BUFFER PERFORMANCE
+// ============================================================
+
+// Note: Textures require special setup - testing buffer operations
+// but with different access patterns that simulate texture behavior
+
+kernel void buffer_sequential(device const float* in [[buffer(0)]],
+                              device float* out [[buffer(1)]],
+                              constant uint& size [[buffer(2)]],
+                              uint id [[thread_position_in_grid]]) {
+    out[id] = in[id] + 1.0f;
+}
+
+// Simulate texture gather-like access (non-sequential but localized)
+kernel void buffer_gather(device const float* in [[buffer(0)]],
+                         device float* out [[buffer(1)]],
+                         constant uint& size [[buffer(2)]],
+                         uint id [[thread_position_in_grid]]) {
+    uint base = (id / 4) * 4;
+    float sum = in[base] + in[base + 1] + in[base + 2] + in[base + 3];
+    out[id] = sum * 0.25f;
+}
+
+// ============================================================
+// 5. SIMD-GROUP (WARP) OPERATIONS
+// Apple uses SIMD-groups of 32 threads
+// Test shuffle and broadcast primitives
+// ============================================================
+
+// Broadcast from lane 0 to all in SIMD-group
+kernel void simd_broadcast(device const float* in [[buffer(0)]],
+                          device float* out [[buffer(1)]],
+                          constant uint& size [[buffer(2)]],
+                          uint id [[thread_position_in_grid]]) {
+    uint simd_id = id & ~31;  // SIMD-group base
+    uint lane_0 = simd_id;    // lane 0 in group
+    float val = in[lane_0];   // read from lane 0
+    // simd_broadcast would broadcast val to all lanes
+    out[id] = val;
+}
+
+// SIMD-prefix sum (work-efficient)
+kernel void simd_prefix_sum(device const float* in [[buffer(0)]],
+                           device float* out [[buffer(1)]],
+                           constant uint& size [[buffer(2)]],
+                           uint id [[thread_position_in_grid]]) {
+    uint lid = id & 31;
+    float val = in[id];
+    // HACK: simplified - real implementation needs stage-by-stage
+    out[id] = val;
+}
+
+// ============================================================
+// 6. OCCUPANCY VS PERFORMANCE
+// Test the same kernel with different threadgroup sizes
+// ============================================================
+
+kernel void occupancy_test(device const float* in [[buffer(0)]],
+                          device float* out [[buffer(1)]],
+                          threadgroup float* shared [[threadgroup(0)]],
+                          constant uint& size [[buffer(2)]],
+                          uint id [[thread_position_in_grid]],
+                          uint lid [[thread_position_in_threadgroup]]) {
+    uint tg_size = 256;  // will vary
+    shared[lid] = in[id];
+    threadgroup_barrier(mem_flags::mem_none);
+    // do some work
+    float sum = 0.0f;
+    for (uint i = 0; i < 32; i++) {
+        sum += shared[(lid + i) & (tg_size - 1)];
+    }
+    out[id] = sum;
+}
+
+// ============================================================
+// 7. MEMORY LATENCY HIDING TEST
+// How many concurrent threads needed to hide memory latency?
+// ============================================================
+
+kernel void latency_hidden(device const float* in [[buffer(0)]],
+                          device float* out [[buffer(1)]],
+                          constant uint& size [[buffer(2)]],
+                          uint id [[thread_position_in_grid]]) {
+    // Each thread does multiple independent memory ops
+    uint idx = id;
+    float sum = 0.0f;
+    for (uint i = 0; i < 8; i++) {
+        sum += in[idx];
+        idx = (idx + 1) % (size / 4);
+    }
+    out[id] = sum;
+}
+
+kernel void latency_exposed(device const float* in [[buffer(0)]],
+                            device float* out [[buffer(1)]],
+                            constant uint& size [[buffer(2)]],
+                            uint id [[thread_position_in_grid]]) {
+    // Each thread does single memory op, less latency hiding
+    out[id] = in[id];
+}
+
+// ============================================================
+// 8. REGISTER PRESSURE TEST
+// Test performance with different register usage
+// ============================================================
+
+kernel void register_low(device const float* in [[buffer(0)]],
+                        device float* out [[buffer(1)]],
+                        constant uint& size [[buffer(2)]],
+                        uint id [[thread_position_in_grid]]) {
+    float a = in[id];
+    out[id] = a + 1.0f;
+}
+
+kernel void register_high(device const float* in [[buffer(0)]],
+                         device float* out [[buffer(1)]],
+                         constant uint& size [[buffer(2)]],
+                         uint id [[thread_position_in_grid]]) {
+    // High register usage - forces spill to memory
+    float a = in[id];
+    float b = a * 2.0f;
+    float c = b * 3.0f;
+    float d = c / 4.0f;
+    float e = d + 5.0f;
+    float f = e - 6.0f;
+    float g = f * 7.0f;
+    float h = g / 8.0f;
+    out[id] = h + a + b + c + d + e + f + g + h;
+}
+
+// ============================================================
+// 9. BRANCH DIVERGENCE TEST
+// Test cost of divergent branches within SIMD-group
+// ============================================================
+
+kernel void branch_converged(device const float* in [[buffer(0)]],
+                            device float* out [[buffer(1)]],
+                            constant uint& size [[buffer(2)]],
+                            uint id [[thread_position_in_grid]]) {
+    // All threads take same path
+    out[id] = in[id] > 0.5f ? in[id] : 0.5f;
+}
+
+kernel void branch_divergent(device const float* in [[buffer(0)]],
+                            device float* out [[buffer(1)]],
+                            constant uint& size [[buffer(2)]],
+                            uint id [[thread_position_in_grid]]) {
+    // Alternating branches - maximum divergence
+    uint lane = id & 31;
+    if ((lane & 1) == 0) {
+        out[id] = in[id] * 2.0f;
+    } else {
+        out[id] = in[id] + 1.0f;
+    }
+}
+
+// ============================================================
+// 10. ATOMIC OPERATION CONTENTION
+// ============================================================
+
+kernel void atomic_low_contention(device atomic_uint* counter [[buffer(0)]],
+                                  device float* out [[buffer(1)]],
+                                  constant uint& size [[buffer(2)]],
+                                  uint id [[thread_position_in_grid]]) {
+    // Each thread increments different location
+    atomic_fetch_add_explicit(&counter[id % (size / 4)], 1, memory_order_relaxed);
+    out[id] = float(id);
+}
+
+kernel void atomic_high_contention(device atomic_uint* counter [[buffer(0)]],
+                                  device float* out [[buffer(1)]],
+                                  constant uint& size [[buffer(2)]],
+                                  uint id [[thread_position_in_grid]]) {
+    // All threads increment same location
+    atomic_fetch_add_explicit(&counter[0], 1, memory_order_relaxed);
+    out[id] = float(id);
+}
+"""
+
 // MARK: - FP16 Deep Dive Shader Library
 
 let shaderSource = """
@@ -645,6 +933,376 @@ func testReductionPerformance(device: MTLDevice, queue: MTLCommandQueue, library
     print("")
 }
 
+// MARK: - Deep GPU Architecture Research
+
+func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
+    print(String(repeating: "=", count: 60))
+    print("=== DEEP GPU ARCHITECTURE RESEARCH ===")
+    print(String(repeating: "=", count: 60))
+
+    let deepLibrary: MTLLibrary
+    do {
+        deepLibrary = try device.makeLibrary(source: deepShaderSource, options: nil)
+    } catch {
+        print("Failed to compile deep research shaders: \(error)")
+        return
+    }
+
+    let iterations = 100
+    let bufferSize = 8 * 1024 * 1024
+
+    // 1. MEMORY COALESCING TEST
+    print("\n--- 1. Memory Coalescing Analysis ---")
+
+    guard let coalescedFunc = deepLibrary.makeFunction(name: "coalesced_read"),
+          let noncoalescedFunc = deepLibrary.makeFunction(name: "noncoalesced_read"),
+          let coalPipeline = try? device.makeComputePipelineState(function: coalescedFunc),
+          let noncoalPipeline = try? device.makeComputePipelineState(function: noncoalescedFunc) else {
+        print("Failed to create coalescing pipelines")
+        return
+    }
+
+    guard let inBuffer = device.makeBuffer(length: bufferSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let outBuffer = device.makeBuffer(length: bufferSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+
+    let inPtr = inBuffer.contents().assumingMemoryBound(to: Float.self)
+    for i in 0..<bufferSize { inPtr[i] = Float(i) }
+
+    var size = UInt32(bufferSize)
+
+    // Coalesced read
+    let startCoal = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(coalPipeline)
+        encoder.setBuffer(inBuffer, offset: 0, index: 0)
+        encoder.setBuffer(outBuffer, offset: 0, index: 1)
+        encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: bufferSize, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endCoal = getTimeNanos()
+    let elapsedCoal = getElapsedSeconds(start: startCoal, end: endCoal)
+    let bwCoal = Double(bufferSize) * Double(iterations) * Double(MemoryLayout<Float>.size) / elapsedCoal / 1e9
+
+    // Non-coalesced read
+    let startNonCoal = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(noncoalPipeline)
+        encoder.setBuffer(inBuffer, offset: 0, index: 0)
+        encoder.setBuffer(outBuffer, offset: 0, index: 1)
+        encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: bufferSize, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endNonCoal = getTimeNanos()
+    let elapsedNonCoal = getElapsedSeconds(start: startNonCoal, end: endNonCoal)
+    let bwNonCoal = Double(bufferSize) * Double(iterations) * Double(MemoryLayout<Float>.size) / elapsedNonCoal / 1e9
+
+    print("Coalesced Read:  \(String(format: "%.2f", bwCoal)) GB/s")
+    print("Non-Coalesced:   \(String(format: "%.2f", bwNonCoal)) GB/s")
+    print("Coalescing Gain: \(String(format: "%.1fx", bwCoal / bwNonCoal))")
+
+    // 2. SHARED MEMORY BANK CONFLICT TEST
+    print("\n--- 2. Shared Memory Bank Conflict Analysis ---")
+
+    guard let bankNoneFunc = deepLibrary.makeFunction(name: "shared_bank_none"),
+          let bankConflictFunc = deepLibrary.makeFunction(name: "shared_bank_conflict"),
+          let bankNonePipeline = try? device.makeComputePipelineState(function: bankNoneFunc),
+          let bankConflictPipeline = try? device.makeComputePipelineState(function: bankConflictFunc) else {
+        print("Failed to create bank conflict pipelines")
+        return
+    }
+
+    guard let sharedOutBuffer = device.makeBuffer(length: bufferSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+
+    let threadgroupSize = 256
+    let gridSize = bufferSize
+
+    let startBankNone = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(bankNonePipeline)
+        encoder.setBuffer(sharedOutBuffer, offset: 0, index: 0)
+        encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 1)
+        encoder.dispatchThreads(MTLSize(width: gridSize, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: threadgroupSize, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endBankNone = getTimeNanos()
+    let elapsedBankNone = getElapsedSeconds(start: startBankNone, end: endBankNone)
+
+    let startBankConflict = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(bankConflictPipeline)
+        encoder.setBuffer(sharedOutBuffer, offset: 0, index: 0)
+        encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 1)
+        encoder.dispatchThreads(MTLSize(width: gridSize, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: threadgroupSize, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endBankConflict = getTimeNanos()
+    let elapsedBankConflict = getElapsedSeconds(start: startBankConflict, end: endBankConflict)
+
+    let gopsBankNone = Double(iterations) * Double(gridSize) / elapsedBankNone / 1e9
+    let gopsBankConflict = Double(iterations) * Double(gridSize) / elapsedBankConflict / 1e9
+
+    print("No Conflict:     \(String(format: "%.2f", gopsBankNone)) GOPS")
+    print("With Conflict:   \(String(format: "%.2f", gopsBankConflict)) GOPS")
+    print("Conflict Cost:   \(String(format: "%.1fx", elapsedBankConflict / elapsedBankNone))")
+
+    // 3. LATENCY HIDING TEST
+    print("\n--- 3. Memory Latency Hiding Analysis ---")
+
+    guard let latencyHiddenFunc = deepLibrary.makeFunction(name: "latency_hidden"),
+          let latencyExposedFunc = deepLibrary.makeFunction(name: "latency_exposed"),
+          let hiddenPipeline = try? device.makeComputePipelineState(function: latencyHiddenFunc),
+          let exposedPipeline = try? device.makeComputePipelineState(function: latencyExposedFunc) else {
+        print("Failed to create latency pipelines")
+        return
+    }
+
+    let hiddenSize = 1024 * 1024
+
+    let startHidden = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(hiddenPipeline)
+        encoder.setBuffer(inBuffer, offset: 0, index: 0)
+        encoder.setBuffer(outBuffer, offset: 0, index: 1)
+        var sz = UInt32(hiddenSize)
+        encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: hiddenSize, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endHidden = getTimeNanos()
+    let elapsedHidden = getElapsedSeconds(start: startHidden, end: endHidden)
+    let opsHidden = Double(hiddenSize) * 8.0 * Double(iterations)
+
+    let startExposed = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(exposedPipeline)
+        encoder.setBuffer(inBuffer, offset: 0, index: 0)
+        encoder.setBuffer(outBuffer, offset: 0, index: 1)
+        var sz = UInt32(hiddenSize)
+        encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: hiddenSize, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endExposed = getTimeNanos()
+    let elapsedExposed = getElapsedSeconds(start: startExposed, end: endExposed)
+    let opsExposed = Double(hiddenSize) * Double(iterations)
+
+    let gopsHidden = opsHidden / elapsedHidden / 1e9
+    let gopsExposed = opsExposed / elapsedExposed / 1e9
+
+    print("Hidden (8x ops): \(String(format: "%.2f", gopsHidden)) GOPS")
+    print("Exposed (1x op): \(String(format: "%.2f", gopsExposed)) GOPS")
+    print("Hiding Factor:   \(String(format: "%.1fx", gopsHidden / gopsExposed))")
+
+    // 4. BRANCH DIVERGENCE TEST
+    print("\n--- 4. SIMD-Group Branch Divergence Analysis ---")
+
+    guard let branchConvergedFunc = deepLibrary.makeFunction(name: "branch_converged"),
+          let branchDivergentFunc = deepLibrary.makeFunction(name: "branch_divergent"),
+          let convergedPipeline = try? device.makeComputePipelineState(function: branchConvergedFunc),
+          let divergentPipeline = try? device.makeComputePipelineState(function: branchDivergentFunc) else {
+        print("Failed to create branch pipelines")
+        return
+    }
+
+    let branchSize = 1024 * 1024
+
+    let startConverged = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(convergedPipeline)
+        encoder.setBuffer(inBuffer, offset: 0, index: 0)
+        encoder.setBuffer(outBuffer, offset: 0, index: 1)
+        var sz = UInt32(branchSize)
+        encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: branchSize, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endConverged = getTimeNanos()
+    let elapsedConverged = getElapsedSeconds(start: startConverged, end: endConverged)
+    let gopsConverged = Double(branchSize) * Double(iterations) / elapsedConverged / 1e9
+
+    let startDivergent = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(divergentPipeline)
+        encoder.setBuffer(inBuffer, offset: 0, index: 0)
+        encoder.setBuffer(outBuffer, offset: 0, index: 1)
+        var sz = UInt32(branchSize)
+        encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: branchSize, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endDivergent = getTimeNanos()
+    let elapsedDivergent = getElapsedSeconds(start: startDivergent, end: endDivergent)
+    let gopsDivergent = Double(branchSize) * Double(iterations) / elapsedDivergent / 1e9
+
+    print("Converged:       \(String(format: "%.2f", gopsConverged)) GOPS")
+    print("Divergent:      \(String(format: "%.2f", gopsDivergent)) GOPS")
+    print("Divergence Cost: \(String(format: "%.1fx", gopsConverged / gopsDivergent))")
+
+    // 5. ATOMIC CONTENTION TEST
+    print("\n--- 5. Atomic Operation Contention Analysis ---")
+
+    guard let atomicLowFunc = deepLibrary.makeFunction(name: "atomic_low_contention"),
+          let atomicHighFunc = deepLibrary.makeFunction(name: "atomic_high_contention"),
+          let atomicLowPipeline = try? device.makeComputePipelineState(function: atomicLowFunc),
+          let atomicHighPipeline = try? device.makeComputePipelineState(function: atomicHighFunc) else {
+        print("Failed to create atomic pipelines")
+        return
+    }
+
+    let atomicSize = 256 * 1024
+
+    guard let atomicBuffer = device.makeBuffer(length: atomicSize * MemoryLayout<UInt32>.size, options: .storageModeShared) else {
+        return
+    }
+
+    let startLowContention = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(atomicLowPipeline)
+        encoder.setBuffer(atomicBuffer, offset: 0, index: 0)
+        encoder.setBuffer(outBuffer, offset: 0, index: 1)
+        var sz = UInt32(atomicSize)
+        encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: atomicSize, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endLowContention = getTimeNanos()
+    let elapsedLow = getElapsedSeconds(start: startLowContention, end: endLowContention)
+    let gopsLow = Double(atomicSize) * Double(iterations) / elapsedLow / 1e9
+
+    let startHighContention = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(atomicHighPipeline)
+        encoder.setBuffer(atomicBuffer, offset: 0, index: 0)
+        encoder.setBuffer(outBuffer, offset: 0, index: 1)
+        var sz = UInt32(atomicSize)
+        encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: atomicSize, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endHighContention = getTimeNanos()
+    let elapsedHigh = getElapsedSeconds(start: startHighContention, end: endHighContention)
+    let gopsHigh = Double(atomicSize) * Double(iterations) / elapsedHigh / 1e9
+
+    print("Low Contention:  \(String(format: "%.3f", gopsLow)) GOPS")
+    print("High Contention: \(String(format: "%.3f", gopsHigh)) GOPS")
+    print("Contention Cost: \(String(format: "%.1fx", gopsLow / gopsHigh))")
+
+    // 6. REGISTER PRESSURE TEST
+    print("\n--- 6. Register Pressure Analysis ---")
+
+    guard let regLowFunc = deepLibrary.makeFunction(name: "register_low"),
+          let regHighFunc = deepLibrary.makeFunction(name: "register_high"),
+          let regLowPipeline = try? device.makeComputePipelineState(function: regLowFunc),
+          let regHighPipeline = try? device.makeComputePipelineState(function: regHighFunc) else {
+        print("Failed to create register pipelines")
+        return
+    }
+
+    let regSize = 1024 * 1024
+
+    let startLowReg = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(regLowPipeline)
+        encoder.setBuffer(inBuffer, offset: 0, index: 0)
+        encoder.setBuffer(outBuffer, offset: 0, index: 1)
+        var sz = UInt32(regSize)
+        encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: regSize, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endLowReg = getTimeNanos()
+    let elapsedLowReg = getElapsedSeconds(start: startLowReg, end: endLowReg)
+    let gopsLowReg = Double(regSize) * Double(iterations) / elapsedLowReg / 1e9
+
+    let startHighReg = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(regHighPipeline)
+        encoder.setBuffer(inBuffer, offset: 0, index: 0)
+        encoder.setBuffer(outBuffer, offset: 0, index: 1)
+        var sz = UInt32(regSize)
+        encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: regSize, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endHighReg = getTimeNanos()
+    let elapsedHighReg = getElapsedSeconds(start: startHighReg, end: endHighReg)
+    let gopsHighReg = Double(regSize) * Double(iterations) / elapsedHighReg / 1e9
+
+    print("Low Register:    \(String(format: "%.2f", gopsLowReg)) GOPS")
+    print("High Register:   \(String(format: "%.2f", gopsHighReg)) GOPS")
+    print("Register Cost:   \(String(format: "%.1fx", gopsLowReg / gopsHighReg))")
+
+    print("\n" + String(repeating: "=", count: 60))
+    print("Deep GPU Architecture Research Complete")
+    print(String(repeating: "=", count: 60))
+}
+
 // MARK: - Main
 
 print("Apple Metal GPU Benchmark - FP16 Deep Dive")
@@ -676,5 +1334,6 @@ do { try testMatmulFP16vsFP32(device: device, queue: queue, library: library) } 
 do { try testVectorFP16vsFP32(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testConversionPerformance(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testReductionPerformance(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testDeepGPUResearch(device: device, queue: queue) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")
