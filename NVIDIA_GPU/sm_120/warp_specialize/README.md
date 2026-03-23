@@ -7,9 +7,9 @@ Warp Specialization 与 Producer-Consumer 模式研究。
 ## 独立编译和运行
 
 ```bash
-cd src/sm_120/warp_specialize
+cd NVIDIA_GPU/sm_120/warp_specialize
 mkdir -p build && cd build
-cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
+cmake .. -DCMAKE_CUDA_ARCHITECTURES=120
 cmake --build . --config Release
 ./gpupeek_warp_specialize [元素数量]
 ```
