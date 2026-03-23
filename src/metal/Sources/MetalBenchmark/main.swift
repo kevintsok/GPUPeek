@@ -480,6 +480,171 @@ func testVectorFP16vsFP32(device: MTLDevice, queue: MTLCommandQueue, library: MT
     print("")
 }
 
+// MARK: - Test: FP16/FP32 Conversion Performance
+
+func testConversionPerformance(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("=== FP16/FP32 Conversion Performance ===")
+
+    guard let func_f16_to_f32 = library.makeFunction(name: "convert_fp16_to_fp32"),
+          let func_f32_to_f16 = library.makeFunction(name: "convert_fp32_to_fp16"),
+          let pipeline_f16_to_f32 = try? device.makeComputePipelineState(function: func_f16_to_f32),
+          let pipeline_f32_to_f16 = try? device.makeComputePipelineState(function: func_f32_to_f16) else {
+        print("Failed to create conversion pipelines")
+        return
+    }
+
+    let bufferSize = 32 * 1024 * 1024
+    let iterations = 50
+
+    // FP16 -> FP32 conversion
+    guard let srcBufferF16 = device.makeBuffer(length: bufferSize * MemoryLayout<UInt16>.size, options: .storageModeShared),
+          let dstBufferF32 = device.makeBuffer(length: bufferSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+
+    let srcF16 = srcBufferF16.contents().assumingMemoryBound(to: UInt16.self)
+    for i in 0..<(bufferSize / 2) {
+        srcF16[i] = UInt16((i % 256) << 8)
+    }
+
+    var size = UInt32(bufferSize / 2)
+
+    let start_f16_to_f32 = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(pipeline_f16_to_f32)
+        encoder.setBuffer(srcBufferF16, offset: 0, index: 0)
+        encoder.setBuffer(dstBufferF32, offset: 0, index: 1)
+        encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: bufferSize / 2, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let end_f16_to_f32 = getTimeNanos()
+    let elapsed_f16_to_f32 = getElapsedSeconds(start: start_f16_to_f32, end: end_f16_to_f32)
+    let ops_f16_to_f32 = Double(bufferSize / 2 * iterations)
+    let gops_f16_to_f32 = ops_f16_to_f32 / elapsed_f16_to_f32 / 1e9
+
+    // FP32 -> FP16 conversion
+    guard let srcBufferF32 = device.makeBuffer(length: bufferSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let dstBufferF16 = device.makeBuffer(length: bufferSize * MemoryLayout<UInt16>.size, options: .storageModeShared) else {
+        return
+    }
+
+    let srcF32 = srcBufferF32.contents().assumingMemoryBound(to: Float.self)
+    for i in 0..<(bufferSize / 4) {
+        srcF32[i] = Float(i % 256) / 256.0
+    }
+
+    let start_f32_to_f16 = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(pipeline_f32_to_f16)
+        encoder.setBuffer(srcBufferF32, offset: 0, index: 0)
+        encoder.setBuffer(dstBufferF16, offset: 0, index: 1)
+        encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: bufferSize / 4, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let end_f32_to_f16 = getTimeNanos()
+    let elapsed_f32_to_f16 = getElapsedSeconds(start: start_f32_to_f16, end: end_f32_to_f16)
+    let ops_f32_to_f16 = Double(bufferSize / 4 * iterations)
+    let gops_f32_to_f16 = ops_f32_to_f16 / elapsed_f32_to_f16 / 1e9
+
+    print("FP16 to FP32: \(String(format: "%.2f", gops_f16_to_f32)) GOPS", terminator: "")
+    print("  |  FP32 to FP16: \(String(format: "%.2f", gops_f32_to_f16)) GOPS")
+    print("")
+}
+
+// MARK: - Test: Reduction Performance
+
+func testReductionPerformance(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("=== Threadgroup Reduction Performance ===")
+
+    guard let func_fp16 = library.makeFunction(name: "reduce_fp16"),
+          let func_fp32 = library.makeFunction(name: "reduce_fp32"),
+          let pipeline_fp16 = try? device.makeComputePipelineState(function: func_fp16),
+          let pipeline_fp32 = try? device.makeComputePipelineState(function: func_fp32) else {
+        print("Failed to create reduction pipelines")
+        return
+    }
+
+    let sizes: [UInt32] = [1024 * 1024, 4 * 1024 * 1024, 16 * 1024 * 1024]
+    let iterations = 100
+
+    for size in sizes {
+        // FP16 Reduction
+        guard let srcBufferF16 = device.makeBuffer(length: Int(size) * MemoryLayout<UInt16>.size, options: .storageModeShared),
+              let dstBufferF16 = device.makeBuffer(length: 256 * MemoryLayout<UInt16>.size, options: .storageModeShared) else {
+            continue
+        }
+
+        let srcF16 = srcBufferF16.contents().assumingMemoryBound(to: UInt16.self)
+        for i in 0..<Int(size) {
+            srcF16[i] = UInt16((i % 256) << 8)
+        }
+
+        var sizeVal = size
+
+        let start_fp16 = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(pipeline_fp16)
+            encoder.setBuffer(srcBufferF16, offset: 0, index: 0)
+            encoder.setBuffer(dstBufferF16, offset: 0, index: 1)
+            encoder.setBytes(&sizeVal, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: Int(size), height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let end_fp16 = getTimeNanos()
+        let elapsed_fp16 = getElapsedSeconds(start: start_fp16, end: end_fp16)
+        let gops_fp16 = Double(size) * Double(iterations) / elapsed_fp16 / 1e9
+
+        // FP32 Reduction
+        guard let srcBufferF32 = device.makeBuffer(length: Int(size) * MemoryLayout<Float>.size, options: .storageModeShared),
+              let dstBufferF32 = device.makeBuffer(length: 256 * MemoryLayout<Float>.size, options: .storageModeShared) else {
+            continue
+        }
+
+        let srcF32 = srcBufferF32.contents().assumingMemoryBound(to: Float.self)
+        for i in 0..<Int(size) {
+            srcF32[i] = Float(i % 256) / 256.0
+        }
+
+        let start_fp32 = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(pipeline_fp32)
+            encoder.setBuffer(srcBufferF32, offset: 0, index: 0)
+            encoder.setBuffer(dstBufferF32, offset: 0, index: 1)
+            encoder.setBytes(&sizeVal, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: Int(size), height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let end_fp32 = getTimeNanos()
+        let elapsed_fp32 = getElapsedSeconds(start: start_fp32, end: end_fp32)
+        let gops_fp32 = Double(size) * Double(iterations) / elapsed_fp32 / 1e9
+
+        print("Size \(size): FP16=\(String(format: "%.3f", gops_fp16)) GOPS, FP32=\(String(format: "%.3f", gops_fp32)) GOPS, Ratio=\(String(format: "%.2fx", gops_fp16 / gops_fp32))")
+    }
+    print("")
+}
+
 // MARK: - Main
 
 print("Apple Metal GPU Benchmark - FP16 Deep Dive")
@@ -509,5 +674,7 @@ print("Shader compilation: SUCCESS\n")
 
 do { try testMatmulFP16vsFP32(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testVectorFP16vsFP32(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testConversionPerformance(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testReductionPerformance(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")

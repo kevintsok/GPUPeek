@@ -30,6 +30,8 @@
 | FP16 MatMul (朴素) | 4.88 GFLOPS | 内存受限 |
 | FP16 向量操作 | 0.25 GOPS | **3x快于FP32** |
 | FMA | 0.22 GFLOPS | 融合乘加 |
+| FP16/FP32 Conversion | 0.22-0.26 GOPS | 转换开销较小 |
+| FP16 Reduction | 0.10-0.28 GOPS | 1.30x快于FP32 (中等规模) |
 
 #### FP16 Tiled Matrix Multiply (Shared Memory)
 
@@ -139,6 +141,8 @@
 | **FP16 MatMul (Tiled)** | 1024³ | **14.98 GFLOPS** |
 | FP16 MatMul (朴素) | 1024³ | 4.88 GFLOPS |
 | FP16 向量加法 | 8M | 0.25 GOPS |
+| FP16/FP32 转换 | 32M | 0.22-0.26 GOPS |
+| FP16 Reduction | 16M | 0.28 GOPS |
 
 ### 延迟特性
 
