@@ -640,6 +640,100 @@ ncu --set full \
 5. **Weight-only Quantization**: TCGen05.mma.ws 支持 INT8 权重 + FP16 激活
 6. **内存布局**: 使用行主序或列主序匹配 ldmatrix/stmatrix 要求
 
+## 11.8 TCGen05/UMMA API 研究 (2026-03-23)
+
+### WMMA vs TCGen05 关键区别
+
+| 特性 | WMMA (Legacy) | TCGen05/UMMA (Blackwell) |
+|------|---------------|---------------------------|
+| API | `nvcuda::wmma` | PTX inline asm |
+| 内存 | 寄存器 | **TMEM (256KB/SM)** |
+| Shape | m16n16k16 | m64nNk16, m16n8k32 等 |
+| 精度 | FP16/BF16/TF32 | **FP4/FP6/FP8** + Block Scale |
+| Block Scaling | 不支持 | **硬件支持** |
+| Clusters | 不支持 | 2-CTA MMA |
+| 复杂度 | 简单 | 高 (需要CUTLASS) |
+
+### TMEM (Tensor Memory)
+
+- **256KB per SM** on-chip memory for Tensor Cores
+- 组织: 512 columns × 128 rows of 32-bit cells
+- D (累加器) 必须放在TMEM
+- A 操作数可以选择从TMEM或SMEM加载
+
+### TCGen05 MMA Shapes
+
+| 数据类型 | Shape | 备注 |
+|----------|-------|------|
+| TF32 | m64nNk8 | N = K/16 |
+| FP16/BF16 | m64nNk16 | 基本形状 |
+| INT8 | m64nNk32 | 整数运算 |
+| **FP4/FP6** | **m16n8k32** | **不同的shape!** |
+
+### 支持的低精度格式
+
+| 格式 | 位数 | 用途 |
+|------|------|------|
+| FP4 (E2M1) | 2-bit exp, 1-bit mantissa | LLM量化 |
+| FP6 (E2M3) | 2-bit exp, 3-bit mantissa | 平衡精度/大小 |
+| FP6 (E3M2) | 3-bit exp, 2-bit mantissa | 替代FP6 |
+| FP8 (E4M3) | 4-bit exp, 3-bit mantissa | Hopper标准 |
+| FP8 (E5M2) | 5-bit exp, 2-bit mantissa | 宽范围 |
+
+### PTX 指令示例
+
+```asm
+// TCGen05 TF32 MMA (A和B都从SMEM)
+tcgen05.mma.cta_group::1.kind::tf32 [%tmem_d], %desc_a, %desc_b, ...
+
+// SM120 Native MMA (m16n8k32, 寄存器-based)
+mma.sync.aligned.kind::f8f6f4.m16n8k32.row.col.f32.e2m1.e2m1.f32
+  {%d0, %d1, %d2, %d3},  // D registers (float)
+  {%a0, %a1, %a2, %a3},  // A registers (uint32_t, packed FP4)
+  {%b0, %b1},            // B registers (uint32_t, packed FP4)
+  {%c0, %c1, %c2, %c3}; // C registers (accumulator)
+```
+
+### CUTLASS 示例 (RTX 50系列)
+
+位置: `ref/cutlass/examples/79_blackwell_geforce_gemm/`
+
+| 文件 | 描述 |
+|------|------|
+| 79a_*_nvfp4_bf16_gemm.cu | FP4 + BF16 GEMM |
+| 79b_*_nvfp4_nvfp4_gemm.cu | FP4 x FP4 GEMM |
+| 79c_*_mixed_mxfp8_mxfp6_bf16_gemm.cu | 8/6位混合精度 |
+| 79d_*_nvfp4_grouped_gemm.cu | 分组GEMM |
+
+### TCGen05 研究命令
+
+```bash
+# TCGen05 API 信息 (文档模式)
+./gpupeek.exe tcgen05
+
+# 运行CUTLASS示例 (需要先编译CUTLASS)
+cd ref/cutlass && mkdir build && cd build
+cmake ../.. -DCUTLASS_NVCC_ARCHS=120
+make -j16
+./examples/79_blackwell_geforce_gemm/79a_* --m=2048 --n=2048 --k=2048
+
+# NCU Profiling CUTLASS
+ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./CUTLASS_binary
+```
+
+### TCGen05 研究文件
+
+- `tcgen05_research_kernel.cu`: TCGen05 API结构和类型定义
+- `tcgen05_research_benchmarks.cu`: TCGen05信息输出
+- `ref/cutlass/`: CUTLASS完整代码库 (参考)
+
+### 下一步研究
+
+1. **编译CUTLASS**: 按照上述命令编译CUTLASS
+2. **运行示例**: 测试79a-79d示例
+3. **学习代码**: 研究`include/cute/arch/mma_sm100_umma.hpp`
+4. **PTX分析**: 使用`ncu --kernels-by-compute`分析SASS指令
+
 ## 12. Tensor Memory Operations 深入研究
 
 ### 12.1 PTX ISA 张量内存指令
@@ -1846,13 +1940,14 @@ ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek fp4
 
 ### 编译状态
 
-**正常工作的模块** (6/17):
+**正常工作的模块** (7/18):
 - ✅ memory - 内存研究
 - ✅ deep - 深度研究
 - ✅ advanced - 高级研究
 - ✅ fp4 - FP4/FP6 研究
 - ✅ multi_stream - 多流并发研究
 - ✅ wmma - WMMA (Warp-level MMA) m16n16k16 Tensor Core
+- ✅ tcgen05 - TCGen05/UMMA (5th Gen Tensor Core) research
 
 **禁用的模块** (编译错误):
 - ❌ ncu - NCU 分析 (编码问题)

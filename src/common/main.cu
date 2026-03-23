@@ -30,6 +30,7 @@
 // #include "../sm_120/unified_memory_research_benchmarks.cu"
 #include "../sm_120/multi_stream_research_benchmarks.cu"
 #include "../sm_120/wmma_test_benchmarks.cu"
+#include "../sm_120/tcgen05_research_benchmarks.cu"
 // #include "../sm_120/mbarrier_research_benchmarks.cu"
 // #include "../sm_120/cooperative_groups_research_benchmarks.cu"
 // #include "../sm_120/redux_sync_research_benchmarks.cu"
@@ -67,6 +68,7 @@ void printUsage(const char* program) {
     printf("  unified             - Unified Memory (managed memory, prefetch, page faults)\n");
     printf("  multi_stream        - Multi-Stream concurrency (priorities, events, overlap)\n");
     printf("  wmma                - WMMA (Warp-level MMA) m16n16k16 Tensor Core\n");
+    printf("  tcgen05             - TCGen05/UMMA (5th Gen Tensor Core) research\n");
     printf("  mbarrier            - Mbarrier operations (async sync, transactions, fences)\n");
     printf("  coop                - Cooperative Groups (grid sync, broadcast, reduce)\n");
     printf("  redux               - Redux.sync warp-level reduction (ADD/MIN/MAX/AND/OR/XOR)\n");
@@ -416,6 +418,20 @@ int main(int argc, char** argv) {
                 break;
             default:
                 printf("\n[WMMA research not available for SM %d.%d]\n",
+                       info.computeCapabilityMajor, info.computeCapabilityMinor);
+                break;
+        }
+    }
+
+    // Run TCGen05 research benchmarks
+    if (strcmp(benchmark, "all") == 0 || strcmp(benchmark, "tcgen05") == 0) {
+        switch (sm) {
+            case 120:
+                printf("\n[Running SM 12.0 TCGen05/UMMA Research]\n");
+                runTCGen05ResearchBenchmarks(N);
+                break;
+            default:
+                printf("\n[TCGen05 research not available for SM %d.%d]\n",
                        info.computeCapabilityMajor, info.computeCapabilityMinor);
                 break;
         }
