@@ -73,6 +73,54 @@ GPUPeek/
 3. 分析结果并更新文档中的发现
 4. 提交代码时同时提交更新的文档
 
+### Benchmark 设计规范
+
+**⚠️ 重要：所有 benchmark 必须包含尺寸扫描和指令变种对比，并生成可视化图表！**
+
+1. **尺寸扫描 (Size Sweep)**：
+   - 测试多个不同数据尺寸，覆盖关键拐点
+   - 例如：1KB, 64KB, 1MB, 4MB, 16MB, 64MB, 256MB
+   - 尺寸应覆盖 L1/L2/DRAM 等内存层级边界
+
+2. **指令变种 (Instruction Variants)**：
+   - 对比多种实现或指令类型
+   - 例如：FP32 vs FP64 vs FP16 vs BF16
+   - 例如：shuffle vs redux.sync vs butterfly
+
+3. **生成图表**：
+   - 工具：Python + matplotlib/seaborn
+   - 格式：PNG/SVG 输出到模块目录
+   - 同时保存 CSV 原始数据到 `data/` 子目录
+   - 图表规范：
+     - X轴：数据尺寸或问题规模
+     - Y轴：TFLOPS / 吞吐带宽 / 延迟
+     - 多系列：不同指令变种用不同颜色/线型标注
+     - 必须有图例 (legend)、坐标轴标签、标题
+
+4. **Benchmark 输出结构**：
+   ```
+   [module]/
+   ├── data/
+   │   ├── benchmark_results.csv   # 原始数据
+   │   └── ...
+   ├── throughput_vs_size.png     # 吞吐 vs 尺寸图
+   ├── latency_vs_size.png       # 延迟 vs 尺寸图
+   └── ...                       # 其他图表
+   ```
+
+5. **图表生成脚本**：
+   - 在 `scripts/` 目录创建 Python 脚本
+   - 脚本命名：`plot_[module]_[test].py`
+   - 输出到对应模块目录
+
+**示例 benchmark 设计**：
+```
+Benchmark: Warp Reduction Performance
+├── Size sweep: 32, 64, 128, 256, 512, 1024 elements
+├── Variants: shuffle_add, butterfly_add, redux_add
+└── Output: throughput_vs_elements.png, latency_vs_elements.png
+```
+
 ## 架构支持
 
 - `NVIDIA_GPU/sm_120/` - Blackwell (RTX 5080, RTX 5070等)
