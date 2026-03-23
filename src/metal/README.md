@@ -1,6 +1,16 @@
 # Apple Metal GPU Benchmark
 
-Apple M系列芯片GPU基准测试，使用Metal API。
+Apple M系列芯片GPU基准测试，使用Metal API进行深度研究。
+
+## 研究进度
+
+| 阶段 | 主题 | 状态 | 关键发现 |
+|------|------|------|----------|
+| Phase 1 | 基准测试优化 | ✅ 完成 | API开销非瓶颈，带宽~1 GB/s |
+| Phase 2 | 内存子系统 | ✅ 完成 | 跨步访问慢2.3x，写入比读取快 |
+| Phase 3 | 计算吞吐量 | ✅ 完成 | 分块MatMul达9.11 GFLOPS |
+| Phase 4 | 并行计算特性 | ✅ 完成 | 线程组效率高，原子操作可扩展 |
+| Phase 5 | 架构深入分析 | ✅ 完成 | 随机访问慢27x，内存延迟可流水线化 |
 
 ## 硬件支持
 
@@ -13,6 +23,25 @@ Apple M系列芯片GPU基准测试，使用Metal API。
 | M2 Max | 38核 | 400 GB/s | 待测试 |
 | M3 Max | 40核 | 400 GB/s | 待测试 |
 | M4 Max | 40核 | 546 GB/s | 待测试 |
+
+## 关键发现
+
+### 内存架构
+- **统一内存带宽**: 理论100 GB/s，实测~1-2 GB/s (~1%利用率)
+- **写入优化**: 写入比读取快2.9倍 (Apple写合并)
+- **访问模式**: 顺序访问比随机访问快27倍
+- **内存压缩**: 影响极小，难以测量
+
+### 计算性能
+- **FP32 MatMul (分块)**: 9.11 GFLOPS
+- **FP16 vs FP32**: 仅快5%，无明显张量单元优势
+- **FMA**: 0.22 GFLOPS (内存受限)
+- **线程组大小**: 64-1024对性能影响极小
+
+### 并行特性
+- **原子操作**: 0.016-0.57 GOPS (随争用扩展)
+- **线程分歧**: 10-15%性能变化
+- **屏障开销**: 单次4.8μs，流水线后89ns
 
 ## 快速开始
 
@@ -43,52 +72,17 @@ swift build --configuration release
 swift run --configuration release
 ```
 
-### 运行结果示例
+## 研究报告
 
-```
-Apple Metal GPU Benchmark
-======================================
+完整报告位于 `docs/` 目录：
 
-=== Apple Metal GPU Info ===
-Device Name: Apple M2
-Unified Memory: Yes (Shared with CPU)
-Max Threadgroup Memory: 32 KB
-Max Threads Per Threadgroup: 1024
-GPU Family: Apple 7+
-
-Shader compilation: SUCCESS
-
-=== Memory Copy Bandwidth Test ===
-Buffer Size: 256.00 MB
-Iterations: 100
-Total Time: 26118.688 ms
-Bandwidth: 1.03 GB/s
-
-=== FP32 Matrix Multiply Test ===
-Matrix Size: 512x512x512
-Iterations: 10
-Time: 665.203 ms
-Performance: 4.04 GFLOPS
-
-Benchmark completed.
-```
-
-## 测试项目
-
-### 内存带宽测试
-
-| 测试 | 描述 |
+| 报告 | 内容 |
 |------|------|
-| Memory Copy | 256MB缓冲区拷贝带宽 |
-| Memory Set | 内存写入带宽 |
-| Vector Add | 2读1写模式带宽 |
-
-### 计算吞吐量测试
-
-| 测试 | 描述 |
-|------|------|
-| FP32 MatMul | 512x512x512 矩阵乘法 |
-| Trig Functions | sin + cos + tan 性能 |
+| Phase 1 Report | API优化、带宽测试结果 |
+| Phase 2 Report | 内存访问模式、原子操作 |
+| Phase 3 Report | 矩阵乘法、计算吞吐量 |
+| Phase 4 Report | 线程组、SIMD、屏障性能 |
+| Phase 5 Report | 架构深入分析、内存特性 |
 
 ## 项目结构
 
@@ -99,65 +93,75 @@ metal/
 ├── Package.swift                  # Swift Package配置
 ├── Sources/
 │   └── MetalBenchmark/
-│       └── main.swift             # 主程序和Metal Shader
-├── bandwidth_test.metal           # 带宽测试内核（备用）
-└── compute_test.metal            # 计算测试内核（备用）
+│       └── main.swift             # 主程序和Metal Shader (Phase 5)
+├── docs/                          # 研究报告
+│   ├── Phase1_*.md               # 英文报告
+│   └── Phase*_*.md               # 中文报告
+├── ref/                          # 参考文档
+│   └── Metal_Shading_Language_Specification.pdf
+└── bandwidth_test.metal           # 备用内核
 ```
 
-## 添加新测试
+## 运行结果示例
 
-在 `Sources/MetalBenchmark/main.swift` 中添加：
-
-### 1. 添加Shader代码
-
-```metal
-// 在 shaderSource 字符串中添加kernel
-kernel void my_kernel(device const float* input [[buffer(0)]],
-                     device float* output [[buffer(1)]],
-                     uint id [[thread_position_in_grid]]) {
-    output[id] = input[id] * 2.0f;
-}
 ```
+Apple Metal GPU Benchmark - Phase 5: Architecture Deep Dive
+======================================
 
-### 2. 添加测试函数
+=== Apple Metal GPU Info ===
+Device Name: Apple M2
+GPU Family: Apple 7+
 
-```swift
-func testMyKernel(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
-    guard let pipeline = library.makeFunction(name: "my_kernel"),
-          let computePipeline = try? device.makeComputePipelineState(function: pipeline) else {
-        return
-    }
+--- Access Patterns ---
+Sequential Access: 0.88 GB/s (baseline)
+Random Access: 0.03 GB/s (27x slower)
 
-    // 测试代码...
-}
-```
+--- Bandwidth Stress ---
+Read: 0.62 GB/s
+Write: 1.80 GB/s
 
-### 3. 在main()中调用
-
-```swift
-try testMyKernel(device: device, queue: queue, library: library)
+--- Memory Latency ---
+Single access: 61.27 ns/op
+Pipelined: 0.45 ns/op
 ```
 
 ## 性能优化建议
 
-1. **批处理Command Buffer**：减少kernel launch开销
-2. **使用Metal Performance Shaders**：Apple优化的核心操作
-3. **合理设置threadsPerThreadgroup**：根据GPU调整
-4. **避免同步等待**：使用completion handler异步处理
+### 内存访问
+- ✅ 使用顺序访问模式
+- ✅ 使用float4向量化
+- ✅ 批量内存操作
+- ❌ 避免随机访问
+- ❌ 避免小内存操作
 
-## 与NVIDIA GPU对比
+### 计算优化
+- ✅ 使用分块算法利用共享内存
+- ✅ 平衡计算与内存操作
+- ✅ 使用FMA融合操作
+- ❌ 不要假设FP16有显著优势
 
-| 指标 | Apple M2 | NVIDIA RTX 4090 |
-|------|----------|-----------------|
-| 内存带宽 | 100 GB/s | 1008 GB/s |
-| FP32性能 | ~3.5 TFLOPS | ~82.6 TFLOPS |
-| 内存类型 | 统一内存 | GDDR6X |
-| API | Metal | CUDA |
+### 并行编程
+- ✅ 使用256线程组作为基准
+- ✅ 分布原子操作减少争用
+- ✅ 流水线屏障分摊开销
+- ❌ 避免单热点原子
 
-> 注意：Apple GPU优势在于统一内存架构和能效比
+## Apple vs NVIDIA 架构对比
+
+| 指标 | Apple M2 | NVIDIA RTX 4090 | 备注 |
+|------|----------|-----------------|------|
+| 内存带宽 | 100 GB/s | 1008 GB/s | 10x差距 |
+| 实测带宽 | ~1-2 GB/s | ~800 GB/s | 统一内存开销 |
+| FP32 MatMul | 9.11 GFLOPS | ~1000+ GFLOPS | 100x差距 |
+| 内存类型 | 统一内存 | GDDR6X | 架构本质不同 |
+| 能效 | 高 | 中 | Apple优势 |
+
+> 关键洞察：Apple M2的统一内存架构消除了CPU-GPU数据传输，但共享带宽导致实际吞吐量远低于独立GPU。
 
 ## 参考资料
 
 - [Apple Metal Documentation](https://developer.apple.com/metal/)
 - [Metal Performance Shaders](https://developer.apple.com/documentation/metalperformanceshaders)
-- [Metal Shader Language Specification](https://developer.apple.com/metal/Metal-Shading-Language-Specification.pdf)
+- [Metal Shader Language Specification](ref/Metal_Shading_Language_Specification.pdf)
+- [WWDC20: Harness Apple GPUs with Metal](https://developer.apple.com/videos/play/wwdc2020/10602/)
+- [WWDC20: GPU Performance Counters](https://developer.apple.com/videos/play/wwdc2020/10603/)
