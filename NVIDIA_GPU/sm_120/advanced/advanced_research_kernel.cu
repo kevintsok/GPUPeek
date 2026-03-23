@@ -104,15 +104,21 @@ __global__ void stridedSharedAccessKernel(T* __restrict__ dst, size_t N, int str
     size_t tid = threadIdx.x;
     size_t idx = blockIdx.x * blockDim.x + tid;
 
+    // Initialize shared memory to avoid garbage values
+    if (tid < 256) {
+        shared_buf[tid] = 0;
+    }
+    __syncthreads();
+
     // Strided write - causes bank conflicts (only first 256 threads)
     if (tid < 256) {
-        for (int i = 0; i < 256; i += stride) {
+        for (int i = tid; i < 256; i += stride) {
             shared_buf[i] = tid;
         }
     }
     __syncthreads();
 
-    // Strided read
+    // Strided read - all threads participate
     T sum = 0;
     if (tid < 256) {
         for (int i = 0; i < 256; i += stride) {
@@ -189,19 +195,15 @@ __global__ void atomicAddBlockKernel(const float* __restrict__ src,
     for (size_t i = idx; i < N; i += stride) {
         sum += src[i];
     }
-    if (tid < 256) {
-        shared_sum[tid] = sum;
-    }
+    shared_sum[tid] = sum;
     __syncthreads();
 
-    // Parallel reduction in shared memory (only first 128 threads)
-    if (tid < 128) {
-        for (int s = 64; s > 0; s >>= 1) {
-            if (tid < s && tid + s < 256) {
-                shared_sum[tid] += shared_sum[tid + s];
-            }
-            __syncthreads();
+    // Parallel reduction in shared memory - all threads participate
+    for (int s = blockDim.x / 2; s > 0; s >>= 1) {
+        if (tid < s) {
+            shared_sum[tid] += shared_sum[tid + s];
         }
+        __syncthreads();
     }
 
     // Only one thread per block does the atomic add
