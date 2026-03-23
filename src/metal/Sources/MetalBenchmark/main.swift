@@ -427,6 +427,83 @@ kernel void atomic_high_contention(device atomic_uint* counter [[buffer(0)]],
 }
 
 // ============================================================
+// 11. COMMAND BUFFER BATCHING TEST
+// ============================================================
+
+kernel void batch_kernel_a(device const float* in [[buffer(0)]],
+                        device float* out [[buffer(1)]],
+                        constant uint& size [[buffer(2)]],
+                        uint id [[thread_position_in_grid]]) {
+    out[id] = in[id] * 2.0f;
+}
+
+kernel void batch_kernel_b(device const float* in [[buffer(0)]],
+                        device float* out [[buffer(1)]],
+                        constant uint& size [[buffer(2)]],
+                        uint id [[thread_position_in_grid]]) {
+    out[id] = in[id] + 1.0f;
+}
+
+kernel void batch_kernel_c(device const float* in [[buffer(0)]],
+                        device float* out [[buffer(1)]],
+                        constant uint& size [[buffer(2)]],
+                        uint id [[thread_position_in_grid]]) {
+    out[id] = in[id] * 3.0f + 2.0f;
+}
+
+// ============================================================
+// 12. OCCUPANCY ANALYSIS (variable shared memory)
+// ============================================================
+
+kernel void occupancy_low(device const float* in [[buffer(0)]],
+                        device float* out [[buffer(1)]],
+                        threadgroup float* shared [[threadgroup(0)]],
+                        constant uint& size [[buffer(2)]],
+                        uint id [[thread_position_in_grid]],
+                        uint lid [[thread_position_in_threadgroup]]) {
+    // Low occupancy: 32 threads, 1KB shared per thread
+    shared[lid] = in[id];
+    threadgroup_barrier(mem_flags::mem_none);
+    float sum = 0.0f;
+    for (uint i = 0; i < 16; i++) {
+        sum += shared[(lid + i) & 31];
+    }
+    out[id] = sum;
+}
+
+kernel void occupancy_med(device const float* in [[buffer(0)]],
+                        device float* out [[buffer(1)]],
+                        threadgroup float* shared [[threadgroup(0)]],
+                        constant uint& size [[buffer(2)]],
+                        uint id [[thread_position_in_grid]],
+                        uint lid [[thread_position_in_threadgroup]]) {
+    // Medium occupancy: 128 threads, 256B shared per thread
+    shared[lid] = in[id];
+    threadgroup_barrier(mem_flags::mem_none);
+    float sum = 0.0f;
+    for (uint i = 0; i < 8; i++) {
+        sum += shared[(lid + i) & 127];
+    }
+    out[id] = sum;
+}
+
+kernel void occupancy_high(device const float* in [[buffer(0)]],
+                        device float* out [[buffer(1)]],
+                        threadgroup float* shared [[threadgroup(0)]],
+                        constant uint& size [[buffer(2)]],
+                        uint id [[thread_position_in_grid]],
+                        uint lid [[thread_position_in_threadgroup]]) {
+    // High occupancy: 512 threads, 64B shared per thread
+    shared[lid] = in[id];
+    threadgroup_barrier(mem_flags::mem_none);
+    float sum = 0.0f;
+    for (uint i = 0; i < 4; i++) {
+        sum += shared[(lid + i) & 511];
+    }
+    out[id] = sum;
+}
+
+// ============================================================
 // 11. HIGH PERFORMANCE MEMORY BANDWIDTH
 // ============================================================
 
@@ -1714,6 +1791,200 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     let bestTile = max(gflops8, max(gflops16, gflops32))
     let bestName = bestTile == gflops8 ? "8" : (bestTile == gflops16 ? "16" : "32")
     print("Best Tile: \(bestName) with \(String(format: "%.2f", bestTile)) GFLOPS")
+
+    // 9. COMMAND BUFFER BATCHING TEST
+    print("\n--- 9. Command Buffer Batching Analysis ---")
+
+    guard let batchAFunc = deepLibrary.makeFunction(name: "batch_kernel_a"),
+          let batchBFunc = deepLibrary.makeFunction(name: "batch_kernel_b"),
+          let batchCFunc = deepLibrary.makeFunction(name: "batch_kernel_c"),
+          let batchAPipeline = try? device.makeComputePipelineState(function: batchAFunc),
+          let batchBPipeline = try? device.makeComputePipelineState(function: batchBFunc),
+          let batchCPipeline = try? device.makeComputePipelineState(function: batchCFunc) else {
+        print("Failed to create batch pipelines")
+        return
+    }
+
+    let batchSize = 1024 * 1024
+    let batchIterations = 100
+    guard let batchIn = device.makeBuffer(length: batchSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let batchOut = device.makeBuffer(length: batchSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+    var batchSz = UInt32(batchSize)
+
+    // Batched: 3 kernels in single command buffer
+    let startBatched = getTimeNanos()
+    for _ in 0..<batchIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(batchAPipeline)
+        encoder.setBuffer(batchIn, offset: 0, index: 0)
+        encoder.setBuffer(batchOut, offset: 0, index: 1)
+        encoder.setBytes(&batchSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: batchSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+
+        encoder.setComputePipelineState(batchBPipeline)
+        encoder.setBuffer(batchIn, offset: 0, index: 0)
+        encoder.setBuffer(batchOut, offset: 0, index: 1)
+        encoder.setBytes(&batchSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: batchSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+
+        encoder.setComputePipelineState(batchCPipeline)
+        encoder.setBuffer(batchIn, offset: 0, index: 0)
+        encoder.setBuffer(batchOut, offset: 0, index: 1)
+        encoder.setBytes(&batchSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: batchSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endBatched = getTimeNanos()
+    let elapsedBatched = getElapsedSeconds(start: startBatched, end: endBatched)
+    let gopsBatched = 3.0 * Double(batchSize) * Double(batchIterations) / elapsedBatched / 1e9
+
+    // Sequential: 3 separate command buffers
+    let startSequential = getTimeNanos()
+    for _ in 0..<batchIterations {
+        guard let cmdA = queue.makeCommandBuffer(),
+              let encA = cmdA.makeComputeCommandEncoder() else { continue }
+        encA.setComputePipelineState(batchAPipeline)
+        encA.setBuffer(batchIn, offset: 0, index: 0)
+        encA.setBuffer(batchOut, offset: 0, index: 1)
+        encA.setBytes(&batchSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encA.dispatchThreads(MTLSize(width: batchSize, height: 1, depth: 1),
+                         threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encA.endEncoding()
+        cmdA.commit()
+        cmdA.waitUntilCompleted()
+
+        guard let cmdB = queue.makeCommandBuffer(),
+              let encB = cmdB.makeComputeCommandEncoder() else { continue }
+        encB.setComputePipelineState(batchBPipeline)
+        encB.setBuffer(batchIn, offset: 0, index: 0)
+        encB.setBuffer(batchOut, offset: 0, index: 1)
+        encB.setBytes(&batchSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encB.dispatchThreads(MTLSize(width: batchSize, height: 1, depth: 1),
+                         threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encB.endEncoding()
+        cmdB.commit()
+        cmdB.waitUntilCompleted()
+
+        guard let cmdC = queue.makeCommandBuffer(),
+              let encC = cmdC.makeComputeCommandEncoder() else { continue }
+        encC.setComputePipelineState(batchCPipeline)
+        encC.setBuffer(batchIn, offset: 0, index: 0)
+        encC.setBuffer(batchOut, offset: 0, index: 1)
+        encC.setBytes(&batchSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encC.dispatchThreads(MTLSize(width: batchSize, height: 1, depth: 1),
+                         threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encC.endEncoding()
+        cmdC.commit()
+        cmdC.waitUntilCompleted()
+    }
+    let endSequential = getTimeNanos()
+    let elapsedSequential = getElapsedSeconds(start: startSequential, end: endSequential)
+    let gopsSequential = 3.0 * Double(batchSize) * Double(batchIterations) / elapsedSequential / 1e9
+
+    print("Batched (3 kernels/cmd): \(String(format: "%.2f", gopsBatched)) GOPS")
+    print("Sequential (1 kernel/cmd): \(String(format: "%.2f", gopsSequential)) GOPS")
+    print("Batch Speedup: \(String(format: "%.2fx", gopsBatched / gopsSequential))")
+
+    // 10. OCCUPANCY ANALYSIS
+    print("\n--- 10. Occupancy Analysis (Shared Memory Tradeoff) ---")
+
+    guard let occLowFunc = deepLibrary.makeFunction(name: "occupancy_low"),
+          let occMedFunc = deepLibrary.makeFunction(name: "occupancy_med"),
+          let occHighFunc = deepLibrary.makeFunction(name: "occupancy_high"),
+          let occLowPipeline = try? device.makeComputePipelineState(function: occLowFunc),
+          let occMedPipeline = try? device.makeComputePipelineState(function: occMedFunc),
+          let occHighPipeline = try? device.makeComputePipelineState(function: occHighFunc) else {
+        print("Failed to create occupancy pipelines")
+        return
+    }
+
+    let occSize = 512 * 1024
+    let occIterations = 50
+    let occSharedSize = 32 * 1024 // 32KB max shared
+
+    guard let occIn = device.makeBuffer(length: occSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let occOut = device.makeBuffer(length: occSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let occSharedLow = device.makeBuffer(length: 32 * 1024, options: .storageModeShared),
+          let occSharedMed = device.makeBuffer(length: 32 * 1024, options: .storageModeShared),
+          let occSharedHigh = device.makeBuffer(length: 32 * 1024, options: .storageModeShared) else {
+        return
+    }
+    var occSz = UInt32(occSize)
+
+    // Low occupancy: 32 threads, 1KB shared per thread (32 threads max)
+    let startLow = getTimeNanos()
+    for _ in 0..<occIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(occLowPipeline)
+        encoder.setBuffer(occIn, offset: 0, index: 0)
+        encoder.setBuffer(occOut, offset: 0, index: 1)
+        encoder.setBuffer(occSharedLow, offset: 0, index: 2)
+        encoder.setBytes(&occSz, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: occSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 32, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endLow = getTimeNanos()
+    let elapsedLowOcc = getElapsedSeconds(start: startLow, end: endLow)
+    let gopsLowOcc = Double(occSize) * Double(occIterations) / elapsedLowOcc / 1e9
+
+    // Medium occupancy: 128 threads, 256B shared per thread (128 threads max)
+    let startMed = getTimeNanos()
+    for _ in 0..<occIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(occMedPipeline)
+        encoder.setBuffer(occIn, offset: 0, index: 0)
+        encoder.setBuffer(occOut, offset: 0, index: 1)
+        encoder.setBuffer(occSharedMed, offset: 0, index: 2)
+        encoder.setBytes(&occSz, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: occSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 128, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endMed = getTimeNanos()
+    let elapsedMedOcc = getElapsedSeconds(start: startMed, end: endMed)
+    let gopsMedOcc = Double(occSize) * Double(occIterations) / elapsedMedOcc / 1e9
+
+    // High occupancy: 512 threads, 64B shared per thread (512 threads max)
+    let startHigh = getTimeNanos()
+    for _ in 0..<occIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(occHighPipeline)
+        encoder.setBuffer(occIn, offset: 0, index: 0)
+        encoder.setBuffer(occOut, offset: 0, index: 1)
+        encoder.setBuffer(occSharedHigh, offset: 0, index: 2)
+        encoder.setBytes(&occSz, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: occSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 512, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endHigh = getTimeNanos()
+    let elapsedHighOcc = getElapsedSeconds(start: startHigh, end: endHigh)
+    let gopsHighOccupancy = Double(occSize) * Double(occIterations) / elapsedHighOcc / 1e9
+
+    print("Low Occupancy (32 thr, 1KB):     \(String(format: "%.2f", gopsLowOcc)) GOPS")
+    print("Med Occupancy (128 thr, 256B):   \(String(format: "%.2f", gopsMedOcc)) GOPS")
+    print("High Occupancy (512 thr, 64B):   \(String(format: "%.2f", gopsHighOccupancy)) GOPS")
+    let bestOcc = max(gopsLowOcc, max(gopsMedOcc, gopsHighOccupancy))
+    let bestOccName = bestOcc == gopsLowOcc ? "Low" : (bestOcc == gopsMedOcc ? "Med" : "High")
+    print("Best Occupancy: \(bestOccName) with \(String(format: "%.2f", bestOcc)) GOPS")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")
