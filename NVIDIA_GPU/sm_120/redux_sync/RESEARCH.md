@@ -56,6 +56,8 @@ Compute Capability: 12.0
 Elements: 1048576 (4.00 MB)
 ```
 
+**可视化图表**: `data/redux_operations.png`, `data/reduction_speedup.png`
+
 ### Basic Operations (100 iterations)
 
 | Test | Method | Time (ms) |
@@ -79,6 +81,8 @@ Elements: 1048576 (4.00 MB)
 | Test 7a | Shuffle Reduction (baseline) | 1.074 | 5次shuffle循环 |
 | Test 7b | Butterfly Reduction | 1.024 | 5次异或shuffle |
 | Test 7c | Redux Conceptual (simulated) | 0.961 | 单指令概念模拟 |
+
+**可视化图表**: `data/reduction_methods.png`, `data/reduction_speedup.png`
 
 ### Atomic Operations
 
@@ -111,6 +115,18 @@ Elements: 1048576 (4.00 MB)
 - 使用 NCU 分析真实的 redux.sync 指令数
 - 对比不同 block size 对归约效率的影响
 - 分析 warp 分歧对 redux.sync 的影响
+
+## 10. 图表生成
+
+运行以下脚本生成可视化图表:
+
+```bash
+cd scripts
+pip install -r requirements.txt
+python plot_redux_sync.py
+```
+
+输出位置: `NVIDIA_GPU/sm_120/redux_sync/data/`
 
 ## 参考文献
 
