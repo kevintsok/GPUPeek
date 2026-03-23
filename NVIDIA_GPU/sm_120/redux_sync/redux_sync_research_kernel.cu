@@ -174,39 +174,6 @@ __global__ void reduxXorKernel(const unsigned int* __restrict__ input,
     }
 }
 
-// =============================================================================
-// Redux.sync with Inline Assembly (Conceptual)
-// =============================================================================
-
-// This demonstrates the concept - actual redux.sync requires inline PTX
-template <typename T>
-__global__ void reduxConceptualKernel(const T* __restrict__ input,
-                                      T* __restrict__ output,
-                                      size_t N) {
-    int tid = threadIdx.x;
-    int wid = threadIdx.x / 32;
-
-    int warp_start = wid * 32;
-    int warp_end = min(warp_start + 32, (int)N);
-
-    if (warp_start >= (int)N) return;
-
-    // Load value
-    T val = input[warp_start + (tid % 32)];
-
-    // redux.sync would do:
-    // asm volatile("redux.sync.add.s32 %0, %1;" : "=r"(val) : "r"(val));
-
-    // For now, simulate with shuffle-based reduction
-    for (int offset = 16; offset > 0; offset >>= 1) {
-        T other = __shfl_down_sync(0xffffffff, val, offset);
-        val = val + other;
-    }
-
-    if (tid % 32 == 0) {
-        output[wid] = val;
-    }
-}
 
 // =============================================================================
 // Redux.sync for Different Data Types
@@ -330,6 +297,37 @@ __global__ void butterflyReductionKernel(const T* __restrict__ input,
     for (int offset = 1; offset <= 16; offset <<= 1) {
         T other = __shfl_xor_sync(0xffffffff, val, offset);
         val += other;
+    }
+
+    if (lane == 0) {
+        output[wid] = val;
+    }
+}
+
+// Conceptual redux.sync kernel - simplified shuffle-based reduction
+// This simulates what a true redux.sync.add would do in hardware
+template <typename T>
+__global__ void reduxConceptualKernel(const T* __restrict__ input,
+                                      T* __restrict__ output,
+                                      size_t N) {
+    int tid = threadIdx.x;
+    int wid = tid / 32;
+    int lane = tid % 32;
+
+    int warp_start = wid * 32;
+    int warp_end = min(warp_start + 32, (int)N);
+
+    if (warp_start >= (int)N) return;
+
+    // Hardware redux.sync would do this in a single instruction
+    // Simulating with efficient shuffle
+    T val = (lane < warp_end - warp_start) ? input[warp_start + lane] : 0;
+
+    // Single shuffle-down reduction (what redux.sync.add does)
+    #pragma unroll
+    for (int offset = 16; offset > 0; offset >>= 1) {
+        T other = __shfl_down_sync(0xffffffff, val, offset);
+        val = val + other;  // redux.sync.add
     }
 
     if (lane == 0) {

@@ -387,6 +387,7 @@ static void runMatchTests(size_t N) {
 static void runBlockReduceTests(size_t N) {
     printf("\n--- Block-Level Reduction with Redux ---\n");
 
+    const int blockSize = 256;
     size_t bytes = N * sizeof(float);
     float *d_input = nullptr;
     float *d_output = nullptr;
@@ -403,7 +404,6 @@ static void runBlockReduceTests(size_t N) {
     CHECK_CUDA(cudaMemcpy(d_input, h_input, bytes, cudaMemcpyHostToDevice));
     CHECK_CUDA(cudaFreeHost(h_input));
 
-    const int blockSize = 256;
     int numBlocks = (N + blockSize - 1) / blockSize;
     if (numBlocks > 65535) numBlocks = 65535;
 
