@@ -172,6 +172,9 @@ ReadWriteTextureSupport: MTLReadWriteTextureTier2
 | 写入带宽 | 64MB | 1.80 GB/s | 最大 |
 | 内存延迟 | 单次 | 61 ns | 单元素访问 |
 | 内存延迟 | 100迭代 | 0.45 ns | 流水线后 |
+| 缓存行访问 | 顺序 | 0.01-0.63 GB/s | 随大小扩展 |
+| 缓存行跨越 | stride-64B | 6-15x慢 | 跨缓存行访问惩罚 |
+| 写合并 | 顺序vs交错 | 1.40 vs 1.26 GB/s | 合并效果极小 |
 
 ### Phase 6: 跨架构对比
 
