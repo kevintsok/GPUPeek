@@ -18,6 +18,10 @@
 
 **关键发现**: 峰值带宽约 640-820 GB/s (16MB 工作集)
 
+**可视化图表**:
+- `data/memory_bandwidth_vs_size.png` - 带宽 vs 尺寸曲线
+- `data/dtype_bandwidth_comparison.png` - 不同数据类型带宽对比
+
 ### 1.2 跨距访问效率
 
 | Stride | 带宽效率 |
@@ -32,6 +36,8 @@
 | 128 | 11% |
 
 **分析**: Stride > 16 后带宽急剧下降
+
+**可视化图表**: `data/stride_efficiency.png` - Stride 访问效率柱状图
 
 ## 2. 内存层级带宽
 
@@ -69,6 +75,18 @@ TMA 峰值带宽约 850 GB/s (16MB)
 ## 6. Memory Fence 影响
 
 Memory fence 引入约 50% 的性能开销。
+
+## 图表生成
+
+运行以下脚本生成可视化图表:
+
+```bash
+cd scripts
+pip install -r requirements.txt
+python plot_memory_bandwidth.py
+```
+
+输出位置: `NVIDIA_GPU/sm_120/memory/data/`
 
 ## 参考文献
 
