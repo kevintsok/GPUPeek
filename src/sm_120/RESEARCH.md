@@ -829,6 +829,31 @@ using Gemm = cutlass::gemm::device::GemmUniversalAdapter<GemmKernel>;
 | Dynamic Datatypes | ❌ 不支持 |
 | Cluster MMA | ❌ 不支持 (仅数据中心GPU如H200) |
 
+### Sub-byte 数据内存布局要求
+
+| 数据类型 | TMA打包格式 | SMEM对齐要求 |
+|----------|-----------|-------------|
+| FP4 (E2M1) | `CU_TENSOR_MAP_DATA_TYPE_16U4_ALIGN16B` | 16字节对齐 |
+| FP6 (E2M3/E3M2) | `CU_TENSOR_MAP_DATA_TYPE_16U6_ALIGN16B` | 16字节对齐 |
+
+**关键约束**:
+- 基地址需要32字节对齐
+- Leading dimension必须是128元素的倍数
+- 只支持128字节swizzle模式或无swizzle
+- K extent for MMA tile永远是32 (dense GEMM)
+
+### Block Scaling 缩放因子格式
+
+| 缩放因子类型 | 格式 | 范围 |
+|-------------|------|------|
+| UE8M0 | 8-bit unsigned exp | 2^x, -127 ≤ x ≤ 127 |
+| UE4M3 | 4-bit exp, 3-bit mantissa | 最大值 448 |
+
+**TMEM布局**:
+- block32/1X: 需要最多12列
+- block32/2X: 需要最多24列
+- block16/4X: 需要最多48列
+
 ### TCGen05 研究文件
 
 - `tcgen05_research_kernel.cu`: TCGen05 API结构和类型定义
