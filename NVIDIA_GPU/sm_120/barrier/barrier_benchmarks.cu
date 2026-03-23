@@ -14,7 +14,15 @@
         } \
     } while(0)
 
-extern const char* formatBandwidth(double GBps);
+const char* formatBandwidth(double GBps) {
+    static char buf[32];
+    if (GBps >= 1000.0) {
+        snprintf(buf, sizeof(buf), "%.2f TB/s", GBps / 1000.0);
+    } else {
+        snprintf(buf, sizeof(buf), "%.2f GB/s", GBps);
+    }
+    return buf;
+}
 
 // =============================================================================
 // C.1 __syncthreads() Overhead Measurement
