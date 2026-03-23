@@ -349,132 +349,68 @@ Standard MMA instructions (Section 9.7.14.5).
 
 **N = K / 16**
 
-### 4.5 TCGen05 (5th Gen Tensor Core)
+### 4.5 TCGen05 (5th Gen Tensor Core) - CUTLASS Required
 
-Blackwell's 5th generation Tensor Core API (Section 9.7.16).
+**⚠️ Important**: True TCGen05 requires **CUTLASS library** and is not directly runnable on RTX 50.
 
-#### 4.5.1 TCGen05 vs WGMMA
+#### 4.5.1 Why TCGen05 Needs CUTLASS
 
-| Feature | WGMMA (Hopper) | TCGen05 (Blackwell) |
-|---------|-----------------|---------------------|
-| PTX Section | 9.7.15 | 9.7.16 |
-| API | wgmma.mma_async | tcgen05.mma |
-| SASS | WGMMA | **OMMA (FP4), QMMA (FP8/FP6)** |
-| Async | Yes | Yes |
-| Sparse | 2:4 | 2:4 |
-| FP4/FP6 | No | **Yes** |
-| Block Scaling | No | **Yes (Hardware)** |
+| Requirement | Description |
+|-------------|-------------|
+| TMEM Management | 256KB per SM, requires proper allocation/deallocation |
+| Descriptor Setup | 64-bit SMEM descriptors for tensor addressing |
+| Warp Group Sync | `elect_one_sync()` and synchronization |
+| Cluster Support | CTA group coordination (数据中心 GPUs only) |
 
-#### 4.5.2 TCGen05 Shape Support
+#### 4.5.2 TCGen05 vs WMMA on RTX 50
 
-| Shape | FP16 | BF16 | TF32 | FP32 | FP64 | INT8 | FP4 | FP6 |
-|-------|------|------|------|------|------|------|-----|-----|
-| .32x32b | Yes | Yes | Yes | Yes | Yes | - | - | - |
-| .16x64b | Yes | Yes | Yes | Yes | Yes | - | - | - |
-| .16x128b | Yes | Yes | Yes | Yes | - | - | - | - |
-| .16x256b | Yes | Yes | Yes | - | - | - | - | - |
-| .16x32bx2 | Yes | Yes | Yes | Yes | - | - | - | - |
-| **m16n8k32** | - | - | - | - | - | - | **Yes** | **Yes** |
+| Feature | WMMA (nvcuda::wmma) | TCGen05 (CUTLASS) |
+|---------|---------------------|---------------------|
+| API | C++ (wmma namespace) | Inline PTX + CUTLASS |
+| Memory | Registers | TMEM (256KB/SM) |
+| RTX 50 Support | ✅ Yes | ❌ Data center only |
+| Block Scaling | ❌ No | ✅ Yes |
+| FP4/FP6 | ❌ No | ✅ Yes |
 
-#### 4.5.3 TCGen05 Variants
+#### 4.5.3 Running TCGen05 GEMM
 
-| Variant | Description |
-|---------|-------------|
-| tcgen05.mma | Basic MMA |
-| tcgen05.mma.sp | Sparse MMA (2:4) |
-| tcgen05.mma.ws | Weight-only Quantization (W8A16) |
-| tcgen05.mma.ws.sp | Weight-only + Sparse |
+```bash
+# Build CUTLASS
+cd ref/cutlass
+mkdir build && cd build
+cmake ../.. -DCUTLASS_NVCC_ARCHS=120
+make -j16
 
-#### 4.5.4 TCGen05 CTA Group Types
-
-| CTA Group | Description | D Registers |
-|-----------|-------------|-------------|
-| cta_group::1 | Single CTA (1 warp group) | 4 |
-| cta_group::2 | Dual CTA cluster (2 warp groups) | 8+ |
-
-#### 4.5.5 TCGen05 Operand Source Variants
-
-| Variant | A Source | B Source | Description |
-|---------|----------|----------|-------------|
-| SS | SMEM | SMEM | Both from shared memory |
-| TS | TMEM | SMEM | A from tensor memory |
-| ST | SMEM | TMEM | B from tensor memory |
-| TT | TMEM | TMEM | Both from tensor memory |
-
-#### 4.5.6 TMEM (Tensor Memory)
-
-| Property | Value |
-|----------|-------|
-| Size | **256 KB per SM** |
-| Organization | 512 columns × 128 rows × 32-bit cells |
-| D (accumulator) | **Must** be in TMEM |
-| A operand | Can load from TMEM or SMEM |
-
-#### 4.5.7 Block Scaling (TCGen05 Hardware Support)
-
-| Format | Block Size | Scale Factor Format |
-|--------|------------|-------------------|
-| UE8M0 | 32 elements | 8-bit unsigned exp (2^x), -127 ≤ x ≤ 127 |
-| UE4M3 | 16 elements | 4-bit exp + 3-bit mantissa, max 448 |
-
-**TMEM Layout**:
-- block32/1X: up to 12 columns
-- block32/2X: up to 24 columns
-- block16/4X: up to 48 columns
-
-#### 4.5.8 PTX Instruction Examples (from CUTLASS)
-
-```asm
-// TF32 SS (both from SMEM)
-tcgen05.mma.cta_group::1.kind::tf32 [%tmem_c], %desc_a, %desc_b, %idescE,
-  {%mask0, %mask1, %mask2, %mask3}, p;
-
-// FP16 BF16 SS
-tcgen05.mma.cta_group::1.kind::f16 [%tmem_c], %desc_a, %desc_b, %idescE,
-  {%mask0, %mask1, %mask2, %mask3}, p;
-
-// Block Scaled MXFP8/MXFP6/MXF4
-tcgen05.mma.cta_group::1.kind::mxf8f6f4.block_scale [%tmem_c], %desc_a, %desc_b,
-  %idescE, [%tsfa_addr], [%tsfb_addr], p;
-
-// Block Scaled MXF4 (NVIDIA FP4) - 16 element block
-tcgen05.mma.cta_group::1.kind::mxf4nvf4.block_scale.block16 [%tmem_c], %desc_a,
-  %desc_b, %idescE, [%tsfa_addr], [%tsfb_addr], p;
-
-// Cluster MMA (2 CTA)
-tcgen05.mma.cta_group::2.kind::tf32 [%tmem_c], %desc_a, %desc_b, %idescE,
-  {%mask0..%mask11}, p;
-
-// Sparse MMA (2:4 structure)
-tcgen05.mma.sp.cta_group::1.kind::tf32 [%tmem_c], %desc_a, %desc_b, [%tsfb_addr],
-  %idescE, {%mask0..%mask7}, p;
-
-// SM120 Native MMA (m16n8k32, register-based)
-mma.sync.aligned.kind::f8f6f4.m16n8k32.row.col.f32.e2m1.e2m1.f32
-  {%d0, %d1, %d2, %d3}, {%a0, %a1, %a2, %a3}, {%b0, %b1}, {%c0, %c1, %c2, %c3};
+# Run FP4+BF16 GEMM example
+./build/examples/79_blackwell_geforce_gemm/79a_blackwell_geforce_nvfp4_bf16_gemm --m=2048 --n=2048 --k=2048
 ```
 
-#### 4.5.9 RTX 50 (GeForce) Limitations
+#### 4.5.4 RTX 50 (GeForce) Limitations
 
 | Feature | Support |
 |---------|---------|
 | TMA Multicast | ❌ Not supported |
 | Cluster Shape | Must be 1x1x1 |
-| Dynamic Datatypes | ❌ Not supported |
-| Cluster MMA | ❌ Not supported (data center GPUs only) |
+| Cluster MMA | ❌ Not supported |
+| Block Scaled MMA | ✅ Yes (via CUTLASS) |
+| FP4/FP6 MMA | ✅ Yes (via CUTLASS) |
 
-#### 4.5.10 Sub-byte Data Memory Layout Requirements
+#### 4.5.5 TCGen05 Reference (For Study)
 
-| Data Type | TMA Packing Format | SMEM Alignment |
-|-----------|-------------------|----------------|
-| FP4 (E2M1) | CU_TENSOR_MAP_DATA_TYPE_16U4_ALIGN16B | 16-byte aligned |
-| FP6 (E2M3/E3M2) | CU_TENSOR_MAP_DATA_TYPE_16U6_ALIGN16B | 16-byte aligned |
+See CUTLASS source for PTX instruction patterns:
+- `ref/cutlass/include/cute/arch/mma_sm100_umma.hpp`
+- `ref/cutlass/examples/79_blackwell_geforce_gemm/`
 
-**Key Constraints**:
-- Base address requires 32-byte alignment
-- Leading dimension must be multiple of 128 elements
-- Only 128-byte swizzle mode or no swizzle supported
-- K extent for MMA tile is always 32 (dense GEMM)
+#### 4.5.6 SM120 Native MMA (m16n8k32)
+
+The SM120 also supports register-based MMA with m16n8k32 shape:
+
+```ptx
+mma.sync.aligned.kind::f8f6f4.m16n8k32.row.col.f32.e2m1.e2m1.f32
+  {%d0, %d1, %d2, %d3}, {%a0, %a1, %a2, %a3}, {%b0, %b1}, {%c0, %c1, %c2, %c3};
+```
+
+**Note**: This is different from WMMA m16n16k16 and uses different register layout.
 
 ### 4.6 FP4/FP6 Low-Precision MMA
 

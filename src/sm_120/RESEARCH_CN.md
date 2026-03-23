@@ -349,132 +349,68 @@ WMMA 是标准的 CUDA Tensor Core API (Section 9.7.14)。
 
 **N = K / 16**
 
-### 4.5 TCGen05 (第五代 Tensor Core)
+### 4.5 TCGen05 (第五代 Tensor Core) - 需要 CUTLASS
 
-Blackwell 的第 5 代 Tensor Core API (Section 9.7.16)。
+**⚠️ 重要**: 真正的 TCGen05 需要 **CUTLASS 库**，无法直接在 RTX 50 上运行。
 
-#### 4.5.1 TCGen05 vs WGMMA
+#### 4.5.1 为什么 TCGen05 需要 CUTLASS
 
-| 特性 | WGMMA (Hopper) | TCGen05 (Blackwell) |
-|------|----------------|---------------------|
-| PTX 章节 | 9.7.15 | 9.7.16 |
-| API | wgmma.mma_async | tcgen05.mma |
-| SASS | WGMMA | **OMMA (FP4), QMMA (FP8/FP6)** |
-| 异步 | Yes | Yes |
-| 稀疏 | 2:4 | 2:4 |
-| FP4/FP6 | No | **Yes** |
-| Block Scaling | No | **Yes (硬件)** |
-
-#### 4.5.2 TCGen05 Shape 支持
-
-| Shape | FP16 | BF16 | TF32 | FP32 | FP64 | INT8 | FP4 | FP6 |
-|-------|------|------|------|------|------|------|-----|-----|
-| .32x32b | Yes | Yes | Yes | Yes | Yes | - | - | - |
-| .16x64b | Yes | Yes | Yes | Yes | Yes | - | - | - |
-| .16x128b | Yes | Yes | Yes | Yes | - | - | - | - |
-| .16x256b | Yes | Yes | Yes | - | - | - | - | - |
-| .16x32bx2 | Yes | Yes | Yes | Yes | - | - | - | - |
-| **m16n8k32** | - | - | - | - | - | - | **Yes** | **Yes** |
-
-#### 4.5.3 TCGen05 变体
-
-| 变体 | 描述 |
+| 需求 | 描述 |
 |------|------|
-| tcgen05.mma | 基本 MMA |
-| tcgen05.mma.sp | 稀疏 MMA (2:4) |
-| tcgen05.mma.ws | 仅权重量化 (W8A16) |
-| tcgen05.mma.ws.sp | Weight-only + 稀疏 |
+| TMEM 管理 | 256KB/SM，需要正确的分配/释放 |
+| Descriptor 设置 | 64-bit SMEM descriptors 用于张量寻址 |
+| Warp Group 同步 | `elect_one_sync()` 和同步 |
+| Cluster 支持 | CTA 组协调 (仅数据中心 GPU) |
 
-#### 4.5.4 TCGen05 CTA Group 类型
+#### 4.5.2 RTX 50 上的 WMMA vs TCGen05
 
-| CTA Group | 描述 | D 寄存器数 |
-|-----------|------|-----------|
-| cta_group::1 | 单 CTA (1 个 warp group) | 4 |
-| cta_group::2 | 双 CTA 集群 (2 个 warp groups) | 8+ |
+| 特性 | WMMA (nvcuda::wmma) | TCGen05 (CUTLASS) |
+|------|---------------------|---------------------|
+| API | C++ (wmma 命名空间) | Inline PTX + CUTLASS |
+| 内存 | 寄存器 | TMEM (256KB/SM) |
+| RTX 50 支持 | ✅ 支持 | ❌ 仅数据中心 |
+| Block Scaling | ❌ 不支持 | ✅ 支持 |
+| FP4/FP6 | ❌ 不支持 | ✅ 支持 |
 
-#### 4.5.5 TCGen05 操作数源变体
+#### 4.5.3 运行 TCGen05 GEMM
 
-| 变体 | A 来源 | B 来源 | 描述 |
-|------|-------|-------|------|
-| SS | SMEM | SMEM | 两者都从共享内存 |
-| TS | TMEM | SMEM | A 从张量内存 |
-| ST | SMEM | TMEM | B 从张量内存 |
-| TT | TMEM | TMEM | 两者都从张量内存 |
+```bash
+# 编译 CUTLASS
+cd ref/cutlass
+mkdir build && cd build
+cmake ../.. -DCUTLASS_NVCC_ARCHS=120
+make -j16
 
-#### 4.5.6 TMEM (张量内存)
-
-| 属性 | 值 |
-|------|---|
-| 大小 | **256 KB per SM** |
-| 组织 | 512 列 × 128 行 × 32 位单元 |
-| D (累加器) | **必须** 放在 TMEM |
-| A 操作数 | 可选择从 TMEM 或 SMEM 加载 |
-
-#### 4.5.7 Block Scaling (TCGen05 硬件支持)
-
-| 格式 | Block 大小 | 缩放因子格式 |
-|------|------------|--------------|
-| UE8M0 | 32 元素 | 8-bit unsigned exp (2^x), -127 ≤ x ≤ 127 |
-| UE4M3 | 16 元素 | 4-bit exp + 3-bit mantissa, 最大 448 |
-
-**TMEM 布局**:
-- block32/1X: 最多 12 列
-- block32/2X: 最多 24 列
-- block16/4X: 最多 48 列
-
-#### 4.5.8 PTX 指令示例 (来自 CUTLASS)
-
-```asm
-// TF32 SS (两者都从SMEM)
-tcgen05.mma.cta_group::1.kind::tf32 [%tmem_c], %desc_a, %desc_b, %idescE,
-  {%mask0, %mask1, %mask2, %mask3}, p;
-
-// FP16 BF16 SS
-tcgen05.mma.cta_group::1.kind::f16 [%tmem_c], %desc_a, %desc_b, %idescE,
-  {%mask0, %mask1, %mask2, %mask3}, p;
-
-// Block Scaled MXFP8/MXFP6/MXF4
-tcgen05.mma.cta_group::1.kind::mxf8f6f4.block_scale [%tmem_c], %desc_a, %desc_b,
-  %idescE, [%tsfa_addr], [%tsfb_addr], p;
-
-// Block Scaled MXF4 (NVIDIA FP4) - 16元素块
-tcgen05.mma.cta_group::1.kind::mxf4nvf4.block_scale.block16 [%tmem_c], %desc_a,
-  %desc_b, %idescE, [%tsfa_addr], [%tsfb_addr], p;
-
-// Cluster MMA (2 CTA)
-tcgen05.mma.cta_group::2.kind::tf32 [%tmem_c], %desc_a, %desc_b, %idescE,
-  {%mask0..%mask11}, p;
-
-// Sparse MMA (2:4 结构化稀疏)
-tcgen05.mma.sp.cta_group::1.kind::tf32 [%tmem_c], %desc_a, %desc_b, [%tsfb_addr],
-  %idescE, {%mask0..%mask7}, p;
-
-// SM120 Native MMA (m16n8k32, 寄存器-based)
-mma.sync.aligned.kind::f8f6f4.m16n8k32.row.col.f32.e2m1.e2m1.f32
-  {%d0, %d1, %d2, %d3}, {%a0, %a1, %a2, %a3}, {%b0, %b1}, {%c0, %c1, %c2, %c3};
+# 运行 FP4+BF16 GEMM 示例
+./build/examples/79_blackwell_geforce_gemm/79a_blackwell_geforce_nvfp4_bf16_gemm --m=2048 --n=2048 --k=2048
 ```
 
-#### 4.5.9 RTX 50 (GeForce) 限制
+#### 4.5.4 RTX 50 (GeForce) 限制
 
 | 特性 | 支持情况 |
 |------|---------|
 | TMA Multicast | ❌ 不支持 |
 | Cluster Shape | 必须 1x1x1 |
-| Dynamic Datatypes | ❌ 不支持 |
-| Cluster MMA | ❌ 不支持 (仅数据中心 GPU) |
+| Cluster MMA | ❌ 不支持 |
+| Block Scaled MMA | ✅ 支持 (通过 CUTLASS) |
+| FP4/FP6 MMA | ✅ 支持 (通过 CUTLASS) |
 
-#### 4.5.10 Sub-byte 数据内存布局要求
+#### 4.5.5 TCGen05 参考 (供学习)
 
-| 数据类型 | TMA 打包格式 | SMEM 对齐 |
-|----------|-------------|----------|
-| FP4 (E2M1) | CU_TENSOR_MAP_DATA_TYPE_16U4_ALIGN16B | 16 字节对齐 |
-| FP6 (E2M3/E3M2) | CU_TENSOR_MAP_DATA_TYPE_16U6_ALIGN16B | 16 字节对齐 |
+CUTLASS 源码中的 PTX 指令模式:
+- `ref/cutlass/include/cute/arch/mma_sm100_umma.hpp`
+- `ref/cutlass/examples/79_blackwell_geforce_gemm/`
 
-**关键约束**:
-- 基地址需要 32 字节对齐
-- Leading dimension 必须是 128 元素的倍数
-- 只支持 128 字节 swizzle 模式或无 swizzle
-- MMA tile 的 K extent 永远是 32 (dense GEMM)
+#### 4.5.6 SM120 原生 MMA (m16n8k32)
+
+SM120 还支持基于寄存器的 m16n8k32 shape MMA:
+
+```ptx
+mma.sync.aligned.kind::f8f6f4.m16n8k32.row.col.f32.e2m1.e2m1.f32
+  {%d0, %d1, %d2, %d3}, {%a0, %a1, %a2, %a3}, {%b0, %b1}, {%c0, %c1, %c2, %c3};
+```
+
+**注意**: 这与 WMMA m16n16k16 不同，使用不同的寄存器布局。
 
 ### 4.6 FP4/FP6 低精度 MMA
 

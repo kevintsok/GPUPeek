@@ -4,6 +4,7 @@
 #include <string.h>
 #include "../common/timer.h"
 #include "mma_research_kernel.cu"
+#include "wmma_mma_kernel.cu"
 
 #define CHECK_CUDA(call) \
     do { \
@@ -254,9 +255,23 @@ void runMMAResearchBenchmarks(size_t N) {
     runWMMATests();
     runMMABF16Tests();
     runBaselineComparisonTests();
+    runWMMAcycleCountingTests();
 
     printf("\n=== MMA Research Complete ===\n");
     printf("NCU Profiling Hints:\n");
     printf("  ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek.exe mma\n");
     printf("  ncu --set full --kernels-by-compute ./gpupeek.exe mma\n");
+}
+
+// =============================================================================
+// WMMA Cycle Counting Tests
+// =============================================================================
+
+void runWMMAcycleCountingTests() {
+    printf("\n");
+    printf("================================================================================\n");
+    printf("WMMA Cycle Counting & Data Requirements\n");
+    printf("================================================================================\n");
+
+    runWMMA_MMA_ResearchBenchmarks(0);
 }
