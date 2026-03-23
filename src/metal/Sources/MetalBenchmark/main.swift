@@ -308,7 +308,7 @@ kernel void atomic_high_contention(device atomic_uint* counter [[buffer(0)]],
 }
 
 // ============================================================
-// 11. MEMORY BANDWIDTH DEEP RESEARCH
+// 11. HIGH PERFORMANCE MEMORY BANDWIDTH
 // ============================================================
 
 // Sequential write - baseline
@@ -1820,6 +1820,289 @@ func testDeepMemoryBandwidth(device: MTLDevice, queue: MTLCommandQueue) throws {
     print(String(repeating: "=", count: 70))
 }
 
+// MARK: - HIGH PERFORMANCE MEMORY BANDWIDTH TEST
+
+func testHighPerformanceBandwidth(device: MTLDevice, queue: MTLCommandQueue) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("=== HIGH PERFORMANCE MEMORY BANDWIDTH TEST ===")
+    print(String(repeating: "=", count: 70))
+
+    // Compile deep shader library for this test
+    let deepLibrary: MTLLibrary
+    do {
+        deepLibrary = try device.makeLibrary(source: deepShaderSource, options: nil)
+    } catch {
+        print("Failed to compile deep shaders: \(error)")
+        return
+    }
+
+    let iterations = 100
+    let testSize = 64 * 1024 * 1024  // 64MB for meaningful test
+
+    // ============================================================
+    // 1. BLIT COMMAND (DEDICATED COPY ENGINE)
+    // ============================================================
+    print("\n--- 1. Blit Command (Dedicated Copy Engine) ---")
+
+    guard let bufA = device.makeBuffer(length: testSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let bufB = device.makeBuffer(length: testSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create buffers")
+        return
+    }
+
+    // Initialize buffer
+    let ptr = bufA.contents().assumingMemoryBound(to: Float.self)
+    for i in 0..<testSize { ptr[i] = Float(i) }
+
+    // Warmup
+    for _ in 0..<3 {
+        guard let cmd = queue.makeCommandBuffer(),
+              let blit = cmd.makeBlitCommandEncoder() else { continue }
+        blit.copy(from: bufA, sourceOffset: 0, to: bufB, destinationOffset: 0, size: testSize * MemoryLayout<Float>.size)
+        blit.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+
+    // Blit copy test
+    let startBlit = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let blit = cmd.makeBlitCommandEncoder() else { continue }
+        blit.copy(from: bufA, sourceOffset: 0, to: bufB, destinationOffset: 0, size: testSize * MemoryLayout<Float>.size)
+        blit.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endBlit = getTimeNanos()
+    let blitBW = Double(testSize) * Double(iterations) * Double(MemoryLayout<Float>.size) / getElapsedSeconds(start: startBlit, end: endBlit) / 1e9
+
+    print("Blit Copy (64MB): \(String(format: "%.2f", blitBW)) GB/s")
+
+    // ============================================================
+    // 2. SHARED STORAGE MODE WRITE
+    // ============================================================
+    print("\n--- 2. Shared Storage Mode Write ---")
+
+    guard let sharedBuf = device.makeBuffer(length: testSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create shared buffer")
+        return
+    }
+
+    let sharedPtr = sharedBuf.contents().assumingMemoryBound(to: Float.self)
+    for i in 0..<testSize { sharedPtr[i] = Float(i) }
+
+    // Get kernels from deepLibrary
+    guard let writeKernel = deepLibrary.makeFunction(name: "mem_write_seq"),
+          let writePipeline = try? device.makeComputePipelineState(function: writeKernel) else {
+        return
+    }
+
+    var sizeVal = UInt32(testSize)
+
+    let startSharedWrite = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(writePipeline)
+        encoder.setBuffer(sharedBuf, offset: 0, index: 0)
+        encoder.setBytes(&sizeVal, length: MemoryLayout<UInt32>.size, index: 1)
+        encoder.dispatchThreads(MTLSize(width: testSize, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 1024, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endSharedWrite = getTimeNanos()
+    let sharedWriteBW = Double(testSize) * Double(iterations) * Double(MemoryLayout<Float>.size) / getElapsedSeconds(start: startSharedWrite, end: endSharedWrite) / 1e9
+
+    print("Shared Mode Write: \(String(format: "%.2f", sharedWriteBW)) GB/s")
+
+    // ============================================================
+    // 3. MAXIMUM THREADGROUP SIZE
+    // ============================================================
+    print("\n--- 3. Maximum Threadgroup Size Effect ---")
+
+    let threadgroupSizes: [Int] = [64, 128, 256, 512, 1024]
+    let gridSize = 16 * 1024 * 1024  // Large grid
+
+    print("\nThreadgroup | Grid Size    | Bandwidth")
+    print(String(repeating: "-", count: 45))
+
+    for tgSize in threadgroupSizes {
+        let startMax = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(writePipeline)
+            encoder.setBuffer(sharedBuf, offset: 0, index: 0)
+            encoder.setBytes(&sizeVal, length: MemoryLayout<UInt32>.size, index: 1)
+            encoder.dispatchThreads(MTLSize(width: gridSize, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: tgSize, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endMax = getTimeNanos()
+        let maxBW = Double(gridSize) * Double(iterations) * Double(MemoryLayout<Float>.size) / getElapsedSeconds(start: startMax, end: endMax) / 1e9
+
+        print("\(String(format: "%d", tgSize).padStart(12)) | \(String(format: "%d", gridSize).padStart(12)) | \(String(format: "%.2f", maxBW)) GB/s")
+    }
+
+    // ============================================================
+    // 4. ASYNC EXECUTION WITH TRIPLE BUFFERING
+    // ============================================================
+    print("\n--- 4. Async Execution (Triple Buffering Simulation) ---")
+
+    guard let buf1 = device.makeBuffer(length: testSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let buf2 = device.makeBuffer(length: testSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let buf3 = device.makeBuffer(length: testSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+
+    // Triple buffering: start next operation before waiting
+    let startAsync = getTimeNanos()
+
+    for _ in 0..<iterations / 3 {
+        guard let cmd1 = queue.makeCommandBuffer(),
+              let enc1 = cmd1.makeComputeCommandEncoder() else { continue }
+        enc1.setComputePipelineState(writePipeline)
+        enc1.setBuffer(buf1, offset: 0, index: 0)
+        enc1.setBytes(&sizeVal, length: MemoryLayout<UInt32>.size, index: 1)
+        enc1.dispatchThreads(MTLSize(width: testSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 1024, height: 1, depth: 1))
+        enc1.endEncoding()
+
+        guard let cmd2 = queue.makeCommandBuffer(),
+              let enc2 = cmd2.makeComputeCommandEncoder() else { continue }
+        enc2.setComputePipelineState(writePipeline)
+        enc2.setBuffer(buf2, offset: 0, index: 0)
+        enc2.setBytes(&sizeVal, length: MemoryLayout<UInt32>.size, index: 1)
+        enc2.dispatchThreads(MTLSize(width: testSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 1024, height: 1, depth: 1))
+        enc2.endEncoding()
+
+        guard let cmd3 = queue.makeCommandBuffer(),
+              let enc3 = cmd3.makeComputeCommandEncoder() else { continue }
+        enc3.setComputePipelineState(writePipeline)
+        enc3.setBuffer(buf3, offset: 0, index: 0)
+        enc3.setBytes(&sizeVal, length: MemoryLayout<UInt32>.size, index: 1)
+        enc3.dispatchThreads(MTLSize(width: testSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 1024, height: 1, depth: 1))
+        enc3.endEncoding()
+
+        cmd1.commit()
+        cmd2.commit()
+        cmd3.commit()
+
+        cmd1.waitUntilCompleted()
+        cmd2.waitUntilCompleted()
+        cmd3.waitUntilCompleted()
+    }
+
+    let endAsync = getTimeNanos()
+    let asyncBW = Double(testSize) * Double(iterations) * Double(MemoryLayout<Float>.size) / getElapsedSeconds(start: startAsync, end: endAsync) / 1e9
+
+    print("Async (3x parallel): \(String(format: "%.2f", asyncBW)) GB/s")
+
+    // ============================================================
+    // 5. BURST WRITE (ALL THREADS WRITE AT ONCE)
+    // ============================================================
+    print("\n--- 5. Maximum Parallel Burst Write ---")
+
+    guard let burstKernel = deepLibrary.makeFunction(name: "mem_write_combine"),
+          let burstPipeline = try? device.makeComputePipelineState(function: burstKernel) else {
+        return
+    }
+
+    let elementsPerThread = 16
+
+    let startBurst = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(burstPipeline)
+        encoder.setBuffer(sharedBuf, offset: 0, index: 0)
+        encoder.setBytes(&sizeVal, length: MemoryLayout<UInt32>.size, index: 1)
+        let threadCount = testSize / elementsPerThread
+        encoder.dispatchThreads(MTLSize(width: threadCount, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 1024, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endBurst = getTimeNanos()
+    let burstBW = Double(testSize) * Double(iterations) * Double(MemoryLayout<Float>.size) / getElapsedSeconds(start: startBurst, end: endBurst) / 1e9
+
+    print("Burst Write (16 elements/thread): \(String(format: "%.2f", burstBW)) GB/s")
+
+    // ============================================================
+    // 6. READ WITH MAX THREAD UTILIZATION
+    // ============================================================
+    print("\n--- 6. Maximum Read Bandwidth Test ---")
+
+    guard let readKernel = deepLibrary.makeFunction(name: "mem_read_seq"),
+          let readPipeline = try? device.makeComputePipelineState(function: readKernel) else {
+        return
+    }
+
+    // Initialize source
+    let readPtr = sharedBuf.contents().assumingMemoryBound(to: Float.self)
+    for i in 0..<testSize { readPtr[i] = Float(i) }
+
+    guard let readDst = device.makeBuffer(length: testSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+
+    // Use blit to clear first to ensure fresh read
+    for _ in 0..<3 {
+        guard let cmd = queue.makeCommandBuffer(),
+              let blit = cmd.makeBlitCommandEncoder() else { continue }
+        blit.fill(buffer: readDst, range: 0..<(testSize * MemoryLayout<Float>.size), value: 0)
+        blit.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+
+    let startMaxRead = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(readPipeline)
+        encoder.setBuffer(sharedBuf, offset: 0, index: 0)
+        encoder.setBuffer(readDst, offset: 0, index: 1)
+        encoder.setBytes(&sizeVal, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: testSize, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 1024, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endMaxRead = getTimeNanos()
+    let maxReadBW = Double(testSize) * Double(iterations) * Double(MemoryLayout<Float>.size) / getElapsedSeconds(start: startMaxRead, end: endMaxRead) / 1e9
+
+    print("Max Read (1024 threads): \(String(format: "%.2f", maxReadBW)) GB/s")
+
+    // ============================================================
+    // SUMMARY
+    // ============================================================
+    print("\n" + String(repeating: "=", count: 70))
+    print("HIGH PERFORMANCE BANDWIDTH SUMMARY")
+    print(String(repeating: "=", count: 70))
+
+    print("\n| Method                    | Bandwidth   | Notes                    |")
+    print("|---------------------------|-------------|--------------------------|")
+    print("| Blit Copy Engine          | \(String(format: "%.2f", blitBW).padStart(10)) GB/s | Dedicated hardware     |")
+    print("| Shared Mode Write         | \(String(format: "%.2f", sharedWriteBW).padStart(10)) GB/s | CPU-GPU unified       |")
+    print("| Async Triple Buffering    | \(String(format: "%.2f", asyncBW).padStart(10)) GB/s | 3x parallel ops      |")
+    print("| Burst Write (16/thread)   | \(String(format: "%.2f", burstBW).padStart(10)) GB/s | High thread util      |")
+    print("| Max Read (1024 threads)   | \(String(format: "%.2f", maxReadBW).padStart(10)) GB/s | Max threadgroup       |")
+
+    print("\n" + String(repeating: "=", count: 70))
+    print("High Performance Memory Bandwidth Test Complete")
+    print(String(repeating: "=", count: 70))
+}
+
 // String padding helper
 extension String {
     func padStart(_ length: Int) -> String {
@@ -1861,5 +2144,6 @@ do { try testConversionPerformance(device: device, queue: queue, library: librar
 do { try testReductionPerformance(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testDeepGPUResearch(device: device, queue: queue) } catch { print("Error: \(error)") }
 do { try testDeepMemoryBandwidth(device: device, queue: queue) } catch { print("Error: \(error)") }
+do { try testHighPerformanceBandwidth(device: device, queue: queue) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")
