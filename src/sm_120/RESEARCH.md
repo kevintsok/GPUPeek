@@ -670,6 +670,32 @@ ncu --set full \
 | INT8 | m64nNk32 | 整数运算 |
 | **FP4/FP6** | **m16n8k32** | **不同的shape!** |
 
+### TCGen05 CTA Group 类型
+
+| CTA Group | 描述 | 寄存器数量 |
+|-----------|------|-----------|
+| `cta_group::1` | 单CTA MMA (1 warp group) | 4 D registers |
+| `cta_group::2` | 双CTA集群 MMA (2 warp groups) | 8+ D registers |
+
+### TCGen05 Operand Source 变体
+
+| 变体 | A来源 | B来源 | 描述 |
+|------|-------|-------|------|
+| SS | SMEM | SMEM | Smem-Smem (两者都从共享内存) |
+| TS | TMEM | SMEM | Tmem-Smem (A从张量内存) |
+| ST | SMEM | TMEM | Smem-Tmem (B从张量内存) |
+| TT | TMEM | TMEM | Tmem-Tmem (两者都从张量内存) |
+
+### TCGen05 Block Scaling 变体
+
+| 变体 | 描述 |
+|------|------|
+| `block_scale` | 启用块缩放 |
+| `block16` | 16元素块缩放因子 |
+| `block32` | 32元素块缩放因子 |
+| `scale_vec::2X` | 2倍缩放向量 |
+| `scale_vec::4X` | 4倍缩放向量 |
+
 ### 支持的低精度格式
 
 | 格式 | 位数 | 用途 |
@@ -680,11 +706,36 @@ ncu --set full \
 | FP8 (E4M3) | 4-bit exp, 3-bit mantissa | Hopper标准 |
 | FP8 (E5M2) | 5-bit exp, 2-bit mantissa | 宽范围 |
 
-### PTX 指令示例
+### PTX 指令示例 (来自 CUTLASS mma_sm100_umma.hpp)
 
 ```asm
-// TCGen05 TF32 MMA (A和B都从SMEM)
-tcgen05.mma.cta_group::1.kind::tf32 [%tmem_d], %desc_a, %desc_b, ...
+// TF32 SS (两者都从SMEM)
+tcgen05.mma.cta_group::1.kind::tf32 [%tmem_c], %desc_a, %desc_b, %idescE,
+  {%mask0, %mask1, %mask2, %mask3}, p;
+
+// FP16 BF16 SS
+tcgen05.mma.cta_group::1.kind::f16 [%tmem_c], %desc_a, %desc_b, %idescE,
+  {%mask0, %mask1, %mask2, %mask3}, p;
+
+// Block Scaled MXFP8/MXFP6/MXF4
+tcgen05.mma.cta_group::1.kind::mxf8f6f4.block_scale [%tmem_c], %desc_a, %desc_b,
+  %idescE, [%tsfa_addr], [%tsfb_addr], p;
+
+// Block Scaled MXF4 (NVIDIA FP4) - 16元素块
+tcgen05.mma.cta_group::1.kind::mxf4nvf4.block_scale.block16 [%tmem_c], %desc_a,
+  %desc_b, %idescE, [%tsfa_addr], [%tsfb_addr], p;
+
+// Block Scaled MXF4 - 32元素块
+tcgen05.mma.cta_group::1.kind::mxf4.block_scale.block32 [%tmem_c], %desc_a,
+  %desc_b, %idescE, [%tsfa_addr], [%tsfb_addr], p;
+
+// Cluster MMA (2 CTA)
+tcgen05.mma.cta_group::2.kind::tf32 [%tmem_c], %desc_a, %desc_b, %idescE,
+  {%mask0..%mask11}, p;
+
+// Sparse MMA (2:4 结构化稀疏)
+tcgen05.mma.sp.cta_group::1.kind::tf32 [%tmem_c], %desc_a, %desc_b, [%tsfb_addr],
+  %idescE, {%mask0..%mask7}, p;
 
 // SM120 Native MMA (m16n8k32, 寄存器-based)
 mma.sync.aligned.kind::f8f6f4.m16n8k32.row.col.f32.e2m1.e2m1.f32
@@ -720,6 +771,63 @@ make -j16
 # NCU Profiling CUTLASS
 ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./CUTLASS_binary
 ```
+
+### CUTLASS CollectiveBuilder 使用模式
+
+来自 `79a_blackwell_geforce_nvfp4_bf16_gemm.cu`:
+
+```cpp
+// 类型定义
+using ElementA = cutlass::nv_float4_t<cutlass::float_e2m1_t>;  // FP4
+using ElementB = cutlass::bfloat16_t;
+using ElementD = cutlass::bfloat16_t;
+using ElementAccumulator = float;
+using ArchTag = cutlass::arch::Sm120;
+using OperatorClass = cutlass::arch::OpClassBlockScaledTensorOp;
+
+// Tile配置
+using ThreadBlockShape = Shape<_128,_128,_128>;  // 128x128x128 K-dim
+using ClusterShape = Shape<_1,_1,_1>;             // GeForce (无multicast)
+
+// CollectiveMainloop (数据加载 + MMA)
+using CollectiveMainloop = typename cutlass::gemm::collective::CollectiveBuilder<
+    ArchTag, OperatorClass,
+    ElementA, LayoutATag, AlignmentA,
+    ElementB, LayoutBTag, AlignmentB,
+    ElementAccumulator,
+    ThreadBlockShape, ClusterShape,
+    StageCountAutoCarveout<...>,
+    cutlass::gemm::collective::KernelScheduleAuto
+>::CollectiveOp;
+
+// CollectiveEpilogue (输出阶段)
+using CollectiveEpilogue = typename cutlass::epilogue::collective::CollectiveBuilder<
+    ArchTag, OperatorClass,
+    ThreadBlockShape, ClusterShape,
+    cutlass::epilogue::collective::EpilogueTileAuto,
+    ElementAccumulator, ElementAccumulator,
+    ElementC, LayoutCTag, AlignmentC,
+    ElementD, LayoutDTag, AlignmentD,
+    cutlass::epilogue::collective::EpilogueScheduleAuto
+>::CollectiveOp;
+
+// GEMM Kernel
+using GemmKernel = cutlass::gemm::kernel::GemmUniversal<
+    Shape<int,int,int,int>,  // ProblemShape (m, n, k, batch)
+    CollectiveMainloop,
+    CollectiveEpilogue,
+    void>;
+using Gemm = cutlass::gemm::device::GemmUniversalAdapter<GemmKernel>;
+```
+
+### RTX 50 系列 (GeForce) 限制
+
+| 特性 | 支持情况 |
+|------|---------|
+| TMA Multicast | ❌ 不支持 |
+| Cluster Shape | 必须 1x1x1 |
+| Dynamic Datatypes | ❌ 不支持 |
+| Cluster MMA | ❌ 不支持 (仅数据中心GPU如H200) |
 
 ### TCGen05 研究文件
 
