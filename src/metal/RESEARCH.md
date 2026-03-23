@@ -72,12 +72,19 @@
 - [x] 三角函数性能 - 0.57 GOPS
 - [x] 整数运算性能 - 0.58 GOPS
 
-### Phase 4: 架构特性研究
+### Phase 4: 并行计算特性
+- [x] 线程组大小扩展 - 64-1024线程性能相似
+- [x] SIMD向量操作 - float4达到0.03-0.18 GFLOPS
+- [x] 原子操作争用扩展 - 0.016-0.57 GOPS
+- [x] 线程分歧测试 - 10-15%性能变化
+- [x] 屏障开销测试 - 4.8μs单次，流水线后89ns
+
+### Phase 5: 架构特性研究
 - [ ] Apple GPU微架构分析
 - [ ] TBDR (Tile-Based Deferred Rendering) 特性
 - [ ] 内存压缩技术
 
-### Phase 5: 架构对比
+### Phase 6: 架构对比
 - [ ] 与NVIDIA GPU对比
 - [ ] 与AMD GPU对比
 - [ ] 性能效率分析
@@ -130,6 +137,17 @@ ReadWriteTextureSupport: MTLReadWriteTextureTier2
 | FMA | 32MB | 0.22 GFLOPS | 融合乘加 |
 | 三角函数 | 8M元素 | 0.57 GOPS | sin+cos+tan |
 | 整数运算 | 8M元素 | 0.58 GOPS | add+sub+mul+xor |
+
+### Phase 4: 并行计算特性测试结果
+
+| 操作类型 | 规模 | 实测性能 | 备注 |
+|---------|------|---------|------|
+| 线程组扩展 | 64-1024 | 0.70-0.76 GB/s | 大小影响极小 |
+| SIMD float4 | 向量操作 | 0.03-0.18 GFLOPS | 向量化操作 |
+| 原子操作 | 1-1024计数器 | 0.016-0.57 GOPS | 争用影响性能 |
+| 线程分歧 | 不同分支阈值 | 1.16-1.31 GFLOPS | 分支偏斜影响 |
+| 屏障开销 | 单次 | 4.8μs/次 | 流水线后89ns |
+| 共享内存归约 | 65K-1M | 0.01-0.11 GFLOPS | 规模线性扩展 |
 
 ## 关键发现
 
@@ -203,6 +221,8 @@ swift run --configuration release
 - [Phase 2 Report (CN)](docs/Phase2_Memory_Subsystem_Report_CN.md)
 - [Phase 3 Report (EN)](docs/Phase3_Compute_Throughput_Report.md)
 - [Phase 3 Report (CN)](docs/Phase3_Compute_Throughput_Report_CN.md)
+- [Phase 4 Report (EN)](docs/Phase4_Parallel_Computing_Report.md)
+- [Phase 4 Report (CN)](docs/Phase4_Parallel_Computing_Report_CN.md)
 
 ## 参考资料
 
