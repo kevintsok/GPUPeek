@@ -86,12 +86,17 @@
 - [x] 填充模式测试 - 零/一/交替都约1.6 GB/s
 - [x] 内存延迟分析 - 61ns单次，流水线后0.45ns
 
-### Phase 6: 架构特性研究
+### Phase 6: 跨架构对比
+- [x] Apple M2 vs NVIDIA RTX 4090规格对比
+- [x] 内存架构分析 - 统一内存vs独立显存
+- [x] 计算性能对比 - 9000倍差距分析
+- [x] 能效对比 - GFLOPS/Watt分析
+- [x] 使用场景建议 - 根据工作负载选择
+
+### Phase 7: 架构特性研究
 - [ ] Apple GPU微架构分析
 - [ ] TBDR (Tile-Based Deferred Rendering) 特性
 - [ ] 内存压缩技术
-
-### Phase 7: 架构对比
 - [ ] 与NVIDIA GPU对比
 - [ ] 与AMD GPU对比
 - [ ] 性能效率分析
@@ -167,6 +172,17 @@ ReadWriteTextureSupport: MTLReadWriteTextureTier2
 | 写入带宽 | 64MB | 1.80 GB/s | 最大 |
 | 内存延迟 | 单次 | 61 ns | 单元素访问 |
 | 内存延迟 | 100迭代 | 0.45 ns | 流水线后 |
+
+### Phase 6: 跨架构对比
+
+| 指标 | Apple M2 | NVIDIA RTX 4090 | 备注 |
+|------|----------|-----------------|------|
+| 内存带宽(理论) | 100 GB/s | 1008 GB/s | 10倍差距 |
+| 内存带宽(实测) | ~1.5 GB/s | ~650 GB/s | 430倍差距 |
+| FP32 MatMul | 9.11 GFLOPS | ~1000+ GFLOPS | 计算差距大 |
+| TDP | ~25W | 450W | 18倍差距 |
+| GFLOPS/W | ~0.36 | ~2.2 | 效率差距 |
+| 内存类型 | 统一内存 | GDDR6X | 架构不同 |
 
 ## 关键发现
 
@@ -244,6 +260,8 @@ swift run --configuration release
 - [Phase 4 Report (CN)](docs/Phase4_Parallel_Computing_Report_CN.md)
 - [Phase 5 Report (EN)](docs/Phase5_Architecture_Deep_Dive_Report.md)
 - [Phase 5 Report (CN)](docs/Phase5_Architecture_Deep_Dive_Report_CN.md)
+- [Phase 6 Report (EN)](docs/Phase6_Cross_Architecture_Comparison_Report.md)
+- [Phase 6 Report (CN)](docs/Phase6_Cross_Architecture_Comparison_Report_CN.md)
 
 ## 参考资料
 
