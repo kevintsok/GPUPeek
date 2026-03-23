@@ -393,6 +393,447 @@ void runCooperativeSyncTest() {
 }
 
 // =============================================================================
+// B.7 bar.red Reduction Barrier Tests
+// =============================================================================
+
+void runBarRedTest() {
+    printf("\n");
+    printf("================================================================================\n");
+    printf("B.7 bar.red Reduction Barrier\n");
+    printf("================================================================================\n");
+
+    const size_t N = 4 * 1024 * 1024;
+    const int iterations = 100;
+    const int blockSize = 256;
+
+    int numBlocks = (N + blockSize - 1) / blockSize;
+
+    // Prepare predicate array (50% true)
+    int *h_pred;
+    CHECK_CUDA(cudaMallocHost(&h_pred, N * sizeof(int)));
+    for (size_t i = 0; i < N; i++) {
+        h_pred[i] = (i % 2);
+    }
+
+    int *d_pred, *d_result;
+    unsigned int *d_popc_result;
+
+    CHECK_CUDA(cudaMalloc(&d_pred, N * sizeof(int)));
+    CHECK_CUDA(cudaMalloc(&d_result, numBlocks * sizeof(int)));
+    CHECK_CUDA(cudaMalloc(&d_popc_result, numBlocks * sizeof(unsigned int)));
+
+    CHECK_CUDA(cudaMemcpy(d_pred, h_pred, N * sizeof(int), cudaMemcpyHostToDevice));
+
+    GPUTimer timer;
+
+    // bar.red.popc test
+    printf("\n--- bar.red.popc (Population Count Reduction) ---\n\n");
+
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        barRedPopcKernel<<<numBlocks, blockSize>>>(d_pred, d_popc_result, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+
+    double popcTime = timer.elapsed_ms() / iterations;
+    printf("bar.red.popc: %.3f ms per kernel\n", popcTime);
+    printf("Reduces predicate to thread count in one barrier instruction.\n");
+
+    // bar.red.and test
+    printf("\n--- bar.red.and (All-True Reduction) ---\n\n");
+
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        barRedAndKernel<<<numBlocks, blockSize>>>(d_pred, d_result, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+
+    double andTime = timer.elapsed_ms() / iterations;
+    printf("bar.red.and: %.3f ms per kernel\n", andTime);
+    printf("Returns 1 if ALL threads had predicate=true.\n");
+
+    // bar.red.or test
+    printf("\n--- bar.red.or (Any-True Reduction) ---\n\n");
+
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        barRedOrKernel<<<numBlocks, blockSize>>>(d_pred, d_result, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+
+    double orTime = timer.elapsed_ms() / iterations;
+    printf("bar.red.or: %.3f ms per kernel\n", orTime);
+    printf("Returns 1 if ANY thread had predicate=true.\n");
+
+    printf("\nPTX Reference:\n");
+    printf("  bar.red.popc.u32 Rd, Nt, Pd;  // count true predicates\n");
+    printf("  bar.red.and.pred Rd, Nt, Pd;  // AND reduction\n");
+    printf("  bar.red.or.pred  Rd, Nt, Pd;  // OR reduction\n");
+
+    CHECK_CUDA(cudaFree(d_pred));
+    CHECK_CUDA(cudaFree(d_result));
+    CHECK_CUDA(cudaFree(d_popc_result));
+    CHECK_CUDA(cudaFreeHost(h_pred));
+}
+
+// =============================================================================
+// B.8 bar.arrive vs bar.sync vs bar.wait
+// =============================================================================
+
+void runArriveSyncWaitTest() {
+    printf("\n");
+    printf("================================================================================\n");
+    printf("B.8 bar.arrive vs bar.sync vs bar.wait\n");
+    printf("================================================================================\n");
+
+    const size_t N = 4 * 1024 * 1024;
+    const int iterations = 100;
+    const int blockSize = 256;
+
+    int numBlocks = (N + blockSize - 1) / blockSize;
+
+    float *d_data;
+    CHECK_CUDA(cudaMalloc(&d_data, N * sizeof(float)));
+    CHECK_CUDA(cudaMemset(d_data, 1, N * sizeof(float)));
+
+    GPUTimer timer;
+
+    // bar.sync (blocking)
+    printf("\n--- bar.sync (Blocking) ---\n\n");
+
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        barSyncBlockingKernel<<<numBlocks, blockSize>>>(d_data, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+
+    double syncTime = timer.elapsed_ms() / iterations;
+    double syncBw = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("bar.sync (blocking): %.3f ms, %s\n", syncTime, formatBandwidth(syncBw));
+    printf("All threads arrive AND wait at barrier.\n");
+
+    // bar.arrive + bar.wait (non-blocking)
+    printf("\n--- bar.arrive + bar.wait (Non-blocking) ---\n\n");
+
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        barArriveWaitKernel<<<numBlocks, blockSize>>>(d_data, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+
+    double arriveWaitTime = timer.elapsed_ms() / iterations;
+    double arriveWaitBw = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("bar.arrive + bar.wait: %.3f ms, %s\n", arriveWaitTime, formatBandwidth(arriveWaitBw));
+    printf("Threads arrive (decrement counter) without waiting, then wait later.\n");
+
+    // Producer-consumer with two barriers
+    printf("\n--- Producer-Consumer (Two Barriers) ---\n\n");
+
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        producerConsumerKernel<<<numBlocks, blockSize>>>(d_data, N, 0);
+        producerConsumerKernel<<<numBlocks, blockSize>>>(d_data, N, 1);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+
+    double pcTime = timer.elapsed_ms() / iterations;
+    double pcBw = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("Producer-Consumer: %.3f ms, %s\n", pcTime, formatBandwidth(pcBw));
+    printf("Uses separate barriers for produce/consume phases.\n");
+
+    printf("\nPTX Reference:\n");
+    printf("  bar.sync  Id, Nt;     // Arrive AND wait (blocking)\n");
+    printf("  bar.arrive Id, Nt;    // Arrive only (non-blocking)\n");
+    printf("  bar.wait  Id, Nt;     // Wait for arrive count\n");
+    printf("\nNote: bar.arrive/wait enables work between arrive and wait,\n");
+    printf("      hiding latency vs blocking bar.sync.\n");
+
+    CHECK_CUDA(cudaFree(d_data));
+}
+
+// =============================================================================
+// B.9 Named Barriers (SM90+)
+// =============================================================================
+
+void runNamedBarrierTest() {
+    printf("\n");
+    printf("================================================================================\n");
+    printf("B.9 Named Barriers (SM90+)\n");
+    printf("================================================================================\n");
+
+    const size_t N = 4 * 1024 * 1024;
+    const int iterations = 100;
+    const int blockSize = 256;
+
+    int numBlocks = (N + blockSize - 1) / blockSize;
+
+    float *d_data;
+    CHECK_CUDA(cudaMalloc(&d_data, N * sizeof(float)));
+    CHECK_CUDA(cudaMemset(d_data, 1, N * sizeof(float)));
+
+    GPUTimer timer;
+
+    printf("\n--- Named Barrier (ID 8) ---\n\n");
+
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        namedBarrierKernel<<<numBlocks, blockSize>>>(d_data, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+
+    double namedTime = timer.elapsed_ms() / iterations;
+    double namedBw = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("Named Barrier: %.3f ms, %s\n", namedTime, formatBandwidth(namedBw));
+
+    printf("\nNamed Barrier Features:\n");
+    printf("- 16 named barriers (ID 0-15) available on SM90+\n");
+    printf("- ID 0 reserved for __syncthreads() compatibility\n");
+    printf("- IDs 1-7 reserved for system (CUTLASS uses 1-7)\n");
+    printf("- User barriers start at ID 8\n");
+    printf("- Can be used for inter-CTA synchronization\n");
+
+    printf("\nPTX Reference:\n");
+    printf("  bar.sync  Id, Nt;     // Id = 0-15 for named barriers\n");
+    printf("  bar.arrive Id, Nt;\n");
+    printf("  bar.wait  Id, Nt;\n");
+
+    CHECK_CUDA(cudaFree(d_data));
+}
+
+// =============================================================================
+// B.10 mbarrier Operations
+// =============================================================================
+
+void runMbarrierTest() {
+    printf("\n");
+    printf("================================================================================\n");
+    printf("B.10 mbarrier (Memory Barrier) Operations\n");
+    printf("================================================================================\n");
+
+    const size_t N = 4 * 1024 * 1024;
+    const int iterations = 100;
+    const int blockSize = 256;
+
+    int numBlocks = (N + blockSize - 1) / blockSize;
+
+    uint64_t *d_mbarrier;
+    float *d_data;
+
+    CHECK_CUDA(cudaMalloc(&d_mbarrier, numBlocks * sizeof(uint64_t)));
+    CHECK_CUDA(cudaMalloc(&d_data, N * sizeof(float)));
+    CHECK_CUDA(cudaMemset(d_data, 1, N * sizeof(float)));
+
+    GPUTimer timer;
+
+    // mbarrier.init + mbarrier.test_wait
+    printf("\n--- mbarrier.init + test_wait ---\n\n");
+
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        mbarrierInitWaitKernel<<<numBlocks, blockSize>>>(d_mbarrier, d_data, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+
+    double initWaitTime = timer.elapsed_ms() / iterations;
+    printf("mbarrier.init + test_wait: %.3f ms\n", initWaitTime);
+
+    // mbarrier.arrive (non-blocking)
+    printf("\n--- mbarrier.arrive (Non-blocking) ---\n\n");
+
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        mbarrierArriveKernel<<<numBlocks, blockSize>>>(d_mbarrier, d_data, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+
+    double arriveTime = timer.elapsed_ms() / iterations;
+    printf("mbarrier.arrive: %.3f ms\n", arriveTime);
+
+    // mbarrier.expect_tx (transaction count)
+    printf("\n--- mbarrier.expect_tx (Transaction Counting) ---\n\n");
+
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        mbarrierExpectTxKernel<<<numBlocks, blockSize>>>(d_mbarrier, d_data, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+
+    double expectTxTime = timer.elapsed_ms() / iterations;
+    printf("mbarrier.expect_tx: %.3f ms\n", expectTxTime);
+
+    printf("\nmbarrier Operations:\n");
+    printf("- mbarrier.init: Initialize barrier with arrival count\n");
+    printf("- mbarrier.arrive: Decrement arrival count (non-blocking)\n");
+    printf("- mbarrier.test_wait: Blocking wait for barrier\n");
+    printf("- mbarrier.try_wait: Non-blocking query\n");
+    printf("- mbarrier.expect_tx: Declare expected transaction bytes\n");
+    printf("- mbarrier.complete_tx: Complete transaction bytes\n");
+
+    printf("\nPTX Reference:\n");
+    printf("  mbarrier.init.shared::cta.b64 [addr], count;\n");
+    printf("  mbarrier.arrive.shared::cta.b64 _, [addr];\n");
+    printf("  mbarrier.test_wait.parity.shared::cta.b64 P, [addr], phase;\n");
+    printf("  mbarrier.expect_tx.shared::cta.b64 [addr], bytes;\n");
+    printf("  mbarrier.complete_tx.shared::cta.b64 [addr], bytes;\n");
+
+    CHECK_CUDA(cudaFree(d_mbarrier));
+    CHECK_CUDA(cudaFree(d_data));
+}
+
+// =============================================================================
+// B.11 cp.async + mbarrier Pipeline
+// =============================================================================
+
+void runCpAsyncMbarrierTest() {
+    printf("\n");
+    printf("================================================================================\n");
+    printf("B.11 cp.async + mbarrier Pipeline\n");
+    printf("================================================================================\n");
+
+    const size_t N = 4 * 1024 * 1024;
+    const size_t block_size = 256 * 4;
+    const int iterations = 100;
+    const int blockSize = 256;
+
+    int numBlocks = (N + blockSize - 1) / blockSize;
+
+    float *h_src;
+    CHECK_CUDA(cudaMallocHost(&h_src, N * sizeof(float)));
+    for (size_t i = 0; i < N; i++) h_src[i] = 1.0f;
+
+    float *d_src, *d_dst;
+    uint64_t *d_mbarrier;
+
+    CHECK_CUDA(cudaMalloc(&d_src, N * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&d_dst, N * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&d_mbarrier, numBlocks * sizeof(uint64_t)));
+
+    CHECK_CUDA(cudaMemcpy(d_src, h_src, N * sizeof(float), cudaMemcpyHostToDevice));
+
+    GPUTimer timer;
+
+    printf("\n--- Producer (cp.async + mbarrier.arrive) ---\n\n");
+
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        cpAsyncProducerKernel<<<numBlocks, blockSize, 0>>>(d_src, d_dst, d_mbarrier, N, block_size);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+
+    double producerTime = timer.elapsed_ms() / iterations;
+    double producerBw = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("cp.async Producer: %.3f ms, %s\n", producerTime, formatBandwidth(producerBw));
+
+    printf("\nAsync Copy + mbarrier Pattern:\n");
+    printf("1. cp.async.ca.shared::cta.b32 [smem], [gm], size;\n");
+    printf("2. cp.async.commit_group; // Group async ops\n");
+    printf("3. cp.async.mbarrier.arrive [barrier]; // Arrive on mbarrier\n");
+    printf("4. cp.async.wait_group 0; // Wait for group\n");
+    printf("5. mbarrier.test_wait [barrier]; // Final sync\n");
+
+    printf("\nThis pattern enables:\n");
+    printf("- Overlap memory copy with computation\n");
+    printf("- Producer-consumer pipelines across blocks\n");
+    printf("- Latency hiding for global memory access\n");
+
+    CHECK_CUDA(cudaFree(d_src));
+    CHECK_CUDA(cudaFree(d_dst));
+    CHECK_CUDA(cudaFree(d_mbarrier));
+    CHECK_CUDA(cudaFreeHost(h_src));
+}
+
+// =============================================================================
+// B.12 __threadfence vs __syncthreads
+// =============================================================================
+
+void runThreadFenceTest() {
+    printf("\n");
+    printf("================================================================================\n");
+    printf("B.12 __threadfence vs __syncthreads\n");
+    printf("================================================================================\n");
+
+    const size_t N = 4 * 1024 * 1024;
+    const int iterations = 100;
+    const int blockSize = 256;
+
+    int numBlocks = (N + blockSize - 1) / blockSize;
+
+    float *d_data;
+    CHECK_CUDA(cudaMalloc(&d_data, N * sizeof(float)));
+    CHECK_CUDA(cudaMemset(d_data, 1, N * sizeof(float)));
+
+    GPUTimer timer;
+
+    // __threadfence (memory fence only)
+    printf("\n--- __threadfence (Memory Fence Only) ---\n\n");
+
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        threadFenceOnlyKernel<<<numBlocks, blockSize>>>(d_data, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+
+    double fenceTime = timer.elapsed_ms() / iterations;
+    printf("__threadfence: %.3f ms (UNSAFE for cross-thread communication)\n", fenceTime);
+
+    // __syncthreads (fence + sync)
+    printf("\n--- __syncthreads (Fence + Synchronization) ---\n\n");
+
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        syncthreadsKernel<<<numBlocks, blockSize>>>(d_data, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+
+    double syncthreadsTime = timer.elapsed_ms() / iterations;
+    double syncthreadsBw = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("__syncthreads: %.3f ms, %s\n", syncthreadsTime, formatBandwidth(syncthreadsBw));
+
+    // __threadfence_block
+    printf("\n--- __threadfence_block (Block Fence Only) ---\n\n");
+
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        threadFenceBlockKernel<<<numBlocks, blockSize>>>(d_data, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+
+    double fenceBlockTime = timer.elapsed_ms() / iterations;
+    double fenceBlockBw = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("__threadfence_block: %.3f ms, %s\n", fenceBlockTime, formatBandwidth(fenceBlockBw));
+
+    printf("\nMemory Ordering Comparison:\n");
+    printf("+--------------------+------+---------+--------+\n");
+    printf("| Primitive          | Fence|  Sync   | Scope  |\n");
+    printf("+--------------------+------+---------+--------+\n");
+    printf("| __threadfence      | Yes  | No      | Grid   |\n");
+    printf("| __threadfence_block| Yes  | No      | Block  |\n");
+    printf("| __syncthreads      | Yes  | Yes     | Block  |\n");
+    printf("+--------------------+------+---------+--------+\n");
+
+    printf("\nUse cases:\n");
+    printf("- __threadfence: Ensure memory ordering without synchronization\n");
+    printf("- __threadfence_block: Cheaper fence when only block-scope needed\n");
+    printf("- __syncthreads: When both ordering AND synchronization needed\n");
+
+    CHECK_CUDA(cudaFree(d_data));
+}
+
+// =============================================================================
 // Main Entry
 // =============================================================================
 
@@ -404,12 +845,21 @@ void runBarrierBenchmarks(size_t N) {
     printf("#                                                                              #\n");
     printf("################################################################################\n");
 
+    // Basic Tests
     runSyncOverheadTest();
     runBarrierStallTest();
     runBlockSizeBarrierEfficiencyTest();
     runMultiBlockSyncTest();
     runWarpSyncPrimitiveTest();
     runCooperativeSyncTest();
+
+    // Deep Barrier Research (B.7-B.12)
+    runBarRedTest();
+    runArriveSyncWaitTest();
+    runNamedBarrierTest();
+    runMbarrierTest();
+    runCpAsyncMbarrierTest();
+    runThreadFenceTest();
 
     printf("\n");
     printf("================================================================================\n");
