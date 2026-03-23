@@ -40,6 +40,23 @@ mma.sync.aligned.m16n8k32.row.col.f32.e3m2.e3m2.f32   // FP6 e3m2
 - 极致内存压缩
 - 推理加速
 
+## 6. 图表生成
+
+运行以下脚本生成可视化图表:
+
+```bash
+cd scripts
+pip install -r requirements.txt
+python plot_fp_precision.py
+```
+
+输出位置: `NVIDIA_GPU/sm_120/fp4_fp6/data/`
+
+| 图表 | 描述 |
+|------|------|
+| `fp4_fp6_comparison.png` | FP4/FP6格式位宽和TFLOPS对比 |
+| `precision_tradeoff.png` | 精度vs内存减少权衡 |
+
 ## 参考文献
 
 - [PTX ISA - FP4/FP6](../ref/ptx_isa.html)

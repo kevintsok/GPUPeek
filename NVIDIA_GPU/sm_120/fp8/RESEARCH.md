@@ -34,6 +34,23 @@ mma.sync.aligned.m16n8k16.row.col.f32.e5m2.e5m2.f32   // FP8 E5M2
 | FP8 E4M3 | 8 | 4x | 中 |
 | FP8 E5M2 | 8 | 4x | 中低 |
 
+## 5. 图表生成
+
+运行以下脚本生成可视化图表:
+
+```bash
+cd scripts
+pip install -r requirements.txt
+python plot_fp_precision.py
+```
+
+输出位置: `NVIDIA_GPU/sm_120/fp8/data/`
+
+| 图表 | 描述 |
+|------|------|
+| `fp8_comparison.png` | FP8格式位宽和带宽对比 |
+| `memory_reduction.png` | 各精度格式内存减少因子 |
+
 ## 参考文献
 
 - [CUDA Programming Guide - FP8](../ref/cuda_programming_guide.html)
