@@ -31,6 +31,8 @@ __syncthreads();
 | 512 | 低 |
 | 1024 | 最低 |
 
+**可视化图表**: `data/block_size_efficiency.png`
+
 **建议**: 根据计算密度选择合适的 Block Size
 
 ## 4. bar.sync 指令
@@ -40,6 +42,8 @@ PTX 中的 barrier 指令:
 bar.sync 0;  // CTA barrier
 bar.red.popc.gpu.s32 ...;  // reduction barrier
 ```
+
+**可视化图表**: `data/sync_overhead.png`, `data/barrier_stall.png`
 
 ## 5. NCU 指标
 
@@ -247,6 +251,18 @@ value = data[idx];
 ```
 
 ---
+
+## 图表生成
+
+运行以下脚本生成可视化图表:
+
+```bash
+cd scripts
+pip install -r requirements.txt
+python plot_barrier_sync.py
+```
+
+输出位置: `NVIDIA_GPU/sm_120/barrier/data/`
 
 ## 参考文献
 
