@@ -65,12 +65,19 @@
 - [x] 原子操作性能 - 0.093 GOPS (高竞争开销)
 - [x] 内存操作类型 - 写入比读取快(1.57 vs 0.9 GB/s)
 
-### Phase 3: 架构特性研究
+### Phase 3: 计算吞吐量研究
+- [x] FP32矩阵乘法 - 朴素vs分块，分块快2-3倍
+- [x] FP16 vs FP32对比 - FP16快约5%
+- [x] FMA性能测试 - 0.22 GFLOPS (内存受限)
+- [x] 三角函数性能 - 0.57 GOPS
+- [x] 整数运算性能 - 0.58 GOPS
+
+### Phase 4: 架构特性研究
 - [ ] Apple GPU微架构分析
 - [ ] TBDR (Tile-Based Deferred Rendering) 特性
 - [ ] 内存压缩技术
 
-### Phase 4: 架构对比
+### Phase 5: 架构对比
 - [ ] 与NVIDIA GPU对比
 - [ ] 与AMD GPU对比
 - [ ] 性能效率分析
@@ -112,6 +119,17 @@ ReadWriteTextureSupport: MTLReadWriteTextureTier2
 |---------|------|---------|------|
 | FP32 MatMul | 1024x1024x1024 | 4.62 GFLOPS | 朴素实现 |
 | FP16 MatMul | 1024x1024x1024 | 4.93 GFLOPS | 半精度 |
+
+### Phase 3: 计算吞吐量测试结果
+
+| 操作类型 | 规模 | 实测性能 | 备注 |
+|---------|------|---------|------|
+| FP32 MatMul (朴素) | 1024³ | 4.30 GFLOPS | 内存受限 |
+| FP32 MatMul (分块) | 1024³ | 9.11 GFLOPS | 共享内存tiling |
+| FP16 MatMul | 1024³ | 4.92 GFLOPS | 半精度 |
+| FMA | 32MB | 0.22 GFLOPS | 融合乘加 |
+| 三角函数 | 8M元素 | 0.57 GOPS | sin+cos+tan |
+| 整数运算 | 8M元素 | 0.58 GOPS | add+sub+mul+xor |
 
 ## 关键发现
 
@@ -181,6 +199,10 @@ swift run --configuration release
 
 - [Phase 1 Report (EN)](docs/Phase1_Benchmark_Optimization_Report.md)
 - [Phase 1 Report (CN)](docs/Phase1_Benchmark_Optimization_Report_CN.md)
+- [Phase 2 Report (EN)](docs/Phase2_Memory_Subsystem_Report.md)
+- [Phase 2 Report (CN)](docs/Phase2_Memory_Subsystem_Report_CN.md)
+- [Phase 3 Report (EN)](docs/Phase3_Compute_Throughput_Report.md)
+- [Phase 3 Report (CN)](docs/Phase3_Compute_Throughput_Report_CN.md)
 
 ## 参考资料
 

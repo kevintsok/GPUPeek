@@ -19,134 +19,191 @@ func getTimeInterval(start: UInt64, end: UInt64) -> Double {
     return Double(elapsed) * Double(info.numer) / Double(info.denom) / 1e9
 }
 
-// MARK: - Phase 2: Memory Subsystem Shader Library
+// MARK: - Phase 3: Compute Throughput Shader Library
 
 let shaderSource = """
 #include <metal_stdlib>
 using namespace metal;
 
-// Memory Copy - Reference kernel
-kernel void memory_copy(device const float* src [[buffer(0)]],
-                      device float* dst [[buffer(1)]],
-                      constant uint& size [[buffer(2)]],
-                      uint id [[thread_position_in_grid]]) {
-    dst[id] = src[id];
+// FP32 Matrix Multiply - Naive
+kernel void matmul_fp32_naive(device const float* a [[buffer(0)]],
+                             device const float* b [[buffer(1)]],
+                             device float* c [[buffer(2)]],
+                             constant uint& M [[buffer(3)]],
+                             constant uint& K [[buffer(4)]],
+                             constant uint& N [[buffer(5)]],
+                             uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= N || gid.y >= M) return;
+
+    float sum = 0.0f;
+    for (uint k = 0; k < K; k++) {
+        uint a_idx = gid.y * K + k;
+        uint b_idx = k * N + gid.x;
+        sum += a[a_idx] * b[b_idx];
+    }
+    c[gid.y * N + gid.x] = sum;
 }
 
-// Memory Copy - Vectorized (float4)
-kernel void memory_copy_v4(device const float4* src [[buffer(0)]],
-                         device float4* dst [[buffer(1)]],
-                         constant uint& count [[buffer(2)]],
-                         uint id [[thread_position_in_grid]]) {
-    dst[id] = src[id];
+// FP16 Matrix Multiply - Naive
+kernel void matmul_fp16_naive(device const half* a [[buffer(0)]],
+                             device const half* b [[buffer(1)]],
+                             device half* c [[buffer(2)]],
+                             constant uint& M [[buffer(3)]],
+                             constant uint& K [[buffer(4)]],
+                             constant uint& N [[buffer(5)]],
+                             uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= N || gid.y >= M) return;
+
+    half sum = 0.0h;
+    for (uint k = 0; k < K; k++) {
+        uint a_idx = gid.y * K + k;
+        uint b_idx = k * N + gid.x;
+        sum += a[a_idx] * b[b_idx];
+    }
+    c[gid.y * N + gid.x] = sum;
 }
 
-// Strided memory access - sequential elements with stride
-kernel void strided_access(device const float* src [[buffer(0)]],
-                         device float* dst [[buffer(1)]],
-                         constant uint& stride [[buffer(2)]],
-                         constant uint& size [[buffer(3)]],
-                         uint id [[thread_position_in_grid]]) {
-    uint src_idx = id * stride;
-    if (src_idx < size) {
-        dst[id] = src[src_idx];
+// FP32 Matrix Multiply - Tiled with shared memory
+kernel void matmul_fp32_tiled(device const float* a [[buffer(0)]],
+                             device const float* b [[buffer(1)]],
+                             device float* c [[buffer(2)]],
+                             constant uint& M [[buffer(3)]],
+                             constant uint& K [[buffer(4)]],
+                             constant uint& N [[buffer(5)]],
+                             threadgroup float* As [[threadgroup(0)]],
+                             threadgroup float* Bs [[threadgroup(1)]],
+                             uint2 gid [[thread_position_in_grid]],
+                             uint2 tid [[thread_position_in_threadgroup]]) {
+    constexpr uint TILE_SIZE = 16;
+
+    uint cRow = gid.y;
+    uint cCol = gid.x;
+    uint cRowTile = tid.y;
+    uint cColTile = tid.x;
+
+    float sum = 0.0f;
+
+    for (uint kTile = 0; kTile < (K + TILE_SIZE - 1) / TILE_SIZE; kTile++) {
+        // Load tile of A
+        uint aRow = cRow;
+        uint aCol = kTile * TILE_SIZE + cColTile;
+        if (aRow < M && aCol < K) {
+            As[cRowTile * TILE_SIZE + cColTile] = a[aRow * K + aCol];
+        } else {
+            As[cRowTile * TILE_SIZE + cColTile] = 0.0f;
+        }
+
+        // Load tile of B
+        uint bRow = kTile * TILE_SIZE + cRowTile;
+        uint bCol = cCol;
+        if (bRow < K && bCol < N) {
+            Bs[cRowTile * TILE_SIZE + cColTile] = b[bRow * N + bCol];
+        } else {
+            Bs[cRowTile * TILE_SIZE + cColTile] = 0.0f;
+        }
+
+        threadgroup_barrier(mem_flags::mem_none);
+
+        // Compute tile product
+        for (uint k = 0; k < TILE_SIZE; k++) {
+            sum += As[cRowTile * TILE_SIZE + k] * Bs[k * TILE_SIZE + cColTile];
+        }
+
+        threadgroup_barrier(mem_flags::mem_none);
+    }
+
+    if (cRow < M && cCol < N) {
+        c[cRow * N + cCol] = sum;
     }
 }
 
-// Random-like access using hash function
-kernel void hash_access(device const float* src [[buffer(0)]],
-                       device float* dst [[buffer(1)]],
-                       constant uint& size [[buffer(2)]],
-                       uint id [[thread_position_in_grid]]) {
-    // Simple hash-based "random" access pattern
-    uint hash = id * 1103515245 + 12345;
-    uint idx = hash % size;
-    dst[id] = src[idx];
-}
-
-// Threadgroup memory copy - using shared memory
-kernel void shared_copy(device const float* src [[buffer(0)]],
-                      device float* dst [[buffer(1)]],
-                      constant uint& size [[buffer(2)]],
+// Vector dot product
+kernel void dot_product(device const float* a [[buffer(0)]],
+                      device const float* b [[buffer(1)]],
+                      device float* result [[buffer(2)]],
+                      constant uint& size [[buffer(3)]],
                       threadgroup float* shared [[threadgroup(0)]],
                       uint id [[thread_position_in_grid]],
                       uint lid [[thread_position_in_threadgroup]]) {
-    constexpr uint THREADGROUP_SIZE = 256;  // Must match dispatch
-
-    // Load into shared memory
-    uint elements_per_group = (size + THREADGROUP_SIZE - 1) / THREADGROUP_SIZE;
-    uint start = id * elements_per_group;
-    uint end = min(start + elements_per_group, size);
-
-    for (uint i = start + lid; i < end; i += THREADGROUP_SIZE) {
-        shared[i] = src[i];
-    }
-
+    constexpr uint THREADGROUP_SIZE = 256;
+    shared[lid] = a[id] * b[id];
     threadgroup_barrier(mem_flags::mem_none);
 
-    // Write from shared memory
-    for (uint i = start + lid; i < end; i += THREADGROUP_SIZE) {
-        dst[i] = shared[i];
+    for (uint s = THREADGROUP_SIZE / 2; s > 0; s >>= 1) {
+        if (lid < s) {
+            shared[lid] += shared[lid + s];
+        }
+        threadgroup_barrier(mem_flags::mem_none);
+    }
+
+    if (lid == 0) {
+        result[0] += shared[0];
     }
 }
 
-// Fill pattern - write same value
-kernel void memory_fill(device float* dst [[buffer(0)]],
-                      constant float& value [[buffer(1)]],
-                      constant uint& size [[buffer(2)]],
-                      uint id [[thread_position_in_grid]]) {
-    dst[id] = value;
+// Fused multiply-add
+kernel void fma_test(device const float* a [[buffer(0)]],
+                   device const float* b [[buffer(1)]],
+                   device float* c [[buffer(2)]],
+                   constant uint& size [[buffer(3)]],
+                   uint id [[thread_position_in_grid]]) {
+    // c = a * b + c (fused)
+    c[id] = fma(a[id], b[id], c[id]);
 }
 
-// Read-modify-write pattern
-kernel void read_modify_write(device const float* src [[buffer(0)]],
-                            device float* dst [[buffer(1)]],
-                            constant uint& size [[buffer(2)]],
-                            uint id [[thread_position_in_grid]]) {
-    float val = src[id];
-    val = val * 2.0f + 1.0f;  // Simple computation
-    dst[id] = val;
-}
-
-// Matrix transpose using shared memory
-kernel void transpose(device const float* src [[buffer(0)]],
-                    device float* dst [[buffer(1)]],
-                    constant uint& width [[buffer(2)]],
-                    constant uint& height [[buffer(3)]],
-                    threadgroup float* shared [[threadgroup(0)]],
-                    uint2 gid [[thread_position_in_grid]],
-                    uint2 tid [[thread_position_in_threadgroup]]) {
-    uint2 pos = gid;
-    uint2 tpos = tid;
-
-    constexpr uint TILE_SIZE = 16;
-    uint src_idx = pos.y * width + pos.x;
-    uint dst_idx = pos.x * height + pos.y;
-
-    // Load tile into shared memory
-    shared[tpos.y * TILE_SIZE + tpos.x] = src[src_idx];
-
-    threadgroup_barrier(mem_flags::mem_none);
-
-    // Write transposed tile
-    dst[dst_idx] = shared[tpos.x * TILE_SIZE + tpos.y];
-}
-
-// Memory bandwidth test - burst access
-kernel void burst_access(device const float4* src [[buffer(0)]],
-                        device float4* dst [[buffer(1)]],
-                        constant uint& count [[buffer(2)]],
-                        uint id [[thread_position_in_grid]]) {
-    // Coalesced access pattern - best case for GPU
-    dst[id] = src[id];
-}
-
-// Atomic counter increment
-kernel void atomic_inc(device atomic_uint* counters [[buffer(0)]],
-                     constant uint& iterations [[buffer(1)]],
+// SIMD sin/cos test
+kernel void simd_trig(device const float* input [[buffer(0)]],
+                     device float* output [[buffer(1)]],
+                     constant uint& size [[buffer(2)]],
                      uint id [[thread_position_in_grid]]) {
-    for (uint i = 0; i < iterations; i++) {
-        atomic_fetch_add_explicit(&counters[id], 1, memory_order_relaxed);
+    float x = input[id];
+    float s = metal::sin(x);
+    float c = metal::cos(x);
+    float t = metal::tan(x);
+    output[id] = s + c + t;
+}
+
+// Exponential and power
+kernel void exp_pow_test(device const float* input [[buffer(0)]],
+                        device float* output [[buffer(1)]],
+                        constant uint& size [[buffer(2)]],
+                        uint id [[thread_position_in_grid]]) {
+    float x = input[id];
+    float e = metal::exp(x);
+    float l = metal::log(x + 1.0f);
+    float p = metal::pow(x, 2.0f);
+    output[id] = e + l + p;
+}
+
+// Integer operations
+kernel void int_ops(device const int* a [[buffer(0)]],
+                  device const int* b [[buffer(1)]],
+                  device int* c [[buffer(2)]],
+                  constant uint& size [[buffer(3)]],
+                  uint id [[thread_position_in_grid]]) {
+    int ia = a[id];
+    int ib = b[id];
+    c[id] = (ia + ib) * (ia - ib) + (ia ^ ib);
+}
+
+// Reduction with warp shuffle
+kernel void warp_reduce(device const float* input [[buffer(0)]],
+                       device float* result [[buffer(1)]],
+                       constant uint& size [[buffer(2)]],
+                       uint id [[thread_position_in_grid]]) {
+    float val = input[id];
+
+    // Simulate warp shuffle with thread index
+    uint tid = id & 31;
+    for (uint offset = 16; offset > 0; offset >>= 1) {
+        uint other = id + offset;
+        if (other < size && tid < offset) {
+            val += input[other];
+        }
+    }
+
+    if (tid == 0) {
+        result[id / 32] = val;
     }
 }
 """
@@ -156,380 +213,368 @@ kernel void atomic_inc(device atomic_uint* counters [[buffer(0)]],
 func printDeviceInfo(device: MTLDevice) {
     print("\n=== Apple Metal GPU Info ===")
     print("Device Name: \(device.name)")
-    print("Unified Memory: Yes (Shared with CPU)")
     print("Max Threadgroup Memory: \(device.maxThreadgroupMemoryLength / 1024) KB")
     print("Max Threads Per Threadgroup: \(device.maxThreadsPerThreadgroup.width)")
 
     if device.supportsFamily(.apple7) {
         print("GPU Family: Apple 7+")
-    } else if device.supportsFamily(.apple6) {
-        print("GPU Family: Apple 6")
-    }
-
-    if #available(macOS 13.0, *) {
-        print("ReadWriteTextureSupport: \(device.readWriteTextureSupport)")
     }
 
     print("\n")
 }
 
-// MARK: - Test: Sequential vs Strided Access
+// MARK: - Test: FP32 Matrix Multiply
 
-func testSequentialVsStrided(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
-    print("=== Sequential vs Strided Memory Access ===\n")
+func testMatmulFP32(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("=== FP32 Matrix Multiply ===")
 
-    guard let pipeline_seq = library.makeFunction(name: "memory_copy_v4"),
-          let pipeline_stride = library.makeFunction(name: "strided_access"),
-          let compute_seq = try? device.makeComputePipelineState(function: pipeline_seq),
-          let compute_stride = try? device.makeComputePipelineState(function: pipeline_stride) else {
+    guard let pipeline_naive = library.makeFunction(name: "matmul_fp32_naive"),
+          let pipeline_tiled = library.makeFunction(name: "matmul_fp32_tiled"),
+          let compute_naive = try? device.makeComputePipelineState(function: pipeline_naive),
+          let compute_tiled = try? device.makeComputePipelineState(function: pipeline_tiled) else {
         print("Failed to create pipeline")
         return
     }
 
-    let bufferSize = 128 * 1024 * 1024 // 128MB
-    let floatCount = bufferSize / MemoryLayout<Float>.size
-    let float4Count = bufferSize / MemoryLayout<simd_float4>.size
-    let iterations = 50
+    let sizes: [UInt32] = [256, 512, 1024]
 
-    guard let srcBuffer = device.makeBuffer(length: bufferSize, options: .storageModeShared),
-          let dstBuffer = device.makeBuffer(length: bufferSize, options: .storageModeShared) else {
-        return
-    }
+    for M in sizes {
+        let K = M
+        let N = M
 
-    // Initialize
-    let srcData = srcBuffer.contents().assumingMemoryBound(to: Float.self)
-    for i in 0..<floatCount {
-        srcData[i] = Float(i)
-    }
+        let aSize = Int(M * K)
+        let bSize = Int(K * N)
+        let cSize = Int(M * N)
+        let iterations = 10
 
-    // Sequential access (vectorized)
-    var count = UInt32(float4Count)
-    let start_seq = getTimeNanos()
+        guard let aBuffer = device.makeBuffer(length: aSize * MemoryLayout<Float>.size, options: .storageModeShared),
+              let bBuffer = device.makeBuffer(length: bSize * MemoryLayout<Float>.size, options: .storageModeShared),
+              let cBuffer = device.makeBuffer(length: cSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+            continue
+        }
 
-    for _ in 0..<iterations {
-        guard let cmd = queue.makeCommandBuffer(),
-              let encoder = cmd.makeComputeCommandEncoder() else { continue }
-        encoder.setComputePipelineState(compute_seq)
-        encoder.setBuffer(srcBuffer, offset: 0, index: 0)
-        encoder.setBuffer(dstBuffer, offset: 0, index: 1)
-        encoder.setBytes(&count, length: MemoryLayout<UInt32>.size, index: 2)
-        encoder.dispatchThreads(MTLSize(width: float4Count, height: 1, depth: 1),
-                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
-        encoder.endEncoding()
-        cmd.commit()
-        cmd.waitUntilCompleted()
-    }
+        let a = aBuffer.contents().assumingMemoryBound(to: Float.self)
+        let b = bBuffer.contents().assumingMemoryBound(to: Float.self)
+        for i in 0..<aSize { a[i] = Float(i % 256) / 256.0 }
+        for i in 0..<bSize { b[i] = Float(i % 256) / 256.0 }
 
-    let end_seq = getTimeNanos()
-    let elapsed_seq = getTimeInterval(start: start_seq, end: end_seq)
-    let bw_seq = (Double(bufferSize) * Double(iterations) / elapsed_seq) / 1e9
+        var m = M, k = K, n = N
 
-    // Strided access
-    var stride: UInt32 = 4  // 4-element stride
-    var size = UInt32(floatCount)
-
-    let start_stride = getTimeNanos()
-
-    for _ in 0..<iterations {
-        guard let cmd = queue.makeCommandBuffer(),
-              let encoder = cmd.makeComputeCommandEncoder() else { continue }
-        encoder.setComputePipelineState(compute_stride)
-        encoder.setBuffer(srcBuffer, offset: 0, index: 0)
-        encoder.setBuffer(dstBuffer, offset: 0, index: 1)
-        encoder.setBytes(&stride, length: MemoryLayout<UInt32>.size, index: 2)
-        encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 3)
-        encoder.dispatchThreads(MTLSize(width: floatCount / Int(stride), height: 1, depth: 1),
-                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
-        encoder.endEncoding()
-        cmd.commit()
-        cmd.waitUntilCompleted()
-    }
-
-    let end_stride = getTimeNanos()
-    let elapsed_stride = getTimeInterval(start: start_stride, end: end_stride)
-    let elements_accessed = Double(floatCount / Int(stride))
-    let bytes_per_element = Double(MemoryLayout<Float>.size)
-    let total_bytes_stride = elements_accessed * bytes_per_element * Double(iterations)
-    let bw_stride = (total_bytes_stride / elapsed_stride) / 1e9
-
-    print("Sequential (vectorized): \(String(format: "%.2f", bw_seq)) GB/s")
-    print("Strided (stride=4): \(String(format: "%.2f", bw_stride)) GB/s")
-    print("Strided overhead: \(String(format: "%.1f", bw_seq / bw_stride))x slower\n")
-}
-
-// MARK: - Test: Threadgroup Memory Utilization
-
-func testThreadgroupMemory(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
-    print("=== Threadgroup Memory Utilization ===\n")
-
-    guard let pipeline = library.makeFunction(name: "shared_copy"),
-          let compute = try? device.makeComputePipelineState(function: pipeline) else {
-        print("Failed to create pipeline")
-        return
-    }
-
-    let bufferSize = 64 * 1024 * 1024 // 64MB
-    let floatCount = bufferSize / MemoryLayout<Float>.size
-    let iterations = 30
-    let threadgroupSizes = [64, 128, 256, 512, 1024]
-
-    guard let srcBuffer = device.makeBuffer(length: bufferSize, options: .storageModeShared),
-          let dstBuffer = device.makeBuffer(length: bufferSize, options: .storageModeShared) else {
-        return
-    }
-
-    let srcData = srcBuffer.contents().assumingMemoryBound(to: Float.self)
-    for i in 0..<floatCount {
-        srcData[i] = Float(i)
-    }
-
-    var size = UInt32(floatCount)
-
-    for tgSize in threadgroupSizes {
-        let start = getTimeNanos()
-
+        // Naive
+        let start_naive = getTimeNanos()
         for _ in 0..<iterations {
             guard let cmd = queue.makeCommandBuffer(),
                   let encoder = cmd.makeComputeCommandEncoder() else { continue }
-            encoder.setComputePipelineState(compute)
-            encoder.setBuffer(srcBuffer, offset: 0, index: 0)
-            encoder.setBuffer(dstBuffer, offset: 0, index: 1)
-            encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 2)
-            encoder.dispatchThreadgroups(MTLSize(width: floatCount / tgSize, height: 1, depth: 1),
-                                       threadsPerThreadgroup: MTLSize(width: tgSize, height: 1, depth: 1))
+            encoder.setComputePipelineState(compute_naive)
+            encoder.setBuffer(aBuffer, offset: 0, index: 0)
+            encoder.setBuffer(bBuffer, offset: 0, index: 1)
+            encoder.setBuffer(cBuffer, offset: 0, index: 2)
+            encoder.setBytes(&m, length: MemoryLayout<UInt32>.size, index: 3)
+            encoder.setBytes(&k, length: MemoryLayout<UInt32>.size, index: 4)
+            encoder.setBytes(&n, length: MemoryLayout<UInt32>.size, index: 5)
+            encoder.dispatchThreads(MTLSize(width: Int(N), height: Int(M), depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
             encoder.endEncoding()
             cmd.commit()
             cmd.waitUntilCompleted()
         }
+        let end_naive = getTimeNanos()
+        let elapsed_naive = getTimeInterval(start: start_naive, end: end_naive)
+        let flops_naive = 2.0 * Double(M) * Double(K) * Double(N) * Double(iterations)
+        let gflops_naive = flops_naive / elapsed_naive / 1e9
 
-        let end = getTimeNanos()
-        let elapsed = getTimeInterval(start: start, end: end)
-        let bw = (Double(bufferSize) * Double(iterations) / elapsed) / 1e9
+        // Tiled
+        let start_tiled = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(compute_tiled)
+            encoder.setBuffer(aBuffer, offset: 0, index: 0)
+            encoder.setBuffer(bBuffer, offset: 0, index: 1)
+            encoder.setBuffer(cBuffer, offset: 0, index: 2)
+            encoder.setBytes(&m, length: MemoryLayout<UInt32>.size, index: 3)
+            encoder.setBytes(&k, length: MemoryLayout<UInt32>.size, index: 4)
+            encoder.setBytes(&n, length: MemoryLayout<UInt32>.size, index: 5)
+            encoder.dispatchThreadgroups(MTLSize(width: Int(N) / 16, height: Int(M) / 16, depth: 1),
+                                      threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let end_tiled = getTimeNanos()
+        let elapsed_tiled = getTimeInterval(start: start_tiled, end: end_tiled)
+        let flops_tiled = 2.0 * Double(M) * Double(K) * Double(N) * Double(iterations)
+        let gflops_tiled = flops_tiled / elapsed_tiled / 1e9
 
-        let sharedMemKB = device.maxThreadgroupMemoryLength / 1024
-        print("Threadgroup Size: \(tgSize), Bandwidth: \(String(format: "%.2f", bw)) GB/s (Max shared: \(sharedMemKB) KB)")
+        print("Size: \(M)x\(K)x\(N), Naive: \(String(format: "%.2f", gflops_naive)) GFLOPS, Tiled: \(String(format: "%.2f", gflops_tiled)) GFLOPS, Speedup: \(String(format: "%.1fx", gflops_tiled / gflops_naive))")
     }
     print("")
 }
 
-// MARK: - Test: Memory Access Patterns
+// MARK: - Test: FP16 vs FP32
 
-func testMemoryPatterns(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
-    print("=== Memory Access Patterns ===\n")
+func testFP16vsFP32(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("=== FP16 vs FP32 Matrix Multiply ===")
 
-    guard let pipeline_burst = library.makeFunction(name: "burst_access"),
-          let pipeline_rmw = library.makeFunction(name: "read_modify_write"),
-          let pipeline_fill = library.makeFunction(name: "memory_fill"),
-          let compute_burst = try? device.makeComputePipelineState(function: pipeline_burst),
-          let compute_rmw = try? device.makeComputePipelineState(function: pipeline_rmw),
-          let compute_fill = try? device.makeComputePipelineState(function: pipeline_fill) else {
+    guard let pipeline_fp16 = library.makeFunction(name: "matmul_fp16_naive"),
+          let pipeline_fp32 = library.makeFunction(name: "matmul_fp32_naive"),
+          let compute_fp16 = try? device.makeComputePipelineState(function: pipeline_fp16),
+          let compute_fp32 = try? device.makeComputePipelineState(function: pipeline_fp32) else {
+        print("Failed to create pipeline")
         return
     }
 
-    let bufferSize = 128 * 1024 * 1024 // 128MB
-    let float4Count = bufferSize / MemoryLayout<simd_float4>.size
-    let floatCount = bufferSize / MemoryLayout<Float>.size
-    let iterations = 50
+    let M: UInt32 = 1024
+    let K: UInt32 = 1024
+    let N: UInt32 = 1024
+    let iterations = 10
 
-    guard let srcBuffer = device.makeBuffer(length: bufferSize, options: .storageModeShared),
-          let dstBuffer = device.makeBuffer(length: bufferSize, options: .storageModeShared) else {
+    let aSize = Int(M * K)
+    let bSize = Int(K * N)
+    let cSize = Int(M * N)
+
+    guard let aBufferF16 = device.makeBuffer(length: aSize * MemoryLayout<UInt16>.size, options: .storageModeShared),
+          let bBufferF16 = device.makeBuffer(length: bSize * MemoryLayout<UInt16>.size, options: .storageModeShared),
+          let cBufferF16 = device.makeBuffer(length: cSize * MemoryLayout<UInt16>.size, options: .storageModeShared),
+          let aBufferF32 = device.makeBuffer(length: aSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let bBufferF32 = device.makeBuffer(length: bSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let cBufferF32 = device.makeBuffer(length: cSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
         return
     }
 
-    let srcData = srcBuffer.contents().assumingMemoryBound(to: Float.self)
-    for i in 0..<floatCount {
-        srcData[i] = Float(i)
-    }
+    let aF16 = aBufferF16.contents().assumingMemoryBound(to: UInt16.self)
+    let bF16 = bBufferF16.contents().assumingMemoryBound(to: UInt16.self)
+    for i in 0..<aSize { aF16[i] = UInt16((i % 256) << 8) }
+    for i in 0..<bSize { bF16[i] = UInt16((i % 256) << 8) }
 
-    var count4 = UInt32(float4Count)
-    var count = UInt32(floatCount)
-    var value: Float = 3.14159
+    let aF32 = aBufferF32.contents().assumingMemoryBound(to: Float.self)
+    let bF32 = bBufferF32.contents().assumingMemoryBound(to: Float.self)
+    for i in 0..<aSize { aF32[i] = Float(i % 256) / 256.0 }
+    for i in 0..<bSize { bF32[i] = Float(i % 256) / 256.0 }
 
-    // Burst (coalesced) access
-    let start_burst = getTimeNanos()
+    var m = M, k = K, n = N
+
+    // FP16
+    let start_fp16 = getTimeNanos()
     for _ in 0..<iterations {
         guard let cmd = queue.makeCommandBuffer(),
               let encoder = cmd.makeComputeCommandEncoder() else { continue }
-        encoder.setComputePipelineState(compute_burst)
-        encoder.setBuffer(srcBuffer, offset: 0, index: 0)
-        encoder.setBuffer(dstBuffer, offset: 0, index: 1)
-        encoder.setBytes(&count4, length: MemoryLayout<UInt32>.size, index: 2)
-        encoder.dispatchThreads(MTLSize(width: float4Count, height: 1, depth: 1),
-                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.setComputePipelineState(compute_fp16)
+        encoder.setBuffer(aBufferF16, offset: 0, index: 0)
+        encoder.setBuffer(bBufferF16, offset: 0, index: 1)
+        encoder.setBuffer(cBufferF16, offset: 0, index: 2)
+        encoder.setBytes(&m, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.setBytes(&k, length: MemoryLayout<UInt32>.size, index: 4)
+        encoder.setBytes(&n, length: MemoryLayout<UInt32>.size, index: 5)
+        encoder.dispatchThreads(MTLSize(width: Int(N), height: Int(M), depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
         encoder.endEncoding()
         cmd.commit()
         cmd.waitUntilCompleted()
     }
-    let end_burst = getTimeNanos()
-    let bw_burst = (Double(bufferSize) * Double(iterations) / getTimeInterval(start: start_burst, end: end_burst)) / 1e9
+    let end_fp16 = getTimeNanos()
+    let elapsed_fp16 = getTimeInterval(start: start_fp16, end: end_fp16)
+    let flops_fp16 = 2.0 * Double(M) * Double(K) * Double(N) * Double(iterations)
+    let gflops_fp16 = flops_fp16 / elapsed_fp16 / 1e9
 
-    // Read-Modify-Write
-    let start_rmw = getTimeNanos()
+    // FP32
+    let start_fp32 = getTimeNanos()
     for _ in 0..<iterations {
         guard let cmd = queue.makeCommandBuffer(),
               let encoder = cmd.makeComputeCommandEncoder() else { continue }
-        encoder.setComputePipelineState(compute_rmw)
-        encoder.setBuffer(srcBuffer, offset: 0, index: 0)
-        encoder.setBuffer(dstBuffer, offset: 0, index: 1)
-        encoder.setBytes(&count, length: MemoryLayout<UInt32>.size, index: 2)
-        encoder.dispatchThreads(MTLSize(width: floatCount, height: 1, depth: 1),
-                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.setComputePipelineState(compute_fp32)
+        encoder.setBuffer(aBufferF32, offset: 0, index: 0)
+        encoder.setBuffer(bBufferF32, offset: 0, index: 1)
+        encoder.setBuffer(cBufferF32, offset: 0, index: 2)
+        encoder.setBytes(&m, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.setBytes(&k, length: MemoryLayout<UInt32>.size, index: 4)
+        encoder.setBytes(&n, length: MemoryLayout<UInt32>.size, index: 5)
+        encoder.dispatchThreads(MTLSize(width: Int(N), height: Int(M), depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
         encoder.endEncoding()
         cmd.commit()
         cmd.waitUntilCompleted()
     }
-    let end_rmw = getTimeNanos()
-    let bw_rmw = (Double(bufferSize) * Double(iterations) / getTimeInterval(start: start_rmw, end: end_rmw)) / 1e9
+    let end_fp32 = getTimeNanos()
+    let elapsed_fp32 = getTimeInterval(start: start_fp32, end: end_fp32)
+    let flops_fp32 = 2.0 * Double(M) * Double(K) * Double(N) * Double(iterations)
+    let gflops_fp32 = flops_fp32 / elapsed_fp32 / 1e9
 
-    // Fill (write-only)
-    let start_fill = getTimeNanos()
-    for _ in 0..<iterations {
-        guard let cmd = queue.makeCommandBuffer(),
-              let encoder = cmd.makeComputeCommandEncoder() else { continue }
-        encoder.setComputePipelineState(compute_fill)
-        encoder.setBuffer(dstBuffer, offset: 0, index: 0)
-        encoder.setBytes(&value, length: MemoryLayout<Float>.size, index: 1)
-        encoder.setBytes(&count, length: MemoryLayout<UInt32>.size, index: 2)
-        encoder.dispatchThreads(MTLSize(width: floatCount, height: 1, depth: 1),
-                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
-        encoder.endEncoding()
-        cmd.commit()
-        cmd.waitUntilCompleted()
-    }
-    let end_fill = getTimeNanos()
-    let bw_fill = (Double(bufferSize) * Double(iterations) / getTimeInterval(start: start_fill, end: end_fill)) / 1e9
-
-    print("Burst (coalesced read): \(String(format: "%.2f", bw_burst)) GB/s")
-    print("Read-Modify-Write: \(String(format: "%.2f", bw_rmw)) GB/s")
-    print("Fill (write-only): \(String(format: "%.2f", bw_fill)) GB/s")
-    print("\n")
+    print("Matrix Size: \(M)x\(K)x\(N)")
+    print("FP16: \(String(format: "%.2f", gflops_fp16)) GFLOPS")
+    print("FP32: \(String(format: "%.2f", gflops_fp32)) GFLOPS")
+    print("FP16/FP32 Ratio: \(String(format: "%.2f", gflops_fp16 / gflops_fp32))x\n")
 }
 
-// MARK: - Test: Matrix Transpose (Cache-sensitive)
+// MARK: - Test: FMA Performance
 
-func testMatrixTranspose(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
-    print("=== Matrix Transpose (Cache-Efficient) ===\n")
+func testFMAPerformance(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("=== FMA (Fused Multiply-Add) Performance ===")
 
-    guard let pipeline = library.makeFunction(name: "transpose"),
+    guard let pipeline = library.makeFunction(name: "fma_test"),
           let compute = try? device.makeComputePipelineState(function: pipeline) else {
         print("Failed to create pipeline")
         return
     }
 
-    var width: UInt32 = 4096
-    var height: UInt32 = 4096
-    let iterations = 20
+    let bufferSize = 32 * 1024 * 1024
+    let iterations = 50
 
-    let srcSize = Int(width * height)
-    let bufferSize = srcSize * MemoryLayout<Float>.size
-
-    guard let srcBuffer = device.makeBuffer(length: bufferSize, options: .storageModeShared),
-          let dstBuffer = device.makeBuffer(length: bufferSize, options: .storageModeShared) else {
+    guard let aBuffer = device.makeBuffer(length: bufferSize, options: .storageModeShared),
+          let bBuffer = device.makeBuffer(length: bufferSize, options: .storageModeShared),
+          let cBuffer = device.makeBuffer(length: bufferSize, options: .storageModeShared) else {
         return
     }
 
-    let srcData = srcBuffer.contents().assumingMemoryBound(to: Float.self)
-    for i in 0..<srcSize {
-        srcData[i] = Float(i)
+    let a = aBuffer.contents().assumingMemoryBound(to: Float.self)
+    let b = bBuffer.contents().assumingMemoryBound(to: Float.self)
+    let c = cBuffer.contents().assumingMemoryBound(to: Float.self)
+    for i in 0..<(bufferSize / MemoryLayout<Float>.size) {
+        a[i] = Float(i) * 0.001
+        b[i] = Float(i % 256) / 256.0
+        c[i] = 0.0
     }
 
-    let start = getTimeNanos()
+    var size = UInt32(bufferSize / MemoryLayout<Float>.size)
 
+    let start = getTimeNanos()
     for _ in 0..<iterations {
         guard let cmd = queue.makeCommandBuffer(),
               let encoder = cmd.makeComputeCommandEncoder() else { continue }
         encoder.setComputePipelineState(compute)
-        encoder.setBuffer(srcBuffer, offset: 0, index: 0)
-        encoder.setBuffer(dstBuffer, offset: 0, index: 1)
-        encoder.setBytes(&width, length: MemoryLayout<UInt32>.size, index: 2)
-        encoder.setBytes(&height, length: MemoryLayout<UInt32>.size, index: 3)
-
-        let tileSize = 16
-        encoder.dispatchThreadgroups(MTLSize(width: Int(width) / tileSize, height: Int(height) / tileSize, depth: 1),
-                                   threadsPerThreadgroup: MTLSize(width: tileSize, height: tileSize, depth: 1))
+        encoder.setBuffer(aBuffer, offset: 0, index: 0)
+        encoder.setBuffer(bBuffer, offset: 0, index: 1)
+        encoder.setBuffer(cBuffer, offset: 0, index: 2)
+        encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: bufferSize / MemoryLayout<Float>.size, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
         encoder.endEncoding()
         cmd.commit()
         cmd.waitUntilCompleted()
     }
-
     let end = getTimeNanos()
     let elapsed = getTimeInterval(start: start, end: end)
 
-    // Transpose reads and writes: 2 * width * height * sizeof(float)
-    let bytes_per_float = Double(MemoryLayout<Float>.size)
-    let totalBytes = Double(srcSize) * 2.0 * bytes_per_float * Double(iterations)
-    let bw = (totalBytes / elapsed) / 1e9
-    let time_ms = elapsed * 1000
+    // 2 reads + 1 write + 1 FMA per element
+    let flops = Double(bufferSize / MemoryLayout<Float>.size) * Double(iterations) * 2
+    let gflops = flops / elapsed / 1e9
 
-    print("Matrix Size: \(width)x\(height)")
-    print("Iterations: \(iterations)")
-    print("Time: \(String(format: "%.2f", time_ms)) ms")
-    print("Bandwidth: \(String(format: "%.2f", bw)) GB/s")
-    print("\n")
+    print("Buffer Size: \(String(format: "%.2f", Double(bufferSize) / 1024 / 1024)) MB")
+    print("Elements: \(bufferSize / MemoryLayout<Float>.size / 1024 / 1024) M")
+    print("Performance: \(String(format: "%.2f", gflops)) GFLOPS\n")
 }
 
-// MARK: - Test: Atomic Operations
+// MARK: - Test: Trigonometric Functions
 
-func testAtomicOperations(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
-    print("=== Atomic Operations Performance ===\n")
+func testTrigPerformance(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("=== Trigonometric Function Performance ===")
 
-    guard let pipeline = library.makeFunction(name: "atomic_inc"),
+    guard let pipeline = library.makeFunction(name: "simd_trig"),
           let compute = try? device.makeComputePipelineState(function: pipeline) else {
         print("Failed to create pipeline")
         return
     }
 
-    let numCounters = 1024
-    var iterations: UInt32 = 1000
-    let dispatchSize = 256
+    let bufferSize = 32 * 1024 * 1024
+    let iterations = 20
 
-    guard let buffer = device.makeBuffer(length: numCounters * MemoryLayout<UInt32>.size, options: .storageModeShared) else {
+    guard let inputBuffer = device.makeBuffer(length: bufferSize, options: .storageModeShared),
+          let outputBuffer = device.makeBuffer(length: bufferSize, options: .storageModeShared) else {
         return
     }
 
-    let bufferPtr = buffer.contents().assumingMemoryBound(to: UInt32.self)
-    for i in 0..<numCounters {
-        bufferPtr[i] = 0
+    let input = inputBuffer.contents().assumingMemoryBound(to: Float.self)
+    for i in 0..<(bufferSize / MemoryLayout<Float>.size) {
+        input[i] = Float(i) * 0.001
     }
 
+    var size = UInt32(bufferSize / MemoryLayout<Float>.size)
+
     let start = getTimeNanos()
-
-    guard let cmd = queue.makeCommandBuffer(),
-          let encoder = cmd.makeComputeCommandEncoder() else { return }
-    encoder.setComputePipelineState(compute)
-    encoder.setBuffer(buffer, offset: 0, index: 0)
-    encoder.setBytes(&iterations, length: MemoryLayout<UInt32>.size, index: 1)
-    encoder.dispatchThreads(MTLSize(width: numCounters, height: 1, depth: 1),
-                          threadsPerThreadgroup: MTLSize(width: dispatchSize, height: 1, depth: 1))
-    encoder.endEncoding()
-    cmd.commit()
-    cmd.waitUntilCompleted()
-
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(compute)
+        encoder.setBuffer(inputBuffer, offset: 0, index: 0)
+        encoder.setBuffer(outputBuffer, offset: 0, index: 1)
+        encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: bufferSize / MemoryLayout<Float>.size, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
     let end = getTimeNanos()
     let elapsed = getTimeInterval(start: start, end: end)
 
-    let totalOps = Double(numCounters) * Double(iterations)
-    let ops_per_sec = totalOps / elapsed
-    let gops = ops_per_sec / 1e9
+    // sin + cos + tan per element
+    let ops = Double(bufferSize / MemoryLayout<Float>.size) * Double(iterations) * 3
+    let gops = ops / elapsed / 1e9
 
-    // Verify
-    var sum: UInt32 = 0
-    for i in 0..<numCounters {
-        sum += bufferPtr[i]
+    print("Elements: \(bufferSize / MemoryLayout<Float>.size / 1024 / 1024) M")
+    print("Operations: sin + cos + tan per element")
+    print("Performance: \(String(format: "%.2f", gops)) GOPS\n")
+}
+
+// MARK: - Test: Integer Operations
+
+func testIntegerOperations(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("=== Integer Operations Performance ===")
+
+    guard let pipeline = library.makeFunction(name: "int_ops"),
+          let compute = try? device.makeComputePipelineState(function: pipeline) else {
+        print("Failed to create pipeline")
+        return
     }
-    let expected = UInt32(numCounters) * iterations
-    let verified = sum == expected ? "PASS" : "FAIL"
 
-    print("Counters: \(numCounters), Iterations: \(iterations)")
-    print("Time: \(String(format: "%.3f", elapsed * 1000)) ms")
-    print("Throughput: \(String(format: "%.3f", gops)) GOPS")
-    print("Verification: \(verified) (sum=\(sum), expected=\(expected))")
-    print("\n")
+    let bufferSize = 32 * 1024 * 1024
+    let iterations = 50
+
+    guard let aBuffer = device.makeBuffer(length: bufferSize, options: .storageModeShared),
+          let bBuffer = device.makeBuffer(length: bufferSize, options: .storageModeShared),
+          let cBuffer = device.makeBuffer(length: bufferSize, options: .storageModeShared) else {
+        return
+    }
+
+    let a = aBuffer.contents().assumingMemoryBound(to: Int32.self)
+    let b = bBuffer.contents().assumingMemoryBound(to: Int32.self)
+    for i in 0..<(bufferSize / MemoryLayout<Int32>.size) {
+        a[i] = Int32(i)
+        b[i] = Int32(i % 256)
+    }
+
+    var size = UInt32(bufferSize / MemoryLayout<Int32>.size)
+
+    let start = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(compute)
+        encoder.setBuffer(aBuffer, offset: 0, index: 0)
+        encoder.setBuffer(bBuffer, offset: 0, index: 1)
+        encoder.setBuffer(cBuffer, offset: 0, index: 2)
+        encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: bufferSize / MemoryLayout<Int32>.size, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let end = getTimeNanos()
+    let elapsed = getTimeInterval(start: start, end: end)
+
+    // 4 integer ops per element (add, sub, mul, xor)
+    let ops = Double(bufferSize / MemoryLayout<Int32>.size) * Double(iterations) * 4
+    let gops = ops / elapsed / 1e9
+
+    print("Elements: \(bufferSize / MemoryLayout<Int32>.size / 1024 / 1024) M")
+    print("Operations: add + sub + mul + xor per element")
+    print("Performance: \(String(format: "%.2f", gops)) GOPS\n")
 }
 
 // MARK: - Main
 
-print("Apple Metal GPU Benchmark - Phase 2: Memory Subsystem")
+print("Apple Metal GPU Benchmark - Phase 3: Compute Throughput")
 print("======================================")
 
 guard let device = MTLCreateSystemDefaultDevice() else {
@@ -554,44 +599,40 @@ do {
 
 print("Shader compilation: SUCCESS\n")
 
-// Memory Access Patterns
-print("=== Memory Access Patterns ===")
+// Matrix Multiply Tests
+print("=== Matrix Multiply ===")
 do {
-    try testSequentialVsStrided(device: device, queue: queue, library: library)
+    try testMatmulFP32(device: device, queue: queue, library: library)
 } catch {
     print("Error: \(error)")
 }
 
-// Threadgroup Memory
-print("=== Threadgroup Memory ===")
+print("=== Precision Comparison ===")
 do {
-    try testThreadgroupMemory(device: device, queue: queue, library: library)
+    try testFP16vsFP32(device: device, queue: queue, library: library)
 } catch {
     print("Error: \(error)")
 }
 
-// Memory Operations
-print("=== Memory Operations ===")
+print("=== Arithmetic Operations ===")
 do {
-    try testMemoryPatterns(device: device, queue: queue, library: library)
+    try testFMAPerformance(device: device, queue: queue, library: library)
 } catch {
     print("Error: \(error)")
 }
 
-// Matrix Transpose
-print("=== Matrix Operations ===")
+print("=== Transcendental Functions ===")
 do {
-    try testMatrixTranspose(device: device, queue: queue, library: library)
+    try testTrigPerformance(device: device, queue: queue, library: library)
 } catch {
     print("Error: \(error)")
 }
 
-// Atomic Operations
-print("=== Atomic Operations ===")
+print("=== Integer Operations ===")
 do {
-    try testAtomicOperations(device: device, queue: queue, library: library)
+    try testIntegerOperations(device: device, queue: queue, library: library)
 } catch {
     print("Error: \(error)")
 }
 
-print("Phase 2 benchmark completed.")
+print("Phase 3 benchmark completed.")
