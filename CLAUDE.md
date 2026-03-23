@@ -4,28 +4,48 @@
 
 GPUPeek是一个用于探索GPU机制和性能指标的CUDA基准测试框架。
 
-## 项目结构
+## 标准目录结构（复用于所有架构和GPU厂商）
 
 ```
 GPUPeek/
-├── CMakeLists.txt
-├── CLAUDE.md              # 项目规则和约定
-├── README.md
-├── docs/                  # 研究报告
-├── include/               # 头文件
-├── NVIDIA_GPU/           # NVIDIA GPU 相关代码
-│   ├── ref/             # NVIDIA 官方文档
-│   ├── common/           # 通用代码
-│   ├── generic/          # 通用内核（所有GPU可用）
-│   └── sm_120/          # SM 12.0 (Blackwell) 特定代码
-│       ├── memory/      # 内存研究（独立可编译）
-│       ├── wmma/        # WMMA 研究
-│       ├── cuda_core/    # CUDA Core 算力研究
-│       ├── atomic/       # 原子操作研究
-│       ├── barrier/      # Barrier 同步研究
-│       └── [其他模块]...  # 更多研究模块
-└── APPLE_GPU/            # Apple GPU 代码（未来扩展）
+├── CMakeLists.txt              # 全局构建配置
+├── README.md                   # 项目概览和快速开始
+├── CLAUDE.md                   # 项目规则和约定
+├── docs/                       # 研究报告
+├── NVIDIA_GPU/                 # NVIDIA GPU 代码
+│   ├── common/                 # 共享工具（main.cu, gpu_info, timer）
+│   ├── generic/                # 通用内核（所有NVIDIA GPU可用）
+│   ├── ref/                    # NVIDIA 官方文档
+│   ├── COMPARISON.md           # 跨代GPU对比 (EN)
+│   ├── COMPARISON_CN.md        # 跨代GPU对比 (CN)
+│   └── sm_120/                 # SM 12.0 (Blackwell)
+│       ├── arch.cu             # 架构信息
+│       ├── arch_kernels.cu     # 架构专用内核
+│       ├── benchmarks.cu       # Benchmark 运行器
+│       └── [module]/           # 研究模块（独立可编译）
+│           ├── CMakeLists.txt  # 模块构建配置
+│           ├── main.cu         # 模块入口
+│           ├── README.md       # 操作指南
+│           ├── RESEARCH.md     # 研究成果和教学材料
+│           └── *_kernel.cu     # 内核源码
+└── APPLE_GPU/                  # Apple GPU 代码（未来扩展）
+    └── ...
 ```
+
+### 研究模块标准模板
+
+每个研究模块是完全独立可编译的目录，包含：
+
+| 文件 | 用途 |
+|------|------|
+| `CMakeLists.txt` | 独立编译配置 |
+| `main.cu` | 模块入口点 |
+| `README.md` | 操作指南（如何编译运行） |
+| `RESEARCH.md` | 教学材料和研究成果 |
+| `*_kernel.cu` | 内核源码 |
+| `*_benchmarks.cu` | benchmark函数 |
+
+**复用规则**：新加架构（如 `sm_90/`）或新厂商（如 `APPLE_GPU/`）时，直接复用此目录结构。
 
 ## 重要约定
 
