@@ -79,12 +79,19 @@
 - [x] 线程分歧测试 - 10-15%性能变化
 - [x] 屏障开销测试 - 4.8μs单次，流水线后89ns
 
-### Phase 5: 架构特性研究
+### Phase 5: 架构深入分析
+- [x] 内存压缩效果 - 模式vs随机影响极小
+- [x] 访问模式分析 - 随机比顺序慢27倍
+- [x] 读写带宽对比 - 写入比读取快2.9倍
+- [x] 填充模式测试 - 零/一/交替都约1.6 GB/s
+- [x] 内存延迟分析 - 61ns单次，流水线后0.45ns
+
+### Phase 6: 架构特性研究
 - [ ] Apple GPU微架构分析
 - [ ] TBDR (Tile-Based Deferred Rendering) 特性
 - [ ] 内存压缩技术
 
-### Phase 6: 架构对比
+### Phase 7: 架构对比
 - [ ] 与NVIDIA GPU对比
 - [ ] 与AMD GPU对比
 - [ ] 性能效率分析
@@ -148,6 +155,18 @@ ReadWriteTextureSupport: MTLReadWriteTextureTier2
 | 线程分歧 | 不同分支阈值 | 1.16-1.31 GFLOPS | 分支偏斜影响 |
 | 屏障开销 | 单次 | 4.8μs/次 | 流水线后89ns |
 | 共享内存归约 | 65K-1M | 0.01-0.11 GFLOPS | 规模线性扩展 |
+
+### Phase 5: 架构深入分析测试结果
+
+| 操作类型 | 规模 | 实测性能 | 备注 |
+|---------|------|---------|------|
+| 内存压缩 | 1-64MB | 0.39-1.48 GB/s | 模式影响极小 |
+| 顺序访问 | 32MB | 0.88 GB/s | 基线 |
+| 随机访问 | 32MB | 0.03 GB/s | 慢27倍 |
+| 读取带宽 | 64MB | 0.62 GB/s | 最大 |
+| 写入带宽 | 64MB | 1.80 GB/s | 最大 |
+| 内存延迟 | 单次 | 61 ns | 单元素访问 |
+| 内存延迟 | 100迭代 | 0.45 ns | 流水线后 |
 
 ## 关键发现
 
@@ -223,6 +242,8 @@ swift run --configuration release
 - [Phase 3 Report (CN)](docs/Phase3_Compute_Throughput_Report_CN.md)
 - [Phase 4 Report (EN)](docs/Phase4_Parallel_Computing_Report.md)
 - [Phase 4 Report (CN)](docs/Phase4_Parallel_Computing_Report_CN.md)
+- [Phase 5 Report (EN)](docs/Phase5_Architecture_Deep_Dive_Report.md)
+- [Phase 5 Report (CN)](docs/Phase5_Architecture_Deep_Dive_Report_CN.md)
 
 ## 参考资料
 
