@@ -7,7 +7,7 @@ FP8 (8-bit Floating Point) 是 Blackwell 和 Hopper 支持的低精度格式。
 ## 独立编译和运行
 
 ```bash
-cd src/sm_120/fp8
+cd NVIDIA_GPU/sm_120/fp8
 mkdir -p build && cd build
 cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
 cmake --build . --config Release

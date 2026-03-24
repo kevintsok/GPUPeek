@@ -7,7 +7,7 @@ Redux.sync 指令研究，单指令完成 warp 级归约。
 ## 独立编译和运行
 
 ```bash
-cd src/sm_120/redux_sync
+cd NVIDIA_GPU/sm_120/redux_sync
 mkdir -p build && cd build
 cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
 cmake --build . --config Release

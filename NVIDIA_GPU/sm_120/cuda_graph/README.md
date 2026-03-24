@@ -7,7 +7,7 @@ CUDA Graph API 研究，图捕获、实例化和启动优化。
 ## 独立编译和运行
 
 ```bash
-cd src/sm_120/cuda_graph
+cd NVIDIA_GPU/sm_120/cuda_graph
 mkdir -p build && cd build
 cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
 cmake --build . --config Release

@@ -7,7 +7,7 @@ Multi-Stream 并发执行研究，流依赖、重叠执行、流优先级。
 ## 独立编译和运行
 
 ```bash
-cd src/sm_120/multi_stream
+cd NVIDIA_GPU/sm_120/multi_stream
 mkdir -p build && cd build
 cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
 cmake --build . --config Release

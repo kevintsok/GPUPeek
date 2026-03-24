@@ -7,7 +7,7 @@
 ## 独立编译和运行
 
 ```bash
-cd src/sm_120/advanced
+cd NVIDIA_GPU/sm_120/advanced
 mkdir -p build && cd build
 cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
 cmake --build . --config Release

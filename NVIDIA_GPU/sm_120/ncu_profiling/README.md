@@ -7,7 +7,7 @@ NCU 性能分析工具研究，指标收集和内核分析。
 ## 独立编译和运行
 
 ```bash
-cd src/sm_120/ncu_profiling
+cd NVIDIA_GPU/sm_120/ncu_profiling
 mkdir -p build && cd build
 cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
 cmake --build . --config Release

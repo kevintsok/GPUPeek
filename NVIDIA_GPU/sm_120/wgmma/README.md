@@ -13,7 +13,7 @@ WGMMA (Warpgroup MMA) 是 Hopper 架构的异步 MMA 指令。**注意: Blackwel
 ## 独立编译和运行
 
 ```bash
-cd src/sm_120/wgmma
+cd NVIDIA_GPU/sm_120/wgmma
 mkdir -p build && cd build
 cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
 cmake --build . --config Release

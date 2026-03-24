@@ -7,7 +7,7 @@ MBarrier (Multi-Block Barrier) 研究，Hopper 架构的增强同步机制。
 ## 独立编译和运行
 
 ```bash
-cd src/sm_120/mbarrier
+cd NVIDIA_GPU/sm_120/mbarrier
 mkdir -p build && cd build
 cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
 cmake --build . --config Release

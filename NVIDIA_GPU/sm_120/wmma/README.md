@@ -8,7 +8,7 @@ WMMA (Warp-level Matrix Multiply-Accumulate) 是标准的 CUDA Tensor Core API�
 
 ```bash
 # 1. 创建构建目录
-cd src/sm_120/wmma
+cd NVIDIA_GPU/sm_120/wmma
 mkdir -p build && cd build
 
 # 2. 配置项目

@@ -7,7 +7,7 @@ DP4A (Dot Product of 4 Bytes Accumulated) 是 INT8 矩阵乘法指令。
 ## 独立编译和运行
 
 ```bash
-cd src/sm_120/dp4a
+cd NVIDIA_GPU/sm_120/dp4a
 mkdir -p build && cd build
 cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
 cmake --build . --config Release

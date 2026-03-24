@@ -8,7 +8,7 @@
 
 ```bash
 # 1. 创建构建目录
-cd src/sm_120/memory
+cd NVIDIA_GPU/sm_120/memory
 mkdir -p build && cd build
 
 # 2. 配置项目

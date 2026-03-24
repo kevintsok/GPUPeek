@@ -7,7 +7,7 @@ Cooperative Groups API 研究，包括线程组协作和同步。
 ## 独立编译和运行
 
 ```bash
-cd src/sm_120/cooperative_groups
+cd NVIDIA_GPU/sm_120/cooperative_groups
 mkdir -p build && cd build
 cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
 cmake --build . --config Release

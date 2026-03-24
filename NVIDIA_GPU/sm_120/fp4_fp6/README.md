@@ -7,7 +7,7 @@ FP4/FP6 低精度研究，Blackwell 支持的极低精度格式。
 ## 独立编译和运行
 
 ```bash
-cd src/sm_120/fp4_fp6
+cd NVIDIA_GPU/sm_120/fp4_fp6
 mkdir -p build && cd build
 cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
 cmake --build . --config Release
