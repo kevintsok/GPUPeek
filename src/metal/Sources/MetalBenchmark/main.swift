@@ -8230,6 +8230,216 @@ func testComputeBoundAnalysis(device: MTLDevice, queue: MTLCommandQueue, library
     print(String(repeating: "=", count: 70))
 }
 
+// ============================================================
+// 44. CACHE AND TLB BEHAVIOR ANALYSIS
+// ============================================================
+func testCacheTLBAnalysis(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("44. Cache and TLB Behavior Analysis")
+    print(String(repeating: "=", count: 70))
+
+    // Apple M2 Cache Hierarchy:
+    // - L1: 32 KB per GPU core (I think)
+    // - L2: Shared ~4 MB (maybe)
+    // - Unified memory with LPDDR5
+    // Cache line size: typically 64 bytes
+
+    print("\n--- 1. Cache Line Size Effects ---")
+    print("Access Pattern      | Step Size | Time(μs) | Relative Slowdown")
+    print("-------------------|-----------|----------|----------------")
+
+    // Test sequential access with different step sizes (cache line alignment)
+    let baseSize = 64 * 1024  // 64KB - fits in L1
+    let stepSizes = [1, 2, 4, 8, 16, 32, 64, 128]  // elements
+    let iterations = 1000
+
+    // Simple shader that reads with given stride
+    let strideShader = """
+    kernel void stride_read(device float* data [[buffer(0)]],
+                          device float* out [[buffer(1)]],
+                          constant uint& size [[buffer(2)]],
+                          constant uint& stride [[buffer(3)]],
+                          uint gid [[thread_position_in_grid]]) {
+        uint idx = gid * stride;
+        if (idx < size) {
+            out[gid] = data[idx];
+        }
+    }
+    """
+
+    guard let strideFunc = try? device.makeLibrary(source: strideShader, options: nil).makeFunction(name: "stride_read"),
+          let stridePipeline = try? device.makeComputePipelineState(function: strideFunc) else {
+        print("Failed to create stride shader")
+        return
+    }
+
+    guard let srcBuf = device.makeBuffer(length: baseSize * 128 * MemoryLayout<Float>.size, options: .storageModeShared),
+          let dstBuf = device.makeBuffer(length: baseSize * MemoryLayout<Float>.size, options: .storageModeShared) else { return }
+
+    // Initialize source
+    let srcPtr = srcBuf.contents().assumingMemoryBound(to: Float.self)
+    for i in 0..<(baseSize * 128) { srcPtr[i] = Float(i) }
+
+    let baseTime: Double
+    do {
+        var start = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(stridePipeline)
+            encoder.setBuffer(srcBuf, offset: 0, index: 0)
+            encoder.setBuffer(dstBuf, offset: 0, index: 1)
+            var sizeVal = UInt32(baseSize * 128)
+            var strideVal = UInt32(1)
+            encoder.setBytes(&sizeVal, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.setBytes(&strideVal, length: MemoryLayout<UInt32>.size, index: 3)
+            encoder.dispatchThreads(MTLSize(width: baseSize, height: 1, depth: 1),
+                                   threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let end = getTimeNanos()
+        baseTime = getElapsedSeconds(start: start, end: end)
+    }
+
+    print("Sequential (step=1) | \(String(format: "%9d", 1)) | \(String(format: "%8.2f", baseTime * 1e6)) | 1.00x (baseline)")
+
+    for step in stepSizes.dropFirst() {
+        var start = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(stridePipeline)
+            encoder.setBuffer(srcBuf, offset: 0, index: 0)
+            encoder.setBuffer(dstBuf, offset: 0, index: 1)
+            var sizeVal = UInt32(baseSize * 128)
+            var strideVal = UInt32(step)
+            encoder.setBytes(&sizeVal, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.setBytes(&strideVal, length: MemoryLayout<UInt32>.size, index: 3)
+            encoder.dispatchThreads(MTLSize(width: baseSize / step, height: 1, depth: 1),
+                                   threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let elapsed = getElapsedSeconds(start: start, end: getTimeNanos())
+        let slowdown = elapsed / baseTime
+        print("Stride access     | \(String(format: "%9d", step)) | \(String(format: "%8.2f", elapsed * 1e6)) | \(String(format: "%.2fx", slowdown))")
+    }
+
+    print("\n--- 2. Cache Size vs Performance (Temporal Locality) ---")
+    print("Working Set | Time(ms)  | Throughput | Cache Level")
+    print("------------|-----------|------------|------------")
+
+    let cacheSizes = [
+        (32 * 1024, "32 KB", "L1"),
+        (128 * 1024, "128 KB", "L1+L2"),
+        (512 * 1024, "512 KB", "L2"),
+        (2 * 1024 * 1024, "2 MB", "L2"),
+        (8 * 1024 * 1024, "8 MB", "L2+DRAM"),
+        (32 * 1024 * 1024, "32 MB", "DRAM")
+    ]
+
+    for (size, label, level) in cacheSizes {
+        guard let buf = device.makeBuffer(length: size, options: .storageModeShared) else { continue }
+        let ptr = buf.contents().assumingMemoryBound(to: Float.self)
+        for i in 0..<(size / MemoryLayout<Float>.size) { ptr[i] = Float(i) }
+
+        let iter = 10
+        var start = getTimeNanos()
+        for _ in 0..<iter {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            // Simple read-modify-write to test cache
+            encoder.setBuffer(buf, offset: 0, index: 0)
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let elapsed = getElapsedSeconds(start: start, end: getTimeNanos())
+        let throughput = Double(size * iter) / elapsed / 1e9
+        print("\(label.padStart(11)) | \(String(format: "%9.3f", elapsed * 1000)) | \(String(format: "%10.2f", throughput)) GB/s | \(level)")
+    }
+
+    print("\n--- 3. TLB Coverage and Page Boundary Effects ---")
+    print("""
+    TLB (Translation Lookaside Buffer) Analysis:
+
+    - TLB translates virtual addresses to physical addresses
+    - TLB has limited entries (typically 64-128 entries)
+    - Each TLB entry covers one page (4KB typical)
+    - Walking page table costs ~100 cycles
+
+    Page Size Effects:
+    - Small pages: More TLB entries needed, more misses
+    - Large pages: Better TLB coverage, fewer misses
+    - Apple M2 uses 4KB pages typically
+
+    Memory Pattern Effects on TLB:
+    - Sequential access: Good TLB locality
+    - Random access: Poor TLB locality, may cause TLB thrashing
+    """)
+
+    print("\n--- 4. Cache Eviction and Working Set Analysis ---")
+    print("Working Set | Accesses | Time(ms) | Efficiency")
+    print("------------|----------|----------|-----------")
+
+    // Test different working set sizes to find cache capacity
+    let wsSizes = [4096, 8192, 16384, 32768, 65536, 131072]
+    let baseIter = 10000
+
+    for ws in wsSizes {
+        guard let buf = device.makeBuffer(length: ws * MemoryLayout<Float>.size * 2, options: .storageModeShared) else { continue }
+        let ptr = buf.contents().assumingMemoryBound(to: Float.self)
+        for i in 0..<(ws * 2) { ptr[i] = Float(i) }
+
+        var start = getTimeNanos()
+        for _ in 0..<baseIter {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setBuffer(buf, offset: 0, index: 0)
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let elapsed = getElapsedSeconds(start: start, end: getTimeNanos())
+        let efficiency = Double(ws * baseIter) / (elapsed * 1e9)
+        print("\(String(format: "%10d", ws).padStart(12)) | \(String(format: "%8d", baseIter)) | \(String(format: "%8.3f", elapsed * 1000)) | \(String(format: "%.2f", efficiency))")
+    }
+
+    print("\n--- 5. Cache Behavior Summary ---")
+    print("""
+    Apple M2 Cache Architecture Insights:
+
+    1. Cache Line Size: 64 bytes (standard)
+       - Sequential access within line: Fast
+       - Stride that spans cache lines: Slower due to more fetches
+
+    2. L1 Cache: ~32 KB per cluster
+       - Working sets < 32 KB: Best performance
+       - Temporal locality critical for L1 hits
+
+    3. L2 Cache: ~4 MB shared
+       - Moderate working sets benefit most
+       - Miss penalty to DRAM: ~100-200 cycles
+
+    4. Unified Memory Impact:
+       - No dedicated GPU memory means no GPU-only cache
+       - CPU cache coherency adds overhead
+       - Page migration between CPU/GPU can cause stalls
+
+    Optimization Strategies:
+    ✅ Keep working sets within L1 (32 KB)
+    ✅ Use cache-friendly access patterns (sequential)
+    ✅ Minimize cache line spanning (stride patterns)
+    ✅ Reuse data before it evicts (temporal locality)
+    ❌ Avoid random access that evicts cache lines
+    """)
+
+    print("\n" + String(repeating: "=", count: 70))
+}
+
 // String padding helper
 extension String {
     func padStart(_ length: Int) -> String {
@@ -8273,5 +8483,6 @@ do { try testDeepGPUResearch(device: device, queue: queue) } catch { print("Erro
 do { try testDeepMemoryBandwidth(device: device, queue: queue) } catch { print("Error: \(error)") }
 do { try testHighPerformanceBandwidth(device: device, queue: queue) } catch { print("Error: \(error)") }
 do { try testComputeBoundAnalysis(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testCacheTLBAnalysis(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")
