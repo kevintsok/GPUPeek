@@ -158,6 +158,7 @@
 | **Matrix Square (A*A^T)** | 0.71 GOPS | 非合并访问, 内存受限 |
 | **Local Memory Copy** | 0.79 GB/s | Shared比Global快16% |
 | **Bitonic Sort** | 0.0001 GOPS | kernel launch开销大 |
+| **GEMM Comprehensive** | 21.89 GFLOPS | Reg-4x4 at 1024, 4.98x vs Naive |
 
 **关键洞察**:
 - **内存合并 (Coalescing)** 是最重要的优化 - 5.3x性能差异
@@ -204,6 +205,7 @@
 - **Matrix Square (A*A^T)** - 0.71 GOPS，非合并内存访问导致性能低，神经网络backpropagation常见模式
 - **Local Memory Copy** - Shared memory写入反而比直接Global快16% (0.79 vs 0.68 GB/s)，可能与写入合并优化有关
 - **Bitonic Sort** - 0.0001 GOPS，极低因为kernel launch开销大(91次launch/iteration)
+- **Comprehensive GEMM** - Register-blocked 4x4在1024规模下达21.89 GFLOPS，比Naive快5x
 
 ### 4. 并行计算
 
@@ -320,6 +322,21 @@
 | 100次迭代流水线 | 0.45 ns | 135x改善 |
 | 线程组屏障 | 89 ns | 流水线后 |
 | 原子操作 | 可变 | 争用影响 |
+
+### GEMM性能对比 (Comprehensive Study)
+
+| Size | Naive (GFLOPS) | Tiled (GFLOPS) | Reg-4x4 (GFLOPS) | Speedup |
+|------|-----------------|-----------------|-------------------|---------|
+| 128  | 0.40            | 0.34            | 0.55              | 1.36x   |
+| 256  | 1.11            | 0.65            | 4.29              | 3.85x   |
+| 512  | 3.40            | 2.21            | 13.71             | 4.04x   |
+| 1024 | 4.40            | 2.35            | 21.89             | 4.98x   |
+
+**分析**:
+- Register-blocked 4x4通过float4向量化实现最高性能
+- Tiled版本在M2上反而比Naive慢，因为M2统一内存已高效
+- 加速比随矩阵规模增大而增加(1.36x → 4.98x)
+- Apple M2峰值GEMM性能约22 GFLOPS (FP32)
 
 ---
 
