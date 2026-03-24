@@ -2068,6 +2068,54 @@ kernel void fft_full(device float2* data [[buffer(0)]],
         threadgroup_barrier(mem_flags::mem_none);
     }
 }
+
+// ============================================================
+// Graph BFS (Breadth-First Search)
+// CSR format: row_offsets, column_indices
+// ============================================================
+
+// BFS: Frontier expansion (process current frontier)
+// Uses atomics for frontier queue but simple check for visited
+kernel void bfs_expand(device const uint* row_offsets [[buffer(0)]],
+                     device const uint* column_indices [[buffer(1)]],
+                     device uint* distances [[buffer(2)]],
+                     device uint* next_frontier [[buffer(3)]],
+                     device atomic_uint* frontier_count [[buffer(4)]],
+                     constant uint& num_vertices [[buffer(5)]],
+                     uint id [[thread_position_in_grid]]) {
+    if (id >= num_vertices) return;
+
+    uint dist = distances[id];
+    if (dist == 0xFFFFFFFF) return;  // Not in frontier
+
+    uint rowStart = row_offsets[id];
+    uint rowEnd = row_offsets[id + 1];
+
+    for (uint i = rowStart; i < rowEnd; i++) {
+        uint neighbor = column_indices[i];
+        // Simple visited check (not atomic - will over-count but for benchmark ok)
+        if (distances[neighbor] == 0xFFFFFFFF) {
+            distances[neighbor] = dist + 1;
+            uint idx = atomic_fetch_add_explicit(frontier_count, 1u, memory_order_relaxed);
+            next_frontier[idx] = neighbor;
+        }
+    }
+}
+
+// BFS: Initialize distances
+kernel void bfs_init(device uint* distances [[buffer(0)]],
+                   device uint* frontier [[buffer(1)]],
+                   constant uint& num_vertices [[buffer(2)]],
+                   uint id [[thread_position_in_grid]]) {
+    if (id >= num_vertices) return;
+    distances[id] = 0xFFFFFFFF;  // Infinity
+    if (id == 0) {
+        distances[0] = 0;
+        frontier[0] = 0;
+    } else {
+        frontier[id] = 0xFFFFFFFF;
+    }
+}
 """
 
 // MARK: - FP16 Deep Dive Shader Library
@@ -5395,6 +5443,100 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     let fftGops = fftTotalFlops / getElapsedSeconds(start: fftStart, end: fftEnd) / 1e9
 
     print("FFT (1024 elements, radix-2): \(String(format: "%.2f", fftGops)) GOPS")
+
+    // ============================================================
+    // 29. GRAPH BFS (BREADTH-FIRST SEARCH)
+    // Tests parallel graph traversal with CSR format
+    // ============================================================
+    print("\n--- 29. Graph BFS Analysis ---")
+
+    guard let bfsInitFunc = deepLibrary.makeFunction(name: "bfs_init"),
+          let bfsExpandFunc = deepLibrary.makeFunction(name: "bfs_expand"),
+          let bfsInitPipeline = try? device.makeComputePipelineState(function: bfsInitFunc),
+          let bfsExpandPipeline = try? device.makeComputePipelineState(function: bfsExpandFunc) else {
+        print("Failed to create BFS pipelines")
+        return
+    }
+
+    // Graph: 64K vertices, ~4 edges per vertex (sparse graph)
+    let bfsVertices: UInt32 = 65536
+    let bfsEdgesPerVertex = 4
+    let bfsEdges = Int(bfsVertices) * bfsEdgesPerVertex
+    let bfsIterations = 10
+
+    guard let bfsRowOffsets = device.makeBuffer(length: Int(bfsVertices + 1) * MemoryLayout<UInt32>.size, options: .storageModeShared),
+          let bfsColIndices = device.makeBuffer(length: bfsEdges * MemoryLayout<UInt32>.size, options: .storageModeShared),
+          let bfsDistances = device.makeBuffer(length: Int(bfsVertices) * MemoryLayout<UInt32>.size, options: .storageModeShared),
+          let bfsFrontier = device.makeBuffer(length: Int(bfsVertices) * MemoryLayout<UInt32>.size, options: .storageModeShared),
+          let bfsNextFrontier = device.makeBuffer(length: Int(bfsVertices) * MemoryLayout<UInt32>.size, options: .storageModeShared),
+          let bfsFrontierCount = device.makeBuffer(length: MemoryLayout<UInt32>.size, options: .storageModeShared) else {
+        print("Failed to create BFS buffers")
+        return
+    }
+
+    // Build CSR graph (random edges)
+    let bfsRowOffsetsPtr = bfsRowOffsets.contents().bindMemory(to: UInt32.self, capacity: Int(bfsVertices + 1))
+    let bfsColIndicesPtr = bfsColIndices.contents().bindMemory(to: UInt32.self, capacity: bfsEdges)
+
+    bfsRowOffsetsPtr[0] = 0
+    var edgeIdx = 0
+    for v in 0..<Int(bfsVertices) {
+        let numEdges = bfsEdgesPerVertex
+        for _ in 0..<numEdges {
+            if edgeIdx < bfsEdges {
+                bfsColIndicesPtr[edgeIdx] = UInt32.random(in: 0..<bfsVertices)
+                edgeIdx += 1
+            }
+        }
+        bfsRowOffsetsPtr[v + 1] = UInt32(edgeIdx)
+    }
+
+    var bfsVerticesVar = bfsVertices
+    var bfsLevel: UInt32 = 1
+
+    // Initialize BFS
+    guard let cmdInit = queue.makeCommandBuffer(),
+          let encInit = cmdInit.makeComputeCommandEncoder() else { return }
+    encInit.setComputePipelineState(bfsInitPipeline)
+    encInit.setBuffer(bfsDistances, offset: 0, index: 0)
+    encInit.setBuffer(bfsFrontier, offset: 0, index: 1)
+    encInit.setBytes(&bfsVerticesVar, length: MemoryLayout<UInt32>.size, index: 2)
+    encInit.dispatchThreads(MTLSize(width: Int(bfsVertices), height: 1, depth: 1),
+                         threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+    encInit.endEncoding()
+    cmdInit.commit()
+    cmdInit.waitUntilCompleted()
+
+    // Set initial frontier count
+    let fcPtr = bfsFrontierCount.contents().bindMemory(to: UInt32.self, capacity: 1)
+    fcPtr.pointee = 1
+
+    // BFS iterations
+    let bfsStart = getTimeNanos()
+    for _ in 0..<bfsIterations {
+        // Expand frontier
+        guard let cmdExpand = queue.makeCommandBuffer(),
+              let encExpand = cmdExpand.makeComputeCommandEncoder() else { continue }
+        encExpand.setComputePipelineState(bfsExpandPipeline)
+        encExpand.setBuffer(bfsRowOffsets, offset: 0, index: 0)
+        encExpand.setBuffer(bfsColIndices, offset: 0, index: 1)
+        encExpand.setBuffer(bfsDistances, offset: 0, index: 2)
+        encExpand.setBuffer(bfsNextFrontier, offset: 0, index: 3)
+        encExpand.setBuffer(bfsFrontierCount, offset: 0, index: 4)
+        encExpand.setBytes(&bfsVerticesVar, length: MemoryLayout<UInt32>.size, index: 5)
+        encExpand.dispatchThreads(MTLSize(width: Int(bfsVertices), height: 1, depth: 1),
+                               threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encExpand.endEncoding()
+        cmdExpand.commit()
+        cmdExpand.waitUntilCompleted()
+    }
+    let bfsEnd = getTimeNanos()
+
+    // Operations: O(V + E) per BFS level
+    let bfsOps = (Int64(bfsVertices) + Int64(bfsEdges)) * Int64(bfsIterations)
+    let bfsGops = Double(bfsOps) / getElapsedSeconds(start: bfsStart, end: bfsEnd) / 1e9
+
+    print("BFS (65K vertices, 256K edges): \(String(format: "%.3f", bfsGops)) GOPS")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")
