@@ -88,12 +88,19 @@ python plot_cuda_graph.py
 
 ### 生成的可视化图表
 
-| 图表 | 描述 |
-|------|------|
-| `launch_overhead.png` | Launch 开销对比 |
-| `graph_speedup.png` | Graph 加速效果 |
-| `pipeline_performance.png` | 流水线性能 |
-| `kernel_count_speedup.png` | 内核数量 vs 加速比 |
+![Launch 开销对比](data/launch_overhead.png)
+
+![Graph 加速效果](data/graph_speedup.png)
+
+![流水线性能](data/pipeline_performance.png)
+
+![内核数量 vs 加速比](data/kernel_count_speedup.png)
+
+![Batch 性能](data/batch_performance.png)
+
+![Graph Overhead 对比](data/graph_overhead.png)
+
+![Stream Graph 对比](data/stream_graph_comparison.png)
 
 ## 参考文献
 
