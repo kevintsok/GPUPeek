@@ -20,6 +20,36 @@ func getElapsedSeconds(start: UInt64, end: UInt64) -> Double {
     return elapsedTicks * ticksPerNanosec / 1e9
 }
 
+// MARK: - Float/Half Conversion
+
+// Convert Float32 to UInt16 (FP16 representation)
+func FloatToHalf(_ value: Float) -> UInt16 {
+    let bits = value.bitPattern
+    let sign = (bits >> 16) & 0x8000
+    var expo = Int((bits >> 23) & 0xFF) - 127
+    let mantissa = bits & 0x7FFFFF
+
+    // Handle subnormals and overflow
+    if expo > 15 {
+        // Overflow - saturate to max
+        return UInt16(sign | 0x7C00)
+    } else if expo < -10 {
+        // Underflow to zero
+        return UInt16(sign)
+    }
+
+    // Convert to FP16
+    let expBias = expo + 15
+    if expBias <= 0 {
+        // Subnormal
+        let shift = UInt32(-expBias + 1)
+        let mant = (mantissa >> shift) | 0x800
+        return UInt16(sign | mant)
+    }
+
+    return UInt16(sign | UInt32(expBias << 10) | (mantissa >> 13))
+}
+
 // MARK: - Deep Research Shader Library
 
 let deepShaderSource = """
@@ -2008,6 +2038,110 @@ kernel void gemm_shared_tiled(device const float* A [[buffer(0)]],
     if (row < M && col < N) {
         C[row * N + col] = sum;
     }
+}
+
+// ============================================================
+// MIXED-PRECISION GEMM (FP16 Input, FP32 Accumulation)
+// FP16 is 2x faster to load but requires conversion to FP32 for compute
+// ============================================================
+
+// Mixed-precision GEMM: FP16 inputs, FP32 accumulation, register-blocked 4x4
+kernel void gemm_mixed_precision(device const half* A [[buffer(0)]],
+                                  device const half* B [[buffer(1)]],
+                                  device float* C [[buffer(2)]],
+                                  constant uint& M [[buffer(3)]],
+                                  constant uint& K [[buffer(4)]],
+                                  constant uint& N [[buffer(5)]],
+                                  uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= N / 4 || gid.y >= M / 4) return;
+
+    uint blockN = 4;
+    uint blockM = 4;
+    uint blockK = 4;
+
+    // FP32 accumulators for 4x4 block
+    float4 c00 = 0.0f, c01 = 0.0f, c02 = 0.0f, c03 = 0.0f;
+    float4 c10 = 0.0f, c11 = 0.0f, c12 = 0.0f, c13 = 0.0f;
+    float4 c20 = 0.0f, c21 = 0.0f, c22 = 0.0f, c23 = 0.0f;
+    float4 c30 = 0.0f, c31 = 0.0f, c32 = 0.0f, c33 = 0.0f;
+
+    // Loop over K dimension in blocks
+    for (uint k = 0; k < K; k += blockK) {
+        // Load 4x4 block of A (FP16 -> FP32 conversion happens here)
+        float4 a0 = float4(A[(gid.y * blockM + 0) * K + k],
+                          A[(gid.y * blockM + 0) * K + k + 1],
+                          A[(gid.y * blockM + 0) * K + k + 2],
+                          A[(gid.y * blockM + 0) * K + k + 3]);
+        float4 a1 = float4(A[(gid.y * blockM + 1) * K + k],
+                          A[(gid.y * blockM + 1) * K + k + 1],
+                          A[(gid.y * blockM + 1) * K + k + 2],
+                          A[(gid.y * blockM + 1) * K + k + 3]);
+        float4 a2 = float4(A[(gid.y * blockM + 2) * K + k],
+                          A[(gid.y * blockM + 2) * K + k + 1],
+                          A[(gid.y * blockM + 2) * K + k + 2],
+                          A[(gid.y * blockM + 2) * K + k + 3]);
+        float4 a3 = float4(A[(gid.y * blockM + 3) * K + k],
+                          A[(gid.y * blockM + 3) * K + k + 1],
+                          A[(gid.y * blockM + 3) * K + k + 2],
+                          A[(gid.y * blockM + 3) * K + k + 3]);
+
+        // Load 4x4 block of B (FP16 -> FP32)
+        float4 b0 = float4(B[k * N + gid.x * blockN],
+                          B[(k + 1) * N + gid.x * blockN],
+                          B[(k + 2) * N + gid.x * blockN],
+                          B[(k + 3) * N + gid.x * blockN]);
+        float4 b1 = float4(B[k * N + gid.x * blockN + 1],
+                          B[(k + 1) * N + gid.x * blockN + 1],
+                          B[(k + 2) * N + gid.x * blockN + 1],
+                          B[(k + 3) * N + gid.x * blockN + 1]);
+        float4 b2 = float4(B[k * N + gid.x * blockN + 2],
+                          B[(k + 1) * N + gid.x * blockN + 2],
+                          B[(k + 2) * N + gid.x * blockN + 2],
+                          B[(k + 3) * N + gid.x * blockN + 2]);
+        float4 b3 = float4(B[k * N + gid.x * blockN + 3],
+                          B[(k + 1) * N + gid.x * blockN + 3],
+                          B[(k + 2) * N + gid.x * blockN + 3],
+                          B[(k + 3) * N + gid.x * blockN + 3]);
+
+        // Matrix multiply: C_block += A_block * B_block
+        c00 += a0 * b0.x + a1 * b0.y + a2 * b0.z + a3 * b0.w;
+        c01 += a0 * b1.x + a1 * b1.y + a2 * b1.z + a3 * b1.w;
+        c02 += a0 * b2.x + a1 * b2.y + a2 * b2.z + a3 * b2.w;
+        c03 += a0 * b3.x + a1 * b3.y + a2 * b3.z + a3 * b3.w;
+        c10 += a0 * b0.x + a1 * b0.y + a2 * b0.z + a3 * b0.w;
+        c11 += a0 * b1.x + a1 * b1.y + a2 * b1.z + a3 * b1.w;
+        c12 += a0 * b2.x + a1 * b2.y + a2 * b2.z + a3 * b2.w;
+        c13 += a0 * b3.x + a1 * b3.y + a2 * b3.z + a3 * b3.w;
+        c20 += a0 * b0.x + a1 * b0.y + a2 * b0.z + a3 * b0.w;
+        c21 += a0 * b1.x + a1 * b1.y + a2 * b1.z + a3 * b1.w;
+        c22 += a0 * b2.x + a1 * b2.y + a2 * b2.z + a3 * b2.w;
+        c23 += a0 * b3.x + a1 * b3.y + a2 * b3.z + a3 * b3.w;
+        c30 += a0 * b0.x + a1 * b0.y + a2 * b0.z + a3 * b0.w;
+        c31 += a0 * b1.x + a1 * b1.y + a2 * b1.z + a3 * b1.w;
+        c32 += a0 * b2.x + a1 * b2.y + a2 * b2.z + a3 * b2.w;
+        c33 += a0 * b3.x + a1 * b3.y + a2 * b3.z + a3 * b3.w;
+    }
+
+    // Store results (float -> half conversion happens at store)
+    uint cRowStart = gid.y * blockM;
+    uint cColStart = gid.x * blockN;
+
+    C[(cRowStart + 0) * N + cColStart] = c00.x;
+    C[(cRowStart + 0) * N + cColStart + 1] = c01.x;
+    C[(cRowStart + 0) * N + cColStart + 2] = c02.x;
+    C[(cRowStart + 0) * N + cColStart + 3] = c03.x;
+    C[(cRowStart + 1) * N + cColStart] = c10.y;
+    C[(cRowStart + 1) * N + cColStart + 1] = c11.y;
+    C[(cRowStart + 1) * N + cColStart + 2] = c12.y;
+    C[(cRowStart + 1) * N + cColStart + 3] = c13.y;
+    C[(cRowStart + 2) * N + cColStart] = c20.z;
+    C[(cRowStart + 2) * N + cColStart + 1] = c21.z;
+    C[(cRowStart + 2) * N + cColStart + 2] = c22.z;
+    C[(cRowStart + 2) * N + cColStart + 3] = c23.z;
+    C[(cRowStart + 3) * N + cColStart] = c30.w;
+    C[(cRowStart + 3) * N + cColStart + 1] = c31.w;
+    C[(cRowStart + 3) * N + cColStart + 2] = c32.w;
+    C[(cRowStart + 3) * N + cColStart + 3] = c33.w;
 }
 
 // ============================================================
@@ -5947,6 +6081,80 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
 
     print("\n" + String(repeating: "-", count: 50))
     print("Device Architecture Query Complete")
+    print(String(repeating: "-", count: 50))
+
+    // ============================================================
+    // 33. MIXED-PRECISION GEMM (FP16 Input, FP32 Accumulation)
+    // Common optimization in deep learning frameworks
+    // ============================================================
+    print("\n--- 33. Mixed-Precision GEMM Analysis ---")
+
+    guard let gemmMixedFunc = deepLibrary.makeFunction(name: "gemm_mixed_precision"),
+          let gemmMixedPipeline = try? device.makeComputePipelineState(function: gemmMixedFunc) else {
+        print("Failed to create mixed-precision GEMM pipeline")
+        return
+    }
+
+    // Square matrices: 512x512
+    let mixM: UInt32 = 512
+    let mixK: UInt32 = 512
+    let mixN: UInt32 = 512
+    let mixIterations = 10
+
+    // FP16 input buffers (half the size of Float)
+    guard let mixA = device.makeBuffer(length: Int(mixM * mixK) * MemoryLayout<UInt16>.size, options: .storageModeShared),
+          let mixB = device.makeBuffer(length: Int(mixK * mixN) * MemoryLayout<UInt16>.size, options: .storageModeShared),
+          let mixC = device.makeBuffer(length: Int(mixM * mixN) * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create mixed-precision GEMM buffers")
+        return
+    }
+
+    // Initialize FP16 matrices with random data
+    let mixAPtr = mixA.contents().bindMemory(to: UInt16.self, capacity: Int(mixM * mixK))
+    let mixBPtr = mixB.contents().bindMemory(to: UInt16.self, capacity: Int(mixK * mixN))
+    for i in 0..<Int(mixM * mixK) {
+        // Generate random FP16 value
+        let f = Float.random(in: 0.0...1.0)
+        mixAPtr[i] = FloatToHalf(f)
+    }
+    for i in 0..<Int(mixK * mixN) {
+        let f = Float.random(in: 0.0...1.0)
+        mixBPtr[i] = FloatToHalf(f)
+    }
+
+    var mixMVar = mixM
+    var mixKVar = mixK
+    var mixNVar = mixN
+
+    // Run mixed-precision GEMM
+    let mixStart = getTimeNanos()
+    for _ in 0..<mixIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(gemmMixedPipeline)
+        encoder.setBuffer(mixA, offset: 0, index: 0)
+        encoder.setBuffer(mixB, offset: 0, index: 1)
+        encoder.setBuffer(mixC, offset: 0, index: 2)
+        encoder.setBytes(&mixMVar, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.setBytes(&mixKVar, length: MemoryLayout<UInt32>.size, index: 4)
+        encoder.setBytes(&mixNVar, length: MemoryLayout<UInt32>.size, index: 5)
+        encoder.dispatchThreads(MTLSize(width: Int(mixN) / 4, height: Int(mixM) / 4, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 8, height: 8, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let mixEnd = getTimeNanos()
+
+    // FLOPs: 2 * M * K * N (multiply-adds)
+    let mixFlops = 2.0 * Double(mixM) * Double(mixK) * Double(mixN) * Double(mixIterations)
+    let mixGops = mixFlops / getElapsedSeconds(start: mixStart, end: mixEnd) / 1e9
+
+    print("Mixed-Precision GEMM (FP16in, FP32acc, 512x512): \(String(format: "%.2f", mixGops)) GOPS")
+    print("(vs FP32 GEMM Register Blocked: 13.14 GOPS)")
+
+    print("\n" + String(repeating: "-", count: 50))
+    print("Mixed-Precision GEMM Analysis Complete")
     print(String(repeating: "-", count: 50))
 }
 
