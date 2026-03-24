@@ -43,7 +43,7 @@ cudaGraphLaunch(graphExec, stream);
 | CUDA Graph (后续启动) | ~0.02 ms | 快速启动 |
 | CUDA Graph (批量100个) | ~0.0018 ms/kernel | 分摊开销 |
 
-**可视化图表**: `data/graph_overhead.png`
+**可视化图表**: `data/launch_overhead.png`
 
 ### 吞吐对比
 
@@ -54,7 +54,7 @@ cudaGraphLaunch(graphExec, stream);
 | CUDA Graph (10 kernels) | ~1200 GB/s |
 | CUDA Graph (100 kernels) | ~1350 GB/s |
 
-**可视化图表**: `data/stream_graph_comparison.png`, `data/batch_performance.png`
+**可视化图表**: `data/graph_speedup.png`, `data/kernel_count_speedup.png`
 
 ## 6. 优势
 
@@ -79,7 +79,7 @@ cudaGraphLaunch(graphExec, stream);
 ```bash
 cd scripts
 pip install -r requirements.txt
-python plot_multi_stream.py
+python plot_cuda_graph.py
 ```
 
 输出位置: `NVIDIA_GPU/sm_120/cuda_graph/data/`

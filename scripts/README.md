@@ -26,7 +26,8 @@ pip install -r requirements.txt
 | `plot_mbarrier.py` | MBarrier 图表 | `sm_120/mbarrier/data/` |
 | `plot_tensor_mem.py` | Tensor Mem 图表 | `sm_120/tensor_mem/data/` |
 | `plot_unified_memory.py` | Unified Memory 图表 | `sm_120/unified_memory/data/` |
-| `plot_multi_stream.py` | Multi-Stream 图表 | `sm_120/multi_stream/data/`, `sm_120/cuda_graph/data/` |
+| `plot_multi_stream.py` | Multi-Stream 图表 | `sm_120/multi_stream/data/` |
+| `plot_cuda_graph.py` | CUDA Graph 图表 | `sm_120/cuda_graph/data/` |
 | `plot_fp_precision.py` | FP8/FP4/FP6 精度图表 | `sm_120/fp8/data/`, `sm_120/fp4_fp6/data/` |
 
 ## 使用方法
@@ -41,6 +42,7 @@ python plot_barrier_sync.py
 python plot_atomic_ops.py
 python plot_tensor_core.py
 python plot_multi_stream.py
+python plot_cuda_graph.py
 python plot_fp_precision.py
 python plot_warp_specialize.py
 python plot_dp4a.py
