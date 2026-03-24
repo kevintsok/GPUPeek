@@ -155,6 +155,7 @@
 | **3x3 Convolution** | 0.47 GOPS | 9次内存读取/像素，受限于带宽 |
 | **N-Body Simulation** | 0.74 GOPS | O(n²) = 1M交互, 计算受限 |
 | **Ray-Sphere Intersection** | 13.60 GOPS | 1M rays x 64 spheres, 100%命中率 |
+| **Matrix Square (A*A^T)** | 0.71 GOPS | 非合并访问, 内存受限 |
 
 **关键洞察**:
 - **内存合并 (Coalescing)** 是最重要的优化 - 5.3x性能差异
@@ -198,6 +199,7 @@
 - **3x3 Convolution** - 0.47 GOPS (9次内存读取/像素)，内存受限而非计算受限
 - **N-Body Simulation** - 0.74 GOPS，O(n²)算法，计算密集型但受限于Apple M2算力
 - **Ray-Sphere Intersection** - 13.6 GOPS (1M rays x 64 spheres)，计算效率高，适合光线追踪应用
+- **Matrix Square (A*A^T)** - 0.71 GOPS，非合并内存访问导致性能低，神经网络backpropagation常见模式
 
 ### 4. 并行计算
 

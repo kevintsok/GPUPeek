@@ -6642,6 +6642,128 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     print("\n" + String(repeating: "-", count: 50))
     print("Ray-Sphere Intersection Analysis Complete")
     print(String(repeating: "-", count: 50))
+
+    // ============================================================
+    // 38. MATRIX SQUARE (A * A^T) - TRANSPOSE-MULTIPLY
+    // Common in neural network backpropagation
+    // Tests non-contiguous memory access patterns
+    // ============================================================
+    print("\n--- 38. Matrix Square (A x A^T) Analysis ---")
+
+    let matSquareShader = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    // C = A * A^T where A is MxK and A^T is KxM, result is MxM
+    kernel void mat_square_naive(device const float* A [[buffer(0)]],
+                               device float* C [[buffer(1)]],
+                               constant uint& M [[buffer(2)]],
+                               constant uint& K [[buffer(3)]],
+                               uint2 gid [[thread_position_in_grid]]) {
+        if (gid.x >= M || gid.y >= M) return;
+
+        float sum = 0.0f;
+        for (uint k = 0; k < K; k++) {
+            sum += A[gid.y * K + k] * A[gid.x * K + k];
+        }
+        C[gid.y * M + gid.x] = sum;
+    }
+
+    // Shared memory tiled version
+    kernel void mat_square_shared(device const float* A [[buffer(0)]],
+                                 device float* C [[buffer(1)]],
+                                 constant uint& M [[buffer(2)]],
+                                 constant uint& K [[buffer(3)]],
+                                 threadgroup float* tileA [[threadgroup(0)]],
+                                 uint2 gid [[thread_position_in_grid]],
+                                 uint2 lid [[thread_position_in_threadgroup]]) {
+        uint tileSize = 16;
+        float sum = 0.0f;
+
+        for (uint t = 0; t < (K + tileSize - 1) / tileSize; t++) {
+            uint kStart = t * tileSize;
+            uint kEnd = min(kStart + tileSize, K);
+
+            // Load column of A^T (which is row of A) into tile
+            for (uint k = lid.x; k < kEnd - kStart; k += 16) {
+                uint globalK = kStart + k;
+                tileA[lid.y * tileSize + k] = A[gid.y * K + globalK];
+            }
+            threadgroup_barrier(mem_flags::mem_none);
+
+            // Load row of A into tile
+            for (uint k = lid.x; k < kEnd - kStart; k += 16) {
+                uint globalK = kStart + k;
+                tileA[lid.y * tileSize + k] = A[gid.x * K + globalK];
+            }
+            threadgroup_barrier(mem_flags::mem_none);
+
+            // Compute partial dot product
+            for (uint k = 0; k < kEnd - kStart; k++) {
+                sum += tileA[lid.y * tileSize + k] * tileA[lid.x * tileSize + k];
+            }
+            threadgroup_barrier(mem_flags::mem_none);
+        }
+        C[gid.y * M + gid.x] = sum;
+    }
+    """
+
+    guard let matLib = try? device.makeLibrary(source: matSquareShader, options: nil) else {
+        print("Failed to compile mat_square shader")
+        return
+    }
+    guard let matFunc = matLib.makeFunction(name: "mat_square_naive"),
+          let matPipe = try? device.makeComputePipelineState(function: matFunc) else {
+        print("Failed to create mat_square pipeline")
+        return
+    }
+
+    let matM: UInt32 = 512
+    let matK: UInt32 = 512
+    let matIterations = 10
+
+    guard let matA = device.makeBuffer(length: Int(matM * matK) * MemoryLayout<Float>.size, options: .storageModeShared),
+          let matC = device.makeBuffer(length: Int(matM * matM) * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+
+    // Initialize A with random data
+    let matAPtr = matA.contents().bindMemory(to: Float.self, capacity: Int(matM * matK))
+    for i in 0..<Int(matM * matK) {
+        matAPtr[i] = Float.random(in: 0.0...1.0)
+    }
+
+    var matMVar = matM
+    var matKVar = matK
+
+    let matStart = getTimeNanos()
+    for _ in 0..<matIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let enc = cmd.makeComputeCommandEncoder() else { continue }
+        enc.setComputePipelineState(matPipe)
+        enc.setBuffer(matA, offset: 0, index: 0)
+        enc.setBuffer(matC, offset: 0, index: 1)
+        enc.setBytes(&matMVar, length: MemoryLayout<UInt32>.size, index: 2)
+        enc.setBytes(&matKVar, length: MemoryLayout<UInt32>.size, index: 3)
+        enc.dispatchThreads(MTLSize(width: Int(matM), height: Int(matM), depth: 1),
+                          threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
+        enc.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let matEnd = getTimeNanos()
+
+    // FLOPs: C[i][j] = sum_k A[i][k] * A[j][k]
+    // MxM result, each element computes K mul-adds
+    let matFlops = 2.0 * Double(matM) * Double(matM) * Double(matK) * Double(matIterations)
+    let matGops = matFlops / getElapsedSeconds(start: matStart, end: matEnd) / 1e9
+
+    print("Matrix Square A*A^T (512x512, K=512): \(String(format: "%.2f", matGops)) GOPS")
+    print("(2*M*M*K FLOPs per iteration)")
+
+    print("\n" + String(repeating: "-", count: 50))
+    print("Matrix Square Analysis Complete")
+    print(String(repeating: "-", count: 50))
 }
 
 // MARK: - Deep Memory Bandwidth Research
