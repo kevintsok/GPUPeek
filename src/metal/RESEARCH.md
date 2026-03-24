@@ -110,6 +110,8 @@
 | **SIMD Group Shuffle** | 0.02 GOPS | Lane交换操作 |
 | **SIMD Prefix Sum** | 0.02 GOPS | Work-efficient算法 |
 | **Parallel Reduction** | 0.03 GOPS | Shared Memory优化 |
+| **Indirect Gather** | 0.031 GOPS | 索引读取操作 |
+| **Indirect Scatter** | 0.034 GOPS | 索引写入操作 |
 
 **关键洞察**:
 - **内存合并 (Coalescing)** 是最重要的优化 - 5.3x性能差异
@@ -130,6 +132,7 @@
 - **Parallel Reduction** - Shared Memory优化可将性能提升至0.03 GOPS (vs 0.00 GOPS基准)
 - **Advanced Atomics** - Fetch Add/Min/Max约0.04 GOPS，CAS最慢(0.012 GOPS)因需要重试机制
 - **Memory Ordering** - Metal仅支持memory_order_relaxed（设备地址空间），其他语义(acquire/release/seq_cst)仅适用于threadgroup地址空间
+- **Indirect Addressing** - Gather/Scatter约0.03 GOPS，索引访问比顺序访问慢但适合图算法等场景
 
 ### 4. 并行计算
 

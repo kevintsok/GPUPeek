@@ -773,6 +773,44 @@ kernel void indirect_execute(device const float* in [[buffer(0)]],
 }
 
 // ============================================================
+// 17b. INDIRECT ADDRESSING / SCATTER-GATHER
+// Tests random index-based memory access patterns
+// ============================================================
+
+kernel void gather_addressing(device const float* data [[buffer(0)]],
+                           device const uint* indices [[buffer(1)]],
+                           device float* out [[buffer(2)]],
+                           constant uint& size [[buffer(3)]],
+                           uint id [[thread_position_in_grid]]) {
+    // Gather: read from data[indices[id]]
+    uint idx = indices[id] % size;
+    out[id] = data[idx] * 2.0f;
+}
+
+kernel void scatter_addressing(device float* data [[buffer(0)]],
+                            device const uint* indices [[buffer(1)]],
+                            device const float* values [[buffer(2)]],
+                            constant uint& size [[buffer(3)]],
+                            uint id [[thread_position_in_grid]]) {
+    // Scatter: write to data[indices[id]]
+    uint idx = indices[id] % size;
+    data[idx] = values[id] * 2.0f;
+}
+
+kernel void gather_then_process(device const float* data [[buffer(0)]],
+                             device const uint* indices [[buffer(1)]],
+                             device float* out [[buffer(2)]],
+                             constant uint& size [[buffer(3)]],
+                             uint id [[thread_position_in_grid]]) {
+    // Gather then do multiple operations
+    uint idx = indices[id] % size;
+    float val = data[idx];
+    val = val * 2.0f + 1.0f;
+    val = sqrt(val + 0.001f);
+    out[id] = val;
+}
+
+// ============================================================
 // 18. KERNEL FUSION STUDY (multi-op in single kernel)
 // ============================================================
 
@@ -3207,6 +3245,97 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     let gopsWarp = Double(reduceSize) * Double(reduceIter) / getElapsedSeconds(start: startWarp, end: endWarp) / 1e9
 
     print("Warp-Level Reduce: \(String(format: "%.2f", gopsWarp)) GOPS")
+
+    // 15. INDIRECT ADDRESSING / SCATTER-GATHER
+    print("\n--- 15. Indirect Addressing Analysis ---")
+
+    guard let gatherFunc = deepLibrary.makeFunction(name: "gather_addressing"),
+          let scatterFunc = deepLibrary.makeFunction(name: "scatter_addressing"),
+          let gatherProcFunc = deepLibrary.makeFunction(name: "gather_then_process"),
+          let gatherPipeline = try? device.makeComputePipelineState(function: gatherFunc),
+          let scatterPipeline = try? device.makeComputePipelineState(function: scatterFunc),
+          let gatherProcPipeline = try? device.makeComputePipelineState(function: gatherProcFunc) else {
+        print("Failed to create indirect addressing pipelines")
+        return
+    }
+
+    let indSize = 256 * 1024
+    let indIter = 50
+    guard let indData = device.makeBuffer(length: indSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let indIndices = device.makeBuffer(length: indSize * MemoryLayout<UInt32>.size, options: .storageModeShared),
+          let indOut = device.makeBuffer(length: indSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create indirect buffers")
+        return
+    }
+
+    // Initialize indices sequentially
+    let indicesPtr = indIndices.contents().assumingMemoryBound(to: UInt32.self)
+    for i in 0..<indSize {
+        indicesPtr[i] = UInt32(i)
+    }
+
+    var indSz = UInt32(indSize)
+
+    // Gather (indexed read)
+    let startGather = getTimeNanos()
+    for _ in 0..<indIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(gatherPipeline)
+        encoder.setBuffer(indData, offset: 0, index: 0)
+        encoder.setBuffer(indIndices, offset: 0, index: 1)
+        encoder.setBuffer(indOut, offset: 0, index: 2)
+        encoder.setBytes(&indSz, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: indSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endGather = getTimeNanos()
+    let gopsGather = Double(indSize) * Double(indIter) / getElapsedSeconds(start: startGather, end: endGather) / 1e9
+
+    // Scatter (indexed write)
+    let startScatter = getTimeNanos()
+    for _ in 0..<indIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(scatterPipeline)
+        encoder.setBuffer(indOut, offset: 0, index: 0)
+        encoder.setBuffer(indIndices, offset: 0, index: 1)
+        encoder.setBuffer(indData, offset: 0, index: 2)
+        encoder.setBytes(&indSz, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: indSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endScatter = getTimeNanos()
+    let gopsScatter = Double(indSize) * Double(indIter) / getElapsedSeconds(start: startScatter, end: endScatter) / 1e9
+
+    // Gather + Process
+    let startGatherProc = getTimeNanos()
+    for _ in 0..<indIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(gatherProcPipeline)
+        encoder.setBuffer(indData, offset: 0, index: 0)
+        encoder.setBuffer(indIndices, offset: 0, index: 1)
+        encoder.setBuffer(indOut, offset: 0, index: 2)
+        encoder.setBytes(&indSz, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: indSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endGatherProc = getTimeNanos()
+    let gopsGatherProc = Double(indSize) * Double(indIter) / getElapsedSeconds(start: startGatherProc, end: endGatherProc) / 1e9
+
+    print("Gather (indexed read): \(String(format: "%.3f", gopsGather)) GOPS")
+    print("Scatter (indexed write): \(String(format: "%.3f", gopsScatter)) GOPS")
+    print("Gather+Process: \(String(format: "%.3f", gopsGatherProc)) GOPS")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")
