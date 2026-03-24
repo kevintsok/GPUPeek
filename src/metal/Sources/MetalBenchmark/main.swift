@@ -1679,6 +1679,116 @@ kernel void tridiagonal_parallel_cr(device const float* a [[buffer(0)]],
 
     x[id] = d[id] / b[id];  // Simplified: direct solve
 }
+
+// ============================================================
+// Prefix Sum / Scan Algorithms
+// ============================================================
+
+// Hillis-Steele Scan (Work-efficient, O(n log n) steps)
+// Each step doubles the stride
+kernel void scan_hillis_steele(device const float* in [[buffer(0)]],
+                              device float* out [[buffer(1)]],
+                              device float* temp [[buffer(2)]],
+                              constant uint& size [[buffer(3)]],
+                              uint id [[thread_position_in_grid]]) {
+    if (id >= size) return;
+
+    // Load into shared storage
+    float val = in[id];
+
+    // Hillis-Steele scan with log n steps
+    for (uint stride = 1; stride < size; stride *= 2) {
+        temp[id] = val;
+        threadgroup_barrier(mem_flags::mem_none);
+
+        if (id >= stride) {
+            val += temp[id - stride];
+        }
+        threadgroup_barrier(mem_flags::mem_none);
+    }
+    out[id] = val;
+}
+
+// Kogge-Stone Scan (O(log n) latency, O(n log n) work)
+// Each thread adds value from stride distance
+kernel void scan_kogge_stone(device const float* in [[buffer(0)]],
+                            device float* out [[buffer(1)]],
+                            device float* temp [[buffer(2)]],
+                            constant uint& size [[buffer(3)]],
+                            uint id [[thread_position_in_grid]]) {
+    if (id >= size) return;
+
+    float val = in[id];
+
+    // Kogge-Stone: log n steps, each thread does one add per step
+    for (uint stride = 1; stride < size; stride *= 2) {
+        temp[id] = val;
+        threadgroup_barrier(mem_flags::mem_none);
+
+        uint srcIdx = id + stride;
+        if (srcIdx < size) {
+            val += temp[srcIdx];
+        }
+        threadgroup_barrier(mem_flags::mem_none);
+    }
+    out[id] = val;
+}
+
+// Brent-Kung Scan (O(log n) latency, O(n) work optimal)
+// Uses two phases: reduce + downsweep
+kernel void scan_brent_kung(device const float* in [[buffer(0)]],
+                           device float* out [[buffer(1)]],
+                           device float* temp [[buffer(2)]],
+                           constant uint& size [[buffer(3)]],
+                           uint id [[thread_position_in_grid]]) {
+    if (id >= size) return;
+
+    // Phase 1: Build reduction tree (bottom-up)
+    float val = in[id];
+    uint stride = 1;
+    while (stride < size) {
+        if (id % (stride * 2) == 0 && id + stride < size) {
+            val += in[id + stride];
+        }
+        stride *= 2;
+        threadgroup_barrier(mem_flags::mem_none);
+    }
+
+    // Store partial result
+    temp[id] = val;
+    threadgroup_barrier(mem_flags::mem_none);
+
+    // Phase 2: Downsweep (top-down)
+    uint fullSize = size;
+    while (stride > 1) {
+        stride /= 2;
+        if (id % (stride * 2) == 0) {
+            uint rightIdx = id + stride;
+            if (rightIdx < fullSize) {
+                float rightVal = temp[rightIdx];
+                temp[id] = val;
+                val += rightVal;
+            }
+        }
+        threadgroup_barrier(mem_flags::mem_none);
+    }
+
+    out[id] = val;
+}
+
+// Naive Sequential Scan (baseline)
+kernel void scan_naive(device const float* in [[buffer(0)]],
+                      device float* out [[buffer(1)]],
+                      constant uint& size [[buffer(2)]],
+                      uint id [[thread_position_in_grid]]) {
+    if (id >= size) return;
+
+    float sum = 0.0f;
+    for (uint i = 0; i <= id; i++) {
+        sum += in[i];
+    }
+    out[id] = sum;
+}
 """
 
 // MARK: - FP16 Deep Dive Shader Library
@@ -4676,6 +4786,105 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     let tridiagGops = Double(tridiagOps) / getElapsedSeconds(start: tridiagStart, end: tridiagEnd) / 1e9
 
     print("Tridiagonal Solver (Thomas, 1M): \(String(format: "%.3f", tridiagGops)) GOPS")
+
+    // ============================================================
+    // 25. PREFIX SUM / SCAN ALGORITHMS
+    // Tests different parallel scan strategies
+    // ============================================================
+    print("\n--- 25. Prefix Sum / Scan Analysis ---")
+
+    guard let scanNaiveFunc = deepLibrary.makeFunction(name: "scan_naive"),
+          let scanHillisFunc = deepLibrary.makeFunction(name: "scan_hillis_steele"),
+          let scanKoggeFunc = deepLibrary.makeFunction(name: "scan_kogge_stone"),
+          let scanBrentFunc = deepLibrary.makeFunction(name: "scan_brent_kung"),
+          let scanNaivePipeline = try? device.makeComputePipelineState(function: scanNaiveFunc),
+          let scanHillisPipeline = try? device.makeComputePipelineState(function: scanHillisFunc),
+          let scanKoggePipeline = try? device.makeComputePipelineState(function: scanKoggeFunc),
+          let scanBrentPipeline = try? device.makeComputePipelineState(function: scanBrentFunc) else {
+        print("Failed to create scan pipelines")
+        return
+    }
+
+    let scanSize = 256 * 1024  // 256K elements
+    let scanIterations = 10
+
+    guard let scanIn = device.makeBuffer(length: scanSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let scanOut = device.makeBuffer(length: scanSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let scanTemp = device.makeBuffer(length: scanSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create scan buffers")
+        return
+    }
+
+    // Initialize input
+    let scanInPtr = scanIn.contents().bindMemory(to: Float.self, capacity: scanSize)
+    for i in 0..<scanSize {
+        scanInPtr[i] = Float(1.0)
+    }
+
+    var scanSizeVar = UInt32(scanSize)
+
+    // Naive Scan
+    let scanStartNaive = getTimeNanos()
+    for _ in 0..<scanIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(scanNaivePipeline)
+        encoder.setBuffer(scanIn, offset: 0, index: 0)
+        encoder.setBuffer(scanOut, offset: 0, index: 1)
+        encoder.setBytes(&scanSizeVar, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: scanSize, height: 1, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let scanEndNaive = getTimeNanos()
+    let scanOpsNaive = Int64(scanSize) * Int64(scanIterations)  // n operations per iteration
+    let scanGopsNaive = Double(scanOpsNaive) / getElapsedSeconds(start: scanStartNaive, end: scanEndNaive) / 1e9
+
+    // Hillis-Steele Scan
+    let scanStartHillis = getTimeNanos()
+    for _ in 0..<scanIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(scanHillisPipeline)
+        encoder.setBuffer(scanIn, offset: 0, index: 0)
+        encoder.setBuffer(scanOut, offset: 0, index: 1)
+        encoder.setBuffer(scanTemp, offset: 0, index: 2)
+        encoder.setBytes(&scanSizeVar, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: scanSize, height: 1, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let scanEndHillis = getTimeNanos()
+    let scanOpsHillis = Int64(scanSize) * Int64(scanIterations) * Int64(log2(Float(scanSize)))
+    let scanGopsHillis = Double(scanOpsHillis) / getElapsedSeconds(start: scanStartHillis, end: scanEndHillis) / 1e9
+
+    // Kogge-Stone Scan
+    let scanStartKogge = getTimeNanos()
+    for _ in 0..<scanIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(scanKoggePipeline)
+        encoder.setBuffer(scanIn, offset: 0, index: 0)
+        encoder.setBuffer(scanOut, offset: 0, index: 1)
+        encoder.setBuffer(scanTemp, offset: 0, index: 2)
+        encoder.setBytes(&scanSizeVar, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: scanSize, height: 1, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let scanEndKogge = getTimeNanos()
+    let scanOpsKogge = Int64(scanSize) * Int64(scanIterations) * Int64(log2(Float(scanSize)))
+    let scanGopsKogge = Double(scanOpsKogge) / getElapsedSeconds(start: scanStartKogge, end: scanEndKogge) / 1e9
+
+    print("Scan Naive (sequential): \(String(format: "%.3f", scanGopsNaive)) GOPS")
+    print("Scan Hillis-Steele (work-efficient): \(String(format: "%.3f", scanGopsHillis)) GOPS")
+    print("Scan Kogge-Stone (latency-optimal): \(String(format: "%.3f", scanGopsKogge)) GOPS")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")

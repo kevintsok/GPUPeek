@@ -126,6 +126,8 @@
 | **Radix Sort (3-phase)** | 0.017 GOPS | Histogram+Prefix+Reorder |
 | **SpMV CSR Naive** | 0.025 GOPS | 8192x8192, 3.3M nnz |
 | **Tridiagonal Solver** | 0.030 GOPS | Thomas Algorithm, 1M elements |
+| **Scan Hillis-Steele** | 0.311 GOPS | Work-efficient O(n log n) |
+| **Scan Kogge-Stone** | 0.375 GOPS | Latency-optimal O(log n) |
 | **Indirect Gather** | 0.031 GOPS | 索引读取操作 |
 | **Indirect Scatter** | 0.034 GOPS | 索引写入操作 |
 | **Double Buffer** | 0.018 GOPS | 与单缓冲相当(未重叠) |
@@ -155,6 +157,7 @@
 - **Radix Sort** - 3阶段(直方图+前缀和+重排)排序，0.017 GOPS，受限于原子争用
 - **SpMV CSR** - 稀疏矩阵向量乘，0.025 GOPS (8192x8192, 3.3M非零元素)，间接索引访问是瓶颈
 - **Tridiagonal Solver** - Thomas算法求解三对角系统，0.030 GOPS (1M元素)，顺序依赖限制并行度
+- **Parallel Prefix Sum** - Kogge-Stone (0.375 GOPS) 快于 Hillis-Steele (0.311 GOPS)，延迟优化算法在大规模数据上表现更好
 - **Advanced Atomics** - Fetch Add/Min/Max约0.04 GOPS，CAS最慢(0.012 GOPS)因需要重试机制
 - **Memory Ordering** - Metal仅支持memory_order_relaxed（设备地址空间），其他语义(acquire/release/seq_cst)仅适用于threadgroup地址空间
 - **Indirect Addressing** - Gather/Scatter约0.03 GOPS，索引访问比顺序访问慢但适合图算法等场景
