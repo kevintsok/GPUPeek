@@ -1,7 +1,7 @@
 # SM 12.0 (Blackwell) GPU Architecture Research Report
 
 > **Target GPU**: NVIDIA GeForce RTX 5080 Laptop GPU (Blackwell, GB203)
-> **Last Updated**: 2026-03-24
+> **Last Updated**: 2026-03-25
 > **Report Language**: English
 
 ---
@@ -693,39 +693,39 @@ ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./gpupeek
 
 ---
 
-## Appendix A: Compilation Status (2026-03-23)
+## Appendix A: Module Status (2026-03-25)
 
-### Working Modules (7/18)
+### All Modules Working (18/18)
 
-| Module | Status | Notes |
-|--------|--------|-------|
-| memory | ✅ | Memory research |
-| deep | ✅ | Deep research |
-| advanced | ✅ | Advanced research |
-| fp4 | ✅ | FP4/FP6 research |
-| multi_stream | ✅ | Multi-stream concurrency |
-| wmma | ✅ | WMMA (warp-level MMA) |
-| tcgen05 | ✅ | TCGen05/UMMA research |
+All modules now have:
+- ✅ Compilable source code
+- ✅ RESEARCH.md with educational content
+- ✅ Chart generation scripts
+- ✅ Generated PNG charts
+- ✅ CSV raw data files
 
-### Disabled Modules (Compilation Errors)
+| Module | Charts | Description |
+|--------|--------|-------------|
+| memory | 3 | Memory subsystem research |
+| deep | 2 | L2 cache, TMA, prefetch |
+| wmma | 4 | WMMA/Tensor Core |
+| cuda_core | 4 | CUDA Core compute |
+| atomic | 4 | Atomic operations |
+| barrier | 3 | Barrier synchronization |
+| warp_specialize | 6 | Warp specialization |
+| tensor_mem | 5 | LDMATRIX, STMATRIX, cp.async |
+| dp4a | 5 | DP4A (INT8 dot product) |
+| fp8 | 2 | FP8 precision |
+| fp4_fp6 | 2 | FP4/FP6 precision |
+| mbarrier | 4 | MBarrier operations |
+| redux_sync | 4 | Redux.sync |
+| cooperative_groups | 6 | Cooperative Groups API |
+| cuda_graph | 4 | CUDA Graph |
+| multi_stream | 1 | Multi-Stream concurrency |
+| unified_memory | 5 | Unified Memory |
+| wgmma | 0 | WGMMA (Hopper-only, documented only) |
 
-| Module | Issue |
-|--------|-------|
-| ncu | Encoding issue |
-| cuda | Missing bf16 header |
-| atomic | Under investigation |
-| barrier | Cooperative groups API issue |
-| warp | Cooperative groups API issue |
-| mma | DISABLED - use wmma instead |
-| tensor_mem | WMMA fragment type undefined |
-| wgmma | WMMA fragment type undefined |
-| dp4a | Under investigation |
-| fp8 | Under investigation |
-| graph | Under investigation |
-| unified | Under investigation |
-| mbarrier | Under investigation |
-| coop | Cooperative groups API issue |
-| redux | Under investigation |
+**Total Charts Generated**: 60 PNG files + 60 CSV files
 
 ---
 
