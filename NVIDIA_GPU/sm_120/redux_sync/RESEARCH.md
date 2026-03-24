@@ -56,7 +56,7 @@ Compute Capability: 12.0
 Elements: 1048576 (4.00 MB)
 ```
 
-**可视化图表**: `data/redux_operations.png`, `data/reduction_speedup.png`
+![Redux 操作性能](data/redux_operations.png)
 
 ### Basic Operations (100 iterations)
 
@@ -82,7 +82,9 @@ Elements: 1048576 (4.00 MB)
 | Test 7b | Butterfly Reduction | 1.024 | 5次异或shuffle |
 | Test 7c | Redux Conceptual (simulated) | 0.961 | 单指令概念模拟 |
 
-**可视化图表**: `data/reduction_methods.png`, `data/reduction_speedup.png`
+![归约方法对比](data/reduction_methods.png)
+
+![Reduction 加速比](data/reduction_speedup.png)
 
 ### Atomic Operations
 

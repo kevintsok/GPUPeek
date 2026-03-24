@@ -1,0 +1,5 @@
+operation,latency_cycles
+load_matrix (A),4
+load_matrix (B),4
+mma_sync,8
+store_matrix,4

@@ -31,7 +31,7 @@ __syncthreads();
 | 512 | 低 |
 | 1024 | 最低 |
 
-**可视化图表**: `data/block_size_efficiency.png`
+![Block Size 效率对比](data/block_size_efficiency.png)
 
 **建议**: 根据计算密度选择合适的 Block Size
 
@@ -43,7 +43,9 @@ bar.sync 0;  // CTA barrier
 bar.red.popc.gpu.s32 ...;  // reduction barrier
 ```
 
-**可视化图表**: `data/sync_overhead.png`, `data/barrier_stall.png`
+![同步开销对比](data/sync_overhead.png)
+
+![Barrier Stall 分析](data/barrier_stall.png)
 
 ## 5. NCU 指标
 

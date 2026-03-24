@@ -1,0 +1,7 @@
+instruction,latency_cycles
+FP32 FMA,4
+FP64 FMA,16
+FP16 FMA,2
+INT32 ADD,4
+INT32 MUL,4
+SHFL,1

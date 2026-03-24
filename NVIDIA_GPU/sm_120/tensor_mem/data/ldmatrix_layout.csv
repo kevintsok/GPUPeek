@@ -1,0 +1,4 @@
+name,elements_per_warp
+.x1 (1 tile),64
+.x2 (2 tiles),128
+.x4 (4 tiles),256

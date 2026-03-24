@@ -1,0 +1,4 @@
+case,time_us
+No Sync (baseline),0.0
+Single __syncthreads(),2.5
+Multiple __syncthreads(),4.8

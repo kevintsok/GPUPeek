@@ -1,0 +1,5 @@
+name,bandwidth_gbps
+cp.async 1D,680.0
+cp.async group,750.0
+cp.async bulk prefetch,890.0
+cp.async reduce,720.0

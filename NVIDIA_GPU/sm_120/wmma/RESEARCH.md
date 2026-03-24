@@ -37,7 +37,7 @@ using namespace nvcuda::wmma;
 - **RTX 5080**: ~89 TFLOPS FP16 tensor peak
 - **Latency**: ~6-8 cycles per MMA on Blackwell
 
-**可视化图表**: `data/tensor_dtype_comparison.png` - 不同数据类型的 TFLOPS 对比
+![数据类型 TFLOPS 对比](data/tensor_dtype_comparison.png)
 
 ## 5. WMMA 延迟分解
 
@@ -48,7 +48,7 @@ using namespace nvcuda::wmma;
 | mma_sync | 8 |
 | store_matrix | 4 |
 
-**可视化图表**: `data/wmma_latency.png` - WMMA 操作延迟分解
+![WMMA 操作延迟分解](data/wmma_latency.png)
 
 ## 6. WMMA vs CUDA Core 吞吐对比
 
@@ -58,7 +58,7 @@ using namespace nvcuda::wmma;
 | FP16 WMMA (单 Warp) | ~89 TFLOPS |
 | FP16 WMMA (理论峰值) | ~2048 TFLOPS |
 
-**可视化图表**: `data/throughput_comparison.png` - WMMA vs CUDA Core 吞吐对比
+![WMMA vs CUDA Core 吞吐对比](data/throughput_comparison.png)
 
 ## 7. 数据需求 (per warp, per K-iteration)
 
@@ -69,7 +69,7 @@ using namespace nvcuda::wmma;
 | mma_sync | 8192 FMA (2×16×16×16) |
 | store_matrix_sync | 1024 bytes (256 floats) |
 
-**可视化图表**: `data/memory_footprint.png` - WMMA 每次迭代的内存占用
+![WMMA 内存占用](data/memory_footprint.png)
 
 ## 8. 寄存器使用
 

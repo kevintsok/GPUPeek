@@ -141,7 +141,7 @@ def plot_ldmatrix_stmatrix():
     csv_path = os.path.join(output_dir, 'ldmatrix_stmatrix.csv')
     with open(csv_path, 'w') as f:
         f.write("name,bandwidth_gbps\n")
-        for name, bw in ldmatrix_data:
+        for name, bw, _ in ldmatrix_data:
             f.write(f"{name},{bw}\n")
     print(f"Saved: {csv_path}")
 

@@ -37,7 +37,7 @@ kernel2<<<..., stream2>>>(...);
 | 2 Streams (Compute + Compute) | ~680 GB/s | 中重叠 |
 | 8 Streams (Mixed) | ~880 GB/s | 良好重叠 |
 
-**可视化图表**: `data/stream_overlap.png`
+![Stream 重叠效果](data/stream_overlap.png)
 
 ## 4. 流优先级
 

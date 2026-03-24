@@ -158,7 +158,7 @@ while (true) {
 | sm__inst_executed.mbarrier.sum | mbarrier 指令计数 |
 | sm__throughput.avg.pct_of_peak_sustainedTesla | GPU 利用率 |
 
-## 10. 图表生成
+## 10. 可视化图表
 
 运行以下脚本生成可视化图表:
 
@@ -170,12 +170,15 @@ python plot_mbarrier.py
 
 输出位置: `NVIDIA_GPU/sm_120/mbarrier/data/`
 
-| 图表 | 描述 |
-|------|------|
-| `mbarrier_operations.png` | mbarrier 操作延迟对比 |
-| `mbarrier_fence_comparison.png` | 内存 fence 开销对比 |
-| `mbarrier_pipeline.png` | 流水线同步吞吐量 |
-| `mbarrier_tx_count.png` | 事务计数性能 |
+### 生成的可视化图表
+
+![mbarrier 操作延迟对比](data/mbarrier_operations.png)
+
+![内存 fence 开销对比](data/mbarrier_fence_comparison.png)
+
+![流水线同步吞吐量](data/mbarrier_pipeline.png)
+
+![事务计数性能](data/mbarrier_tx_count.png)
 
 ## 参考文献
 

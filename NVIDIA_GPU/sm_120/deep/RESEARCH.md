@@ -16,9 +16,7 @@
 | 8 MB | ~748 GB/s | L2 缓存 |
 | 16 MB | ~798 GB/s | L2 miss → DRAM |
 
-**可视化图表**:
-- `data/l2_throughput_vs_size.png` - L2 带宽 vs 数据尺寸曲线
-- `data/l2_thrashing_vs_stride.png` - L2 Thrashing vs Stride 曲线
+![L2 带宽 vs 数据尺寸](data/l2_throughput_vs_size.png)
 
 ### L2 Thrashing
 
@@ -29,6 +27,8 @@ Stride > 8 导致带宽急剧下降，表明缓存行跨距访问效率低。
 | 1 | ~1234 GB/s |
 | 16 | ~432 GB/s |
 | 4096 | ~23 GB/s |
+
+![L2 Thrashing vs Stride](data/l2_thrashing_vs_stride.png)
 
 **分析**: Stride 增大会导致严重的 L2 cache thrashing
 

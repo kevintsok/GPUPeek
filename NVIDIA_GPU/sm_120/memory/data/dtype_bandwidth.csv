@@ -1,0 +1,6 @@
+dtype,bandwidth_gbps
+FP32,878.19
+INT32,882.25
+FP64,468.73
+FP16,410.2
+INT8,380.5

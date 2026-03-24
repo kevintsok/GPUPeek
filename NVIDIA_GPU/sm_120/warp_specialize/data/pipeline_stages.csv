@@ -1,0 +1,4 @@
+name,bandwidth_gbps,speedup
+Baseline (simple copy),920.0,1.0
+3-Stage Pipeline,780.0,0.85
+Overlapped Pipeline,880.0,0.96

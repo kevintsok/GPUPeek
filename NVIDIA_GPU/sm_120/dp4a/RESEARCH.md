@@ -102,7 +102,7 @@ dp4a.s32.s8 {\%rd}, \{\%r0, \%r1, \%r2, \%r3\}, \{\%r4, \%r5, \%r6, \%r7\}, \%r8
 | sm__inst_executed.dp4a.sum | DP4A 指令计数 |
 | sm__pipe_tensor_cycles_active.pct | INT8/Tensor 流水线利用率 |
 
-## 10. 图表生成
+## 10. 可视化图表
 
 运行以下脚本生成可视化图表:
 
@@ -114,13 +114,17 @@ python plot_dp4a.py
 
 输出位置: `NVIDIA_GPU/sm_120/dp4a/data/`
 
-| 图表 | 描述 |
-|------|------|
-| `dp4a_variants.png` | DP4A 变体性能对比 |
-| `dp4a_vs_baseline.png` | DP4A vs 基线算法 |
-| `dp4a_quantized.png` | 量化推理性能 |
-| `dp4a_reduction.png` | Shared vs Warp 归约 |
-| `theoretical_peak.png` | 理论峰值对比 |
+### 生成的可视化图表
+
+![DP4A 变体性能对比](data/dp4a_variants.png)
+
+![DP4A vs 基线算法](data/dp4a_vs_baseline.png)
+
+![量化推理性能](data/dp4a_quantized.png)
+
+![Shared vs Warp 归约](data/dp4a_reduction.png)
+
+![理论峰值对比](data/theoretical_peak.png)
 
 ## 参考文献
 

@@ -1,0 +1,6 @@
+size_mb,bandwidth_gbps,description
+0.0625,123,L1 fits
+1.0,408,L1/L2 borderline
+4.0,678,L2 cache
+8.0,748,L2 cache
+16.0,798,L2 miss -> DRAM

@@ -1,0 +1,5 @@
+name,bandwidth_gbps
+LDMATRIX FP16,850.0
+LDMATRIX Multi-tile,920.0
+LDMATRIX .x1,800.0
+LDMATRIX .x2,1050.0

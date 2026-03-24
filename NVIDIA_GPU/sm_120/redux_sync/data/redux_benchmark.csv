@@ -1,0 +1,7 @@
+operation,time_ms_100iter
+Redux ADD,2.147
+Redux MIN,1.858
+Redux MAX,1.731
+Redux AND,1.829
+Redux OR,1.824
+Redux XOR,1.729

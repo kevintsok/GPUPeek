@@ -1,0 +1,5 @@
+method,latency_ms
+Direct Kernel Launch,0.15
+CUDA Graph (First Launch),2.5
+CUDA Graph (Subsequent),0.02
+CUDA Graph (Batch 100),0.0018

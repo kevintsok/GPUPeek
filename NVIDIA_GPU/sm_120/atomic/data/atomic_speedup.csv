@@ -1,0 +1,5 @@
+method,speedup_vs_direct
+Direct Atomic,1.0
+Warp-Level Reduction,4.7
+Block-Level Reduction,3.4
+Grid-Level Reduction,4.0

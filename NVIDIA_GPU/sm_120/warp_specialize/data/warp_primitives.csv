@@ -1,0 +1,5 @@
+name,bandwidth_gbps
+Warp Shuffle Reduction,1250.0
+Warp Barrier (shuffle),1180.0
+Warp Reduce + Barrier,980.0
+Warp Scan (prefix sum),1100.0

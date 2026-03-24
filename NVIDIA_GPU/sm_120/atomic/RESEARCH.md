@@ -13,7 +13,7 @@
 | atomicCAS | Compare-and-Swap |
 | atomicAnd/Or/Xor | 位操作 |
 
-**可视化图表**: `data/atomic_operations.png` - 不同原子操作类型对比
+![原子操作类型对比](data/atomic_operations.png)
 
 ## 2. 粒度级别
 
@@ -32,7 +32,7 @@
 - 高争用环境
 - **带宽**: ~180-720 GB/s (取决于是否先归约)
 
-**可视化图表**: `data/atomic_contention.png` - 不同粒度级别的带宽对比
+![不同粒度级别的带宽对比](data/atomic_contention.png)
 
 ## 3. 性能考虑
 
@@ -43,7 +43,7 @@
 | Grid 级 (Direct) | 高 | ~180 GB/s | 1x (baseline) |
 | Grid 级 (Reduced) | 低 | ~720 GB/s | 4.0x vs Direct |
 
-**可视化图表**: `data/atomic_speedup.png` - 归约策略加速比
+![归约策略加速比](data/atomic_speedup.png)
 
 ## 4. Contention 模型
 
@@ -53,7 +53,7 @@
 Effective_BW ≈ Base_BW × (32 / Num_Threads_Contending)
 ```
 
-**可视化图表**: `data/atomic_contention_model.png` - 争用模型曲线
+![争用模型曲线](data/atomic_contention_model.png)
 
 ## 5. 最佳实践
 

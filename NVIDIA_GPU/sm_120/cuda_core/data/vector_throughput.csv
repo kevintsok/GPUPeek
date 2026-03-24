@@ -1,0 +1,5 @@
+vector_type,relative_throughput
+Scalar (float),1.0
+float2,2.0
+float4,4.0
+double2,1.8

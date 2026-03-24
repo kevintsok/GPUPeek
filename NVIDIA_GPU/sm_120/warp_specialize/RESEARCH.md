@@ -221,7 +221,7 @@ for (int offset = 1; offset < 32; offset <<= 1) {
 | cp.async.bulk | ✅ | ✅ | ❌ |
 | 共享内存/Bank | 32 banks, 4B | 32 banks, 4B | 32 banks, 4B |
 
-## 10. 图表生成
+## 10. 可视化图表
 
 运行以下脚本生成可视化图表:
 
@@ -233,14 +233,19 @@ python plot_warp_specialize.py
 
 输出位置: `NVIDIA_GPU/sm_120/warp_specialize/data/`
 
-| 图表 | 描述 |
-|------|------|
-| `warp_specialization_comparison.png` | Warp Specialization vs 标准内核 |
-| `tma_barrier_comparison.png` | TMA + Barrier 同步对比 |
-| `pipeline_stages.png` | 多级流水线性能 |
-| `block_specialization.png` | Block Specialization 对比 |
-| `warp_primitives.png` | Warp 级原语性能 |
-| `tma_warp_specialization.png` | TMA + Warp Specialization |
+### 生成的可视化图表
+
+![Warp Specialization vs 标准内核](data/warp_specialization_comparison.png)
+
+![TMA + Barrier 同步对比](data/tma_barrier_comparison.png)
+
+![多级流水线性能](data/pipeline_stages.png)
+
+![Block Specialization 对比](data/block_specialization.png)
+
+![Warp 级原语性能](data/warp_primitives.png)
+
+![TMA + Warp Specialization](data/tma_warp_specialization.png)
 
 ## 参考文献
 

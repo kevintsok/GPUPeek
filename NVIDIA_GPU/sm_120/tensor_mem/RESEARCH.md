@@ -125,7 +125,7 @@ LDMATRIX + MMA + STMATRIX 流水线:
 | sm__pipe_tensor_cycles_active.pct | Tensor 流水线利用率 |
 | sm__inst_executed.cp_async.sum | cp.async 指令计数 |
 
-## 9. 图表生成
+## 9. 可视化图表
 
 运行以下脚本生成可视化图表:
 
@@ -137,13 +137,17 @@ python plot_tensor_mem.py
 
 输出位置: `NVIDIA_GPU/sm_120/tensor_mem/data/`
 
-| 图表 | 描述 |
-|------|------|
-| `ldmatrix_stmatrix.png` | LDMATRIX/STMATRIX 性能对比 |
-| `cp_async_comparison.png` | cp.async 变体性能 |
-| `baseline_comparison.png` | 与 baseline 对比 |
-| `pipeline_performance.png` | 流水线性能 GFLOPS |
-| `ldmatrix_layout.png` | LDMATRIX layout 变体 |
+### 生成的可视化图表
+
+![LDMATRIX/STMATRIX 性能对比](data/ldmatrix_stmatrix.png)
+
+![cp.async 变体性能](data/cp_async_comparison.png)
+
+![与 baseline 对比](data/baseline_comparison.png)
+
+![流水线性能 GFLOPS](data/pipeline_performance.png)
+
+![LDMATRIX layout 变体](data/ldmatrix_layout.png)
 
 ## 参考文献
 
