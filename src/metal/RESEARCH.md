@@ -110,6 +110,9 @@
 | **SIMD Group Shuffle** | 0.02 GOPS | Lane交换操作 |
 | **SIMD Prefix Sum** | 0.02 GOPS | Work-efficient算法 |
 | **Parallel Reduction** | 0.03 GOPS | Shared Memory优化 |
+| **Threadgroup Memory Seq** | 0.53 GOPS | 顺序访问无冲突 |
+| **Threadgroup Memory Strided** | 0.28 GOPS | 1.9x 更慢(bank冲突) |
+| **Threadgroup Memory Fill+Sum** | 0.32 GOPS | 填充+求和操作 |
 | **Indirect Gather** | 0.031 GOPS | 索引读取操作 |
 | **Indirect Scatter** | 0.034 GOPS | 索引写入操作 |
 | **Double Buffer** | 0.018 GOPS | 与单缓冲相当(未重叠) |
@@ -131,6 +134,7 @@
 - **Burst Write峰值** - 实测6.89 GB/s (理论100 GB/s的6.9%)
 - **SIMD Group Operations** - Vote/Shuffle/Prefix Sum均约0.02 GOPS，硬件支持高效
 - **Parallel Reduction** - Shared Memory优化可将性能提升至0.03 GOPS (vs 0.00 GOPS基准)
+- **Threadgroup Memory** - 顺序访问0.53 GOPS，跨步访问(bank冲突)0.28 GOPS，1.9x性能差异
 - **Advanced Atomics** - Fetch Add/Min/Max约0.04 GOPS，CAS最慢(0.012 GOPS)因需要重试机制
 - **Memory Ordering** - Metal仅支持memory_order_relaxed（设备地址空间），其他语义(acquire/release/seq_cst)仅适用于threadgroup地址空间
 - **Indirect Addressing** - Gather/Scatter约0.03 GOPS，索引访问比顺序访问慢但适合图算法等场景

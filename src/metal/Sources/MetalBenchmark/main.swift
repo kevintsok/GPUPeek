@@ -1072,6 +1072,82 @@ kernel void reduce_warp_level(device const float* in [[buffer(0)]],
 }
 
 // ============================================================
+// 23b. THREADGROUP MEMORY PERFORMANCE
+// Tests shared memory bandwidth and access patterns
+// 32KB shared memory / 256 threads = 128 floats per thread
+// ============================================================
+
+kernel void shared_copy_seq(device const float* in [[buffer(0)]],
+                         device float* out [[buffer(1)]],
+                         threadgroup float* shared [[threadgroup(0)]],
+                         constant uint& size [[buffer(2)]],
+                         uint id [[thread_position_in_grid]]) {
+    // Sequential shared memory copy - each thread works on its own segment
+    // 256 threads x 128 floats = 32KB (full shared memory)
+    uint tid = id % 256;
+    uint segmentSize = 128;  // floats per thread
+    uint offset = tid * segmentSize;
+
+    // Load into shared memory - sequential access per thread
+    for (uint i = 0; i < segmentSize; i++) {
+        shared[offset + i] = in[offset + i];
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    // Store from shared memory - sequential access
+    for (uint i = 0; i < segmentSize; i++) {
+        out[offset + i] = shared[offset + i];
+    }
+}
+
+kernel void shared_copy_strided(device const float* in [[buffer(0)]],
+                              device float* out [[buffer(1)]],
+                              threadgroup float* shared [[threadgroup(0)]],
+                              constant uint& size [[buffer(2)]],
+                              uint id [[thread_position_in_grid]]) {
+    // Strided shared memory copy - causes bank conflicts
+    // All threads access the same shared memory location simultaneously
+    uint tid = id % 256;
+    uint segmentSize = 128;
+    uint stride = 32;  // Bank conflict stride
+    uint offset = tid * segmentSize;
+
+    // Load with stride into shared memory - causes bank conflicts
+    for (uint i = 0; i < segmentSize; i++) {
+        shared[(offset + i * stride) % 8192] = in[offset + i];
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    // Store with stride from shared memory
+    for (uint i = 0; i < segmentSize; i++) {
+        out[offset + i] = shared[(offset + i * stride) % 8192];
+    }
+}
+
+kernel void shared_fill_and_sum(threadgroup float* shared [[threadgroup(0)]],
+                              device float* out [[buffer(0)]],
+                              constant uint& size [[buffer(1)]],
+                              uint id [[thread_position_in_grid]]) {
+    // Fill shared memory then sum all values
+    uint tid = id % 256;
+    uint segmentSize = 128;
+    uint offset = tid * segmentSize;
+
+    // Fill shared memory
+    for (uint i = 0; i < segmentSize; i++) {
+        shared[offset + i] = float(offset + i);
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    // Sum all values from shared memory
+    float sum = 0.0f;
+    for (uint i = 0; i < 8192; i++) {
+        sum += shared[i];
+    }
+    out[id] = sum;
+}
+
+// ============================================================
 // 24. DUAL-BUFFER PIPELINING
 // Memory access and computation overlap
 // ============================================================
@@ -3423,6 +3499,91 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     print("Single Buffer: \(String(format: "%.3f", gopsSingle)) GOPS (baseline)")
     print("Double Buffer A: \(String(format: "%.3f", gopsDualA)) GOPS")
     print("Double Buffer B: \(String(format: "%.3f", gopsDualB)) GOPS")
+
+    // 17. THREADGROUP MEMORY PERFORMANCE
+    print("\n--- 17. Threadgroup Memory Analysis ---")
+
+    guard let sharedSeqFunc = deepLibrary.makeFunction(name: "shared_copy_seq"),
+          let sharedStrideFunc = deepLibrary.makeFunction(name: "shared_copy_strided"),
+          let sharedSumFunc = deepLibrary.makeFunction(name: "shared_fill_and_sum"),
+          let sharedSeqPipeline = try? device.makeComputePipelineState(function: sharedSeqFunc),
+          let sharedStridePipeline = try? device.makeComputePipelineState(function: sharedStrideFunc),
+          let sharedSumPipeline = try? device.makeComputePipelineState(function: sharedSumFunc) else {
+        print("Failed to create threadgroup pipelines")
+        return
+    }
+
+    // 256 threads x 128 floats per thread = 32KB (full shared memory)
+    // Dispatch 128 threadgroups to fully utilize GPU
+    let tgThreads = 256
+    let elementsPerThread = 128
+    let totalElements = tgThreads * elementsPerThread  // 32KB
+    let numThreadgroups = 128  // Fully utilize GPU
+
+    guard let tgIn = device.makeBuffer(length: totalElements * MemoryLayout<Float>.size, options: .storageModeShared),
+          let tgOut = device.makeBuffer(length: totalElements * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create threadgroup buffers")
+        return
+    }
+
+    var tgSz = UInt32(tgThreads)
+
+    // Sequential shared memory copy - each threadgroup (256 threads) fills its 32KB shared memory
+    // Each thread: 128 loads + 128 stores = 256 operations
+    // Total per dispatch: numThreadgroups * 256 threads * 128 elements * 2 ops
+    let totalThreads = numThreadgroups * tgThreads
+    let opsPerDispatch = Double(totalThreads) * Double(elementsPerThread) * 2  // load + store
+
+    let tgStartSeq = getTimeNanos()
+    guard let cmdSeq = queue.makeCommandBuffer(),
+          let encSeq = cmdSeq.makeComputeCommandEncoder() else { return }
+    encSeq.setComputePipelineState(sharedSeqPipeline)
+    encSeq.setBuffer(tgIn, offset: 0, index: 0)
+    encSeq.setBuffer(tgOut, offset: 0, index: 1)
+    encSeq.setBytes(&tgSz, length: MemoryLayout<UInt32>.size, index: 2)
+    encSeq.dispatchThreads(MTLSize(width: totalElements, height: 1, depth: 1),
+                       threadsPerThreadgroup: MTLSize(width: tgThreads, height: 1, depth: 1))
+    encSeq.endEncoding()
+    cmdSeq.commit()
+    cmdSeq.waitUntilCompleted()
+    let tgEndSeq = getTimeNanos()
+    let tgElapsedSeq = getElapsedSeconds(start: tgStartSeq, end: tgEndSeq)
+    let tgGopsSeq = opsPerDispatch / tgElapsedSeq / 1e9
+
+    // Strided shared memory copy - causes bank conflicts
+    let tgStartStride = getTimeNanos()
+    guard let cmdStride = queue.makeCommandBuffer(),
+          let encStride = cmdStride.makeComputeCommandEncoder() else { return }
+    encStride.setComputePipelineState(sharedStridePipeline)
+    encStride.setBuffer(tgIn, offset: 0, index: 0)
+    encStride.setBuffer(tgOut, offset: 0, index: 1)
+    encStride.setBytes(&tgSz, length: MemoryLayout<UInt32>.size, index: 2)
+    encStride.dispatchThreads(MTLSize(width: totalElements, height: 1, depth: 1),
+                       threadsPerThreadgroup: MTLSize(width: tgThreads, height: 1, depth: 1))
+    encStride.endEncoding()
+    cmdStride.commit()
+    cmdStride.waitUntilCompleted()
+    let tgEndStride = getTimeNanos()
+    let tgGopsStride = opsPerDispatch / getElapsedSeconds(start: tgStartStride, end: tgEndStride) / 1e9
+
+    // Fill and sum in shared memory
+    let tgStartSum = getTimeNanos()
+    guard let cmdSum = queue.makeCommandBuffer(),
+          let encSum = cmdSum.makeComputeCommandEncoder() else { return }
+    encSum.setComputePipelineState(sharedSumPipeline)
+    encSum.setBuffer(tgOut, offset: 0, index: 0)
+    encSum.setBytes(&tgSz, length: MemoryLayout<UInt32>.size, index: 1)
+    encSum.dispatchThreads(MTLSize(width: totalElements, height: 1, depth: 1),
+                       threadsPerThreadgroup: MTLSize(width: tgThreads, height: 1, depth: 1))
+    encSum.endEncoding()
+    cmdSum.commit()
+    cmdSum.waitUntilCompleted()
+    let tgEndSum = getTimeNanos()
+    let tgGopsSum = opsPerDispatch / getElapsedSeconds(start: tgStartSum, end: tgEndSum) / 1e9
+
+    print("Shared Seq (no conflict): \(String(format: "%.3f", tgGopsSeq)) GOPS")
+    print("Shared Strided (conflict): \(String(format: "%.3f", tgGopsStride)) GOPS")
+    print("Shared Fill+Sum: \(String(format: "%.3f", tgGopsSum)) GOPS")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")
