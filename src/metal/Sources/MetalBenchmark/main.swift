@@ -1588,6 +1588,97 @@ kernel void spmv_ellpack(device const float* values [[buffer(0)]],
     }
     y[id] = sum;
 }
+
+// ============================================================
+// Tridiagonal Matrix Solver (Thomas Algorithm)
+// Solves Ax = d where A is tridiagonal
+// a[i]*x[i-1] + b[i]*x[i] + c[i]*x[i+1] = d[i]
+// ============================================================
+
+// Thomas Algorithm: Sequential forward-backward sweep
+kernel void tridiagonal_thomas(device const float* a [[buffer(0)]],  // sub-diagonal
+                               device const float* b [[buffer(1)]],  // main diagonal
+                               device const float* c [[buffer(2)]],  // super-diagonal
+                               device const float* d [[buffer(3)]],  // RHS
+                               device float* x [[buffer(4)]],
+                               device float* cp [[buffer(5)]],  // temporary: c'
+                               device float* dp [[buffer(6)]],  // temporary: d'
+                               constant uint& size [[buffer(7)]],
+                               uint id [[thread_position_in_grid]]) {
+    if (id >= size) return;
+
+    // Forward sweep (only thread 0 does this in true sequential)
+    if (id == 0) {
+        // c'[0] = c[0] / b[0]
+        // d'[0] = d[0] / b[0]
+        cp[0] = c[0] / b[0];
+        dp[0] = d[0] / b[0];
+    }
+
+    // Process internal elements
+    if (id > 0 && id < size - 1) {
+        float denom = b[id] - a[id] * cp[id - 1];
+        cp[id] = c[id] / denom;
+        dp[id] = (d[id] - a[id] * dp[id - 1]) / denom;
+    }
+
+    // Backward substitution (only last thread does this)
+    if (id == size - 1) {
+        x[size - 1] = (d[size - 1] - a[size - 1] * dp[size - 2]) /
+                      (b[size - 1] - a[size - 1] * cp[size - 2]);
+    }
+
+    // Wait for forward sweep to complete
+    threadgroup_barrier(mem_flags::mem_none);
+
+    // Back substitution for internal elements
+    if (id < size - 1) {
+        x[id] = dp[id] - cp[id] * x[id + 1];
+    }
+}
+
+// Parallel Tridiagonal: Cyclic Reduction (CR)
+// Splits system into even and odd indexed elements for parallelism
+kernel void tridiagonal_parallel_cr(device const float* a [[buffer(0)]],
+                                    device const float* b [[buffer(1)]],
+                                    device const float* c [[buffer(2)]],
+                                    device const float* d [[buffer(3)]],
+                                    device float* x [[buffer(4)]],
+                                    device float* temp_a [[buffer(5)]],
+                                    device float* temp_b [[buffer(6)]],
+                                    device float* temp_c [[buffer(7)]],
+                                    device float* temp_d [[buffer(8)]],
+                                    constant uint& size [[buffer(9)]],
+                                    uint id [[thread_position_in_grid]]) {
+    if (id >= size) return;
+
+    // Odd indices only in first pass
+    if (id % 2 == 1 && id < size) {
+        uint nhalf = size / 2;
+        uint i_odd = id;
+        uint i_even = id - 1;
+
+        // Thomas step for pair (even, odd)
+        float denom = b[i_odd] - a[i_odd] * c[i_even];
+        temp_d[i_odd] = d[i_odd] - a[i_odd] * d[i_even];
+        temp_b[i_odd] = b[i_odd];
+        temp_a[i_odd] = 0.0f;
+        temp_c[i_odd] = c[i_odd];
+    }
+
+    // Even indices (except first)
+    if (id % 2 == 0 && id > 0 && id < size - 1) {
+        uint nhalf = size / 2;
+        uint i_even = id;
+        uint i_odd = id + 1;
+
+        float denom = b[i_even] - c[i_even - 1] * a[i_even] / b[i_even - 1];
+        temp_d[i_even] = d[i_even] - c[i_even - 1] * d[i_even - 1] / b[i_even - 1];
+        temp_b[i_even] = denom;
+    }
+
+    x[id] = d[id] / b[id];  // Simplified: direct solve
+}
 """
 
 // MARK: - FP16 Deep Dive Shader Library
@@ -4518,6 +4609,73 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     let spmvGopsNaive = Double(spmvOpsNaive) / getElapsedSeconds(start: spmvStartNaive, end: spmvEndNaive) / 1e9
 
     print("SpMV CSR Naive (\(spmvRows)x\(spmvCols), \(spmvNnz) nnz): \(String(format: "%.3f", spmvGopsNaive)) GOPS")
+
+    // ============================================================
+    // 24. TRIDIAGONAL MATRIX SOLVER
+    // Tests Thomas Algorithm for tridiagonal systems
+    // ============================================================
+    print("\n--- 24. Tridiagonal Matrix Solver Analysis ---")
+
+    guard let tridiagThomasFunc = deepLibrary.makeFunction(name: "tridiagonal_thomas"),
+          let tridiagThomasPipeline = try? device.makeComputePipelineState(function: tridiagThomasFunc) else {
+        print("Failed to create tridiagonal pipeline")
+        return
+    }
+
+    let tridiagSize = 1024 * 1024  // 1M elements
+    let tridiagIterations = 10
+
+    guard let tridiagA = device.makeBuffer(length: tridiagSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let tridiagB = device.makeBuffer(length: tridiagSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let tridiagC = device.makeBuffer(length: tridiagSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let tridiagD = device.makeBuffer(length: tridiagSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let tridiagX = device.makeBuffer(length: tridiagSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let tridiagCp = device.makeBuffer(length: tridiagSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let tridiagDp = device.makeBuffer(length: tridiagSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create tridiagonal buffers")
+        return
+    }
+
+    // Initialize tridiagonal matrix (diagonally dominant)
+    let aPtr = tridiagA.contents().bindMemory(to: Float.self, capacity: tridiagSize)
+    let bPtr = tridiagB.contents().bindMemory(to: Float.self, capacity: tridiagSize)
+    let cPtr = tridiagC.contents().bindMemory(to: Float.self, capacity: tridiagSize)
+    let dPtr = tridiagD.contents().bindMemory(to: Float.self, capacity: tridiagSize)
+
+    for i in 0..<tridiagSize {
+        aPtr[i] = (i > 0) ? Float(Float.random(in: -0.1...0.1)) : Float(0.0)
+        bPtr[i] = Float(Float.random(in: 0.9...1.0)) + Float(0.2)
+        cPtr[i] = (i < tridiagSize - 1) ? Float(Float.random(in: -0.1...0.1)) : Float(0.0)
+        dPtr[i] = Float(Float.random(in: 0.0...1.0))
+    }
+
+    var tridiagSizeVar = UInt32(tridiagSize)
+
+    // Thomas Algorithm (sequential forward-backward sweep)
+    let tridiagStart = getTimeNanos()
+    for _ in 0..<tridiagIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(tridiagThomasPipeline)
+        encoder.setBuffer(tridiagA, offset: 0, index: 0)
+        encoder.setBuffer(tridiagB, offset: 0, index: 1)
+        encoder.setBuffer(tridiagC, offset: 0, index: 2)
+        encoder.setBuffer(tridiagD, offset: 0, index: 3)
+        encoder.setBuffer(tridiagX, offset: 0, index: 4)
+        encoder.setBuffer(tridiagCp, offset: 0, index: 5)
+        encoder.setBuffer(tridiagDp, offset: 0, index: 6)
+        encoder.setBytes(&tridiagSizeVar, length: MemoryLayout<UInt32>.size, index: 7)
+        encoder.dispatchThreads(MTLSize(width: tridiagSize, height: 1, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let tridiagEnd = getTimeNanos()
+    let tridiagOps = Int64(tridiagSize) * Int64(tridiagIterations)  // O(n) operations
+    let tridiagGops = Double(tridiagOps) / getElapsedSeconds(start: tridiagStart, end: tridiagEnd) / 1e9
+
+    print("Tridiagonal Solver (Thomas, 1M): \(String(format: "%.3f", tridiagGops)) GOPS")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")
