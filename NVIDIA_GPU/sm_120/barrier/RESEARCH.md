@@ -168,6 +168,8 @@ mbarrier.complete_tx.shared::cta.b64 [addr], bytes;
 - 跨 cluster 内存同步
 - Transaction-based 完成通知
 
+![MBarrier 操作成本对比](data/mbarrier_cost.png)
+
 ---
 
 ## B.11 cp.async + mbarrier Pipeline
@@ -265,6 +267,15 @@ python plot_barrier_sync.py
 ```
 
 输出位置: `NVIDIA_GPU/sm_120/barrier/data/`
+
+### 生成的可视化图表
+
+| 图表 | 描述 | 位置 |
+|------|------|------|
+| `block_size_efficiency.png` | Block Size 效率对比 | Section 3 |
+| `sync_overhead.png` | 同步开销对比 | Section 4 |
+| `barrier_stall.png` | Barrier Stall 分析 | Section 4 |
+| `mbarrier_cost.png` | MBarrier 操作成本对比 | Section B.10 |
 
 ## 参考文献
 
