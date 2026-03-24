@@ -52,4 +52,4 @@ ncu --set full --kernels-by-compute ./build/gpupeek.exe <test>
 
 ## 参考文献
 
-- [NCU Documentation](../ref/ncu_guide.html)
+- [Nsight Compute Documentation](../ref/nsight_compute.html)

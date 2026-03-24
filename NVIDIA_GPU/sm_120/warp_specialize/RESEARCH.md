@@ -197,5 +197,5 @@ for (int offset = 1; offset < 32; offset <<= 1) {
 ## 参考文献
 
 - [CUDA Programming Guide - Warp](../ref/cuda_programming_guide.html)
-- [Parallel Programming Guide](../ref/parallel_programming_guide.html)
+- [CUDA Best Practices Guide](../ref/cuda_best_practices.html)
 - [NVIDIA Warp Level Primitives](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#warp-level-functions)

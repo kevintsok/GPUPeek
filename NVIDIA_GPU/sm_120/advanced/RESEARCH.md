@@ -113,4 +113,4 @@
 ## 参考文献
 
 - [CUDA Programming Guide - Shared Memory](../ref/cuda_programming_guide.html)
-- [CUDA Best Practices - Bank Conflicts](../ref/best_practices_guide.html)
+- [CUDA Best Practices Guide - Bank Conflicts](../ref/cuda_best_practices.html)

@@ -91,4 +91,4 @@ python plot_memory_bandwidth.py
 ## 参考文献
 
 - [CUDA Programming Guide](../ref/cuda_programming_guide.html)
-- [NVIDIA Memory Documentation](../ref/memory_guide.html)
+- [CUDA Best Practices Guide](../ref/cuda_best_practices.html)

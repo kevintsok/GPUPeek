@@ -38,4 +38,4 @@ collective_sum<int> sum(this_thread_block());
 
 ## 参考文献
 
-- [Cooperative Groups API](../ref/cooperative_groups.html)
+- [CUDA Programming Guide - Cooperative Groups](../ref/cuda_programming_guide.html)
