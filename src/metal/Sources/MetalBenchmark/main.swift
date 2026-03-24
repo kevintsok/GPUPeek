@@ -2009,6 +2009,65 @@ kernel void gemm_shared_tiled(device const float* A [[buffer(0)]],
         C[row * N + col] = sum;
     }
 }
+
+// ============================================================
+// FFT (Fast Fourier Transform) - Cooley-Tukey Radix-2
+// ============================================================
+
+// FFT: Single stage (butterfly operations)
+kernel void fft_stage(device const float2* in [[buffer(0)]],
+                    device float2* out [[buffer(1)]],
+                    device float2* twiddles [[buffer(2)]],
+                    constant uint& size [[buffer(3)]],
+                    constant uint& stage [[buffer(4)]],
+                    constant uint& span [[buffer(5)]],
+                    uint id [[thread_position_in_grid]]) {
+    if (id >= size) return;
+
+    uint pairIdx = (id / span) * (2 * span) + (id % span);
+    uint twiddleIdx = id % span;
+
+    float2 a = in[pairIdx];
+    float2 b = in[pairIdx + span];
+    float2 tw = twiddles[twiddleIdx];
+
+    // Butterfly: a + b*tw, a - b*tw
+    float2 bTw = float2(b.x * tw.x - b.y * tw.y, b.x * tw.y + b.y * tw.x);
+    out[pairIdx] = a + bTw;
+    out[pairIdx + span] = a - bTw;
+}
+
+// FFT: Full in-place transform
+kernel void fft_full(device float2* data [[buffer(0)]],
+                    device float2* twiddles [[buffer(1)]],
+                    constant uint& size [[buffer(2)]],
+                    uint id [[thread_position_in_grid]]) {
+    if (id >= size) return;
+
+    uint m = 1;
+    for (uint s = 0; s < 10; s++) {  // up to 1024 elements
+        uint span = m;
+        uint span2 = 2 * span;
+        if (span2 > size) break;
+
+        uint block = id / span2;
+        uint offset = id % span2;
+        uint pairBase = block * span2;
+
+        float2 a = data[pairBase + offset];
+        float2 b = data[pairBase + offset + span];
+
+        float angle = -2.0f * M_PI_F * float(offset % span) / float(span2);
+        float2 tw = float2(cos(angle), sin(angle));
+
+        float2 bTw = float2(b.x * tw.x - b.y * tw.y, b.x * tw.y + b.y * tw.x);
+        data[pairBase + offset] = a + bTw;
+        data[pairBase + offset + span] = a - bTw;
+
+        m = span2;
+        threadgroup_barrier(mem_flags::mem_none);
+    }
+}
 """
 
 // MARK: - FP16 Deep Dive Shader Library
@@ -5275,6 +5334,67 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     let gemmGopsReg = gemmFlops / getElapsedSeconds(start: gemmStartReg, end: gemmEndReg) / 1e9
 
     print("GEMM Register Blocked (512x512): \(String(format: "%.2f", gemmGopsReg)) GOPS")
+
+    // ============================================================
+    // 28. FFT (FAST FOURIER TRANSFORM)
+    // Tests Cooley-Tukey radix-2 FFT
+    // ============================================================
+    print("\n--- 28. FFT Analysis ---")
+
+    guard let fftFullFunc = deepLibrary.makeFunction(name: "fft_full"),
+          let fftFullPipeline = try? device.makeComputePipelineState(function: fftFullFunc) else {
+        print("Failed to create FFT pipeline")
+        return
+    }
+
+    let fftSize = 1024  // Radix-2 FFT size
+    let fftIterations = 10
+
+    guard let fftData = device.makeBuffer(length: fftSize * MemoryLayout<simd_float2>.size, options: .storageModeShared),
+          let fftTwiddles = device.makeBuffer(length: fftSize * MemoryLayout<simd_float2>.size, options: .storageModeShared) else {
+        print("Failed to create FFT buffers")
+        return
+    }
+
+    // Initialize complex data
+    let fftDataPtr = fftData.contents().bindMemory(to: simd_float2.self, capacity: fftSize)
+    for i in 0..<fftSize {
+        fftDataPtr[i] = simd_float2(Float.random(in: -1.0...1.0), Float.random(in: -1.0...1.0))
+    }
+
+    // Precompute twiddle factors
+    let twiddlesPtr = fftTwiddles.contents().bindMemory(to: simd_float2.self, capacity: fftSize)
+    for i in 0..<fftSize {
+        let angle = -2.0 * Double.pi * Double(i) / Double(fftSize)
+        twiddlesPtr[i] = simd_float2(Float(cos(angle)), Float(sin(angle)))
+    }
+
+    var fftSizeVar = UInt32(fftSize)
+
+    // FFT Full
+    let fftStart = getTimeNanos()
+    for _ in 0..<fftIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(fftFullPipeline)
+        encoder.setBuffer(fftData, offset: 0, index: 0)
+        encoder.setBuffer(fftTwiddles, offset: 0, index: 1)
+        encoder.setBytes(&fftSizeVar, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: fftSize, height: 1, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let fftEnd = getTimeNanos()
+
+    // FLOPs: O(n log n) per FFT = n * log2(n) complex ops
+    // Each butterfly: 6 flops (4 mul + 2 add)
+    let fftFlopsPerIter = Double(fftSize) * log2(Double(fftSize)) * 6.0
+    let fftTotalFlops = fftFlopsPerIter * Double(fftIterations)
+    let fftGops = fftTotalFlops / getElapsedSeconds(start: fftStart, end: fftEnd) / 1e9
+
+    print("FFT (1024 elements, radix-2): \(String(format: "%.2f", fftGops)) GOPS")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")
