@@ -1226,6 +1226,60 @@ kernel void histogram_vectorized(device const float4* data [[buffer(0)]],
 }
 
 // ============================================================
+// 26. MATRIX TRANSPOSE
+// Tests shared memory bank conflict patterns and memory coalescing
+// ============================================================
+
+kernel void transpose_naive(device const float* in [[buffer(0)]],
+                         device float* out [[buffer(1)]],
+                         constant uint& width [[buffer(2)]],
+                         constant uint& height [[buffer(3)]],
+                         uint2 gid [[thread_position_in_grid]]) {
+    // Naive transpose - each thread reads row, writes column
+    // Causes non-coalesced writes (bank conflicts)
+    uint row = gid.y;
+    uint col = gid.x;
+    float val = in[row * width + col];
+    out[col * height + row] = val;
+}
+
+kernel void transpose_shared(device const float* in [[buffer(0)]],
+                            device float* out [[buffer(1)]],
+                            constant uint& width [[buffer(2)]],
+                            constant uint& height [[buffer(3)]],
+                            uint2 gid [[thread_position_in_grid]]) {
+    // Shared memory transpose - each thread handles a 16x16 tile
+    // Calculate tile position from global ID
+    uint blockSize = 16;
+    uint tileRow = (gid.y / blockSize) * blockSize;
+    uint tileCol = (gid.x / blockSize) * blockSize;
+    uint localRow = gid.y % blockSize;
+    uint localCol = gid.x % blockSize;
+
+    // Each thread loads its element into shared
+    threadgroup float tile[256];  // 16x16 tile
+
+    uint inRow = tileRow + localRow;
+    uint inCol = tileCol + localCol;
+    uint tileIdx = localRow * blockSize + localCol;
+
+    if (inRow < height && inCol < width) {
+        tile[tileIdx] = in[inRow * width + inCol];
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    // Write transpose: swap row and column within tile
+    uint outRow = tileCol + localRow;
+    uint outCol = tileRow + localCol;
+    uint outIdx = outRow * height + outCol;
+    uint readIdx = localCol * blockSize + localRow;
+
+    if (outRow < width && outCol < height) {
+        out[outIdx] = tile[readIdx];
+    }
+}
+
+// ============================================================
 // 24. DUAL-BUFFER PIPELINING
 // Memory access and computation overlap
 // ============================================================
@@ -3770,6 +3824,77 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     print("Histogram Naive (contention): \(String(format: "%.3f", histGopsNaive)) GOPS")
     print("Histogram Strided: \(String(format: "%.3f", histGopsStride)) GOPS")
     print("Histogram Vectorized (float4): \(String(format: "%.3f", histGopsVec)) GOPS")
+
+    // ============================================================
+    // 19. MATRIX TRANSPOSE
+    // Tests shared memory bank conflict patterns
+    // ============================================================
+    print("\n--- 19. Matrix Transpose Analysis ---")
+
+    guard let transNaiveFunc = deepLibrary.makeFunction(name: "transpose_naive"),
+          let transSharedFunc = deepLibrary.makeFunction(name: "transpose_shared"),
+          let transNaivePipeline = try? device.makeComputePipelineState(function: transNaiveFunc),
+          let transSharedPipeline = try? device.makeComputePipelineState(function: transSharedFunc) else {
+        print("Failed to create transpose pipelines")
+        return
+    }
+
+    // Matrix transpose: 1024x1024 matrix
+    let transWidth: UInt32 = 1024
+    let transHeight: UInt32 = 1024
+    let transSize = Int(transWidth) * Int(transHeight)
+    let transIterations = 10
+
+    guard let transIn = device.makeBuffer(length: transSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let transOut = device.makeBuffer(length: transSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create transpose buffers")
+        return
+    }
+
+    var transW = transWidth
+    var transH = transHeight
+
+    // Naive transpose
+    let transStartNaive = getTimeNanos()
+    for _ in 0..<transIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(transNaivePipeline)
+        encoder.setBuffer(transIn, offset: 0, index: 0)
+        encoder.setBuffer(transOut, offset: 0, index: 1)
+        encoder.setBytes(&transW, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.setBytes(&transH, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: Int(transWidth), height: Int(transHeight), depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let transEndNaive = getTimeNanos()
+    let transOpsNaive = Double(transSize) * Double(transIterations)
+    let transGopsNaive = transOpsNaive / getElapsedSeconds(start: transStartNaive, end: transEndNaive) / 1e9
+
+    // Shared memory transpose
+    let transStartShared = getTimeNanos()
+    for _ in 0..<transIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(transSharedPipeline)
+        encoder.setBuffer(transIn, offset: 0, index: 0)
+        encoder.setBuffer(transOut, offset: 0, index: 1)
+        encoder.setBytes(&transW, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.setBytes(&transH, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: Int(transWidth), height: Int(transHeight), depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let transEndShared = getTimeNanos()
+    let transGopsShared = transOpsNaive / getElapsedSeconds(start: transStartShared, end: transEndShared) / 1e9
+
+    print("Transpose Naive: \(String(format: "%.3f", transGopsNaive)) GOPS")
+    print("Transpose Shared (tile): \(String(format: "%.3f", transGopsShared)) GOPS")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")

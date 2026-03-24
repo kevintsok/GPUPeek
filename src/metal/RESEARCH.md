@@ -116,6 +116,8 @@
 | **Histogram Naive** | 0.085 GOPS | 高原子争用 |
 | **Histogram Strided** | 0.072 GOPS | 减少争用 |
 | **Histogram Vectorized** | 0.120 GOPS | float4向量化1.4x加速 |
+| **Matrix Transpose Naive** | 0.077 GOPS | 非合并访问模式 |
+| **Matrix Transpose Shared** | 0.090 GOPS | 分块tile共享内存1.2x加速 |
 | **Indirect Gather** | 0.031 GOPS | 索引读取操作 |
 | **Indirect Scatter** | 0.034 GOPS | 索引写入操作 |
 | **Double Buffer** | 0.018 GOPS | 与单缓冲相当(未重叠) |
@@ -139,6 +141,7 @@
 - **Parallel Reduction** - Shared Memory优化可将性能提升至0.03 GOPS (vs 0.00 GOPS基准)
 - **Threadgroup Memory** - 顺序访问0.53 GOPS，跨步访问(bank冲突)0.28 GOPS，1.9x性能差异
 - **Histogram** - Vectorized(float4)比Naive快1.4x，向量化是有效的优化策略
+- **Matrix Transpose** - Shared Memory分块比Naive快1.2x，减少了bank冲突和非合并访问
 - **Advanced Atomics** - Fetch Add/Min/Max约0.04 GOPS，CAS最慢(0.012 GOPS)因需要重试机制
 - **Memory Ordering** - Metal仅支持memory_order_relaxed（设备地址空间），其他语义(acquire/release/seq_cst)仅适用于threadgroup地址空间
 - **Indirect Addressing** - Gather/Scatter约0.03 GOPS，索引访问比顺序访问慢但适合图算法等场景
