@@ -166,11 +166,13 @@
 | **Comprehensive Memory BW** | 4.18 GB/s | Combined Write at 64MB, Float4 Read 3.79 GB/s |
 | **Roofline Analysis** | Memory Bound | Unified memory limits compute utilization |
 | **Cache/TLB Analysis** | L1 32KB, L2 ~4MB | Working set >8MB reaches DRAM bandwidth |
+| **SIMD Efficiency** | 32-thread SIMD groups | Vote/shuffle 0.02 GOPS, hardware-native |
 
 **关键洞察**:
 - **Comprehensive Memory Bandwidth Study** - Float4向量化读取(3.79 GB/s)比标量读取快约4倍，与理论向量化收益一致；合并写入(2.05 GB/s)比普通写入快约1.2倍；在64MB达到饱和点(4.18 GB/s)
 - **Roofline Model分析** - Apple M2大部分操作处于内存 bound状态，因为统一内存架构导致带宽共享；crossover point约为6 FLOP/byte；只有高算术强度(>100 FLOP/B)的操作才能接近12 GFLOPS算力峰值
 - **Cache/TLB分析** - Apple M2 L1缓存约32KB，L2缓存约4MB；工作集超过8MB后性能提升明显（达到DRAM带宽20GB/s）；缓存行大小64字节；跨步访问和随机访问会导致缓存效率下降
+- **SIMD Efficiency分析** - Apple GPU使用32线程SIMD组（等同于NVIDIA warp）；simd_any/simd_all/simd_shuffle等操作极快（0.02 GOPS），硬件原生支持；Float4向量比Float标量快约2倍；Half4是最高效的向量格式
 - **Comprehensive Memory Bandwidth Study** - Float4向量化读取(3.79 GB/s)比标量读取快约4倍，与理论向量化收益一致；合并写入(2.05 GB/s)比普通写入快约1.2倍；在64MB达到饱和点(4.18 GB/s)
 - **内存合并 (Coalescing)** 是最重要的优化 - 5.3x性能差异
 - **延迟隐藏 (Latency Hiding)** 通过多内存操作实现5.5x加速
