@@ -725,7 +725,7 @@ All modules now have:
 | unified_memory | 5 | Unified Memory |
 | wgmma | 0 | WGMMA (Hopper-only, documented only) |
 
-**Total Charts Generated**: 60 PNG files + 60 CSV files
+**Total Charts Generated**: 68 PNG files + 68 CSV files
 
 ---
 
