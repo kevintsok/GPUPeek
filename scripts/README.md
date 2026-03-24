@@ -24,6 +24,7 @@ pip install -r requirements.txt
 | `plot_warp_specialize.py` | Warp Specialization 图表 | `sm_120/warp_specialize/data/` |
 | `plot_dp4a.py` | DP4A 图表 | `sm_120/dp4a/data/` |
 | `plot_mbarrier.py` | MBarrier 图表 | `sm_120/mbarrier/data/` |
+| `plot_tensor_mem.py` | Tensor Mem 图表 | `sm_120/tensor_mem/data/` |
 | `plot_multi_stream.py` | Multi-Stream 图表 | `sm_120/multi_stream/data/`, `sm_120/cuda_graph/data/` |
 | `plot_fp_precision.py` | FP8/FP4/FP6 精度图表 | `sm_120/fp8/data/`, `sm_120/fp4_fp6/data/` |
 
@@ -43,6 +44,7 @@ python plot_fp_precision.py
 python plot_warp_specialize.py
 python plot_dp4a.py
 python plot_mbarrier.py
+python plot_tensor_mem.py
 ```
 
 ## 输出格式
