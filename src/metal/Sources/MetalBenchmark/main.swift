@@ -1515,6 +1515,79 @@ kernel void radix_reorder(device const uint* in [[buffer(0)]],
     uint offset = atomic_fetch_add_explicit(&counters[digit], 1, memory_order_relaxed);
     out[bucketStart + offset] = val;
 }
+
+// ============================================================
+// Sparse Matrix Vector Multiply (SpMV) Kernels
+// CSR format: values, column_indices, row_offsets
+// ============================================================
+
+// SpMV: Naive CSR - each thread processes one row
+kernel void spmv_csr_naive(device const float* values [[buffer(0)]],
+                          device const uint* column_indices [[buffer(1)]],
+                          device const uint* row_offsets [[buffer(2)]],
+                          device const float* x [[buffer(3)]],
+                          device float* y [[buffer(4)]],
+                          constant uint& num_rows [[buffer(5)]],
+                          uint id [[thread_position_in_grid]]) {
+    if (id >= num_rows) return;
+
+    float sum = 0.0f;
+    uint row_start = row_offsets[id];
+    uint row_end = row_offsets[id + 1];
+
+    for (uint i = row_start; i < row_end; i++) {
+        uint col = column_indices[i];
+        sum += values[i] * x[col];
+    }
+    y[id] = sum;
+}
+
+// SpMV: Vectorized - process multiple elements per thread
+kernel void spmv_csr_vectorized(device const float4* values [[buffer(0)]],
+                                device const uint4* column_indices [[buffer(1)]],
+                                device const uint* row_offsets [[buffer(2)]],
+                                device const float4* x [[buffer(3)]],
+                                device float* y [[buffer(4)]],
+                                constant uint& num_rows [[buffer(5)]],
+                                uint id [[thread_position_in_grid]]) {
+    if (id >= num_rows) return;
+
+    float4 sum = 0.0f;
+    uint row_start = row_offsets[id];
+    uint row_end = row_offsets[id + 1];
+
+    for (uint i = row_start; i < row_end; i += 4) {
+        uint4 cols = column_indices[i / 4];
+        float4 vals = values[i / 4];
+        sum += vals * x[cols.x];
+        if (i + 1 < row_end) sum += vals * x[cols.y];
+        if (i + 2 < row_end) sum += vals * x[cols.z];
+        if (i + 3 < row_end) sum += vals * x[cols.w];
+    }
+    y[id] = sum.x + sum.y + sum.z + sum.w;
+}
+
+// SpMV: ELLPACK format - fixed width per row
+kernel void spmv_ellpack(device const float* values [[buffer(0)]],
+                        device const uint* column_indices [[buffer(1)]],
+                        device const float* x [[buffer(2)]],
+                        device float* y [[buffer(3)]],
+                        constant uint& num_rows [[buffer(4)]],
+                        constant uint& max_nnz_per_row [[buffer(5)]],
+                        uint id [[thread_position_in_grid]]) {
+    if (id >= num_rows) return;
+
+    float sum = 0.0f;
+    uint base = id * max_nnz_per_row;
+
+    for (uint i = 0; i < max_nnz_per_row; i++) {
+        uint col = column_indices[base + i];
+        if (col != 0xFFFFFFFF) {  // invalid column marker
+            sum += values[base + i] * x[col];
+        }
+    }
+    y[id] = sum;
+}
 """
 
 // MARK: - FP16 Deep Dive Shader Library
@@ -4358,6 +4431,93 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     let radixGops = Double(radixOps) / getElapsedSeconds(start: radixStart, end: radixEnd) / 1e9
 
     print("Radix Sort (256K x 4 passes): \(String(format: "%.3f", radixGops)) GOPS")
+
+    // ============================================================
+    // 23. SPARSE MATRIX VECTOR MULTIPLY (SpMV)
+    // Tests CSR and ELLPACK formats for sparse matrices
+    // ============================================================
+    print("\n--- 23. Sparse Matrix Vector Multiply (SpMV) Analysis ---")
+
+    guard let spmvCsrNaiveFunc = deepLibrary.makeFunction(name: "spmv_csr_naive"),
+          let spmvCsrVecFunc = deepLibrary.makeFunction(name: "spmv_csr_vectorized"),
+          let spmvEllpackFunc = deepLibrary.makeFunction(name: "spmv_ellpack"),
+          let spmvCsrNaivePipeline = try? device.makeComputePipelineState(function: spmvCsrNaiveFunc),
+          let spmvCsrVecPipeline = try? device.makeComputePipelineState(function: spmvCsrVecFunc),
+          let spmvEllpackPipeline = try? device.makeComputePipelineState(function: spmvEllpackFunc) else {
+        print("Failed to create SpMV pipelines")
+        return
+    }
+
+    // Sparse matrix: 8192 x 8192 with ~5% density = ~3.3M non-zeros
+    let spmvRows = 8192
+    let spmvCols = 8192
+    let spmvDensity = 0.05  // 5% sparsity
+    let spmvNnz = spmvRows * spmvCols / 20  // ~3.3M non-zeros
+
+    let spmvIterations = 10
+
+    // Create CSR format buffers
+    guard let spmvValues = device.makeBuffer(length: spmvNnz * MemoryLayout<Float>.size, options: .storageModeShared),
+          let spmvColIndices = device.makeBuffer(length: spmvNnz * MemoryLayout<UInt32>.size, options: .storageModeShared),
+          let spmvRowOffsets = device.makeBuffer(length: (spmvRows + 1) * MemoryLayout<UInt32>.size, options: .storageModeShared),
+          let spmvX = device.makeBuffer(length: spmvCols * MemoryLayout<Float>.size, options: .storageModeShared),
+          let spmvY = device.makeBuffer(length: spmvRows * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create SpMV buffers")
+        return
+    }
+
+    // Initialize sparse matrix in CSR format
+    let valuesPtr = spmvValues.contents().bindMemory(to: Float.self, capacity: spmvNnz)
+    let colIndicesPtr = spmvColIndices.contents().bindMemory(to: UInt32.self, capacity: spmvNnz)
+    let rowOffsetsPtr = spmvRowOffsets.contents().bindMemory(to: UInt32.self, capacity: spmvRows + 1)
+    let xPtr = spmvX.contents().bindMemory(to: Float.self, capacity: spmvCols)
+    let yPtr = spmvY.contents().bindMemory(to: Float.self, capacity: spmvRows)
+
+    // Fill x vector
+    for i in 0..<spmvCols {
+        xPtr[i] = Float.random(in: 0.0...1.0)
+    }
+
+    // Build CSR matrix (random sparsity pattern per row)
+    rowOffsetsPtr[0] = 0
+    var nnzIdx = 0
+    for row in 0..<spmvRows {
+        let rowNnz = spmvNnz / spmvRows  // Average ~20 non-zeros per row
+        for j in 0..<rowNnz {
+            if nnzIdx < spmvNnz {
+                colIndicesPtr[nnzIdx] = UInt32.random(in: 0..<UInt32(spmvCols))
+                valuesPtr[nnzIdx] = Float.random(in: -1.0...1.0)
+                nnzIdx += 1
+            }
+        }
+        rowOffsetsPtr[row + 1] = UInt32(nnzIdx)
+    }
+
+    var spmvRowsVar = UInt32(spmvRows)
+
+    // SpMV CSR Naive
+    let spmvStartNaive = getTimeNanos()
+    for _ in 0..<spmvIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(spmvCsrNaivePipeline)
+        encoder.setBuffer(spmvValues, offset: 0, index: 0)
+        encoder.setBuffer(spmvColIndices, offset: 0, index: 1)
+        encoder.setBuffer(spmvRowOffsets, offset: 0, index: 2)
+        encoder.setBuffer(spmvX, offset: 0, index: 3)
+        encoder.setBuffer(spmvY, offset: 0, index: 4)
+        encoder.setBytes(&spmvRowsVar, length: MemoryLayout<UInt32>.size, index: 5)
+        encoder.dispatchThreads(MTLSize(width: spmvRows, height: 1, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let spmvEndNaive = getTimeNanos()
+    let spmvOpsNaive = Int64(spmvNnz) * Int64(spmvIterations)  // One multiply-add per non-zero
+    let spmvGopsNaive = Double(spmvOpsNaive) / getElapsedSeconds(start: spmvStartNaive, end: spmvEndNaive) / 1e9
+
+    print("SpMV CSR Naive (\(spmvRows)x\(spmvCols), \(spmvNnz) nnz): \(String(format: "%.3f", spmvGopsNaive)) GOPS")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")
