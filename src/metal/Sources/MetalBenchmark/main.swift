@@ -289,17 +289,6 @@ kernel void simd_broadcast(device const float* in [[buffer(0)]],
     out[id] = val;
 }
 
-// SIMD-prefix sum (work-efficient)
-kernel void simd_prefix_sum(device const float* in [[buffer(0)]],
-                           device float* out [[buffer(1)]],
-                           constant uint& size [[buffer(2)]],
-                           uint id [[thread_position_in_grid]]) {
-    uint lid = id & 31;
-    float val = in[id];
-    // HACK: simplified - real implementation needs stage-by-stage
-    out[id] = val;
-}
-
 // ============================================================
 // 6. OCCUPANCY VS PERFORMANCE
 // Test the same kernel with different threadgroup sizes
@@ -873,6 +862,173 @@ kernel void indep_ops(device const float* in [[buffer(0)]],
     float c = v + 2.0f;
     float d = v * 3.0f;
     out[id] = a + b + c + d;
+}
+
+// ============================================================
+// 22. SIMD GROUP OPERATIONS
+// Apple GPU uses 32-thread SIMD groups
+// ============================================================
+
+kernel void simd_vote_all(device const float* in [[buffer(0)]],
+                        device float* out [[buffer(1)]],
+                        constant uint& size [[buffer(2)]],
+                        uint id [[thread_position_in_grid]]) {
+    bool pred = in[id] > 0.5f;
+    bool result = simd_all(pred);
+    out[id] = result ? 1.0f : 0.0f;
+}
+
+kernel void simd_vote_any(device const float* in [[buffer(0)]],
+                        device float* out [[buffer(1)]],
+                        constant uint& size [[buffer(2)]],
+                        uint id [[thread_position_in_grid]]) {
+    bool pred = in[id] > 0.5f;
+    bool result = simd_any(pred);
+    out[id] = result ? 1.0f : 0.0f;
+}
+
+kernel void simd_shuffle(device const float* in [[buffer(0)]],
+                        device float* out [[buffer(1)]],
+                        constant uint& size [[buffer(2)]],
+                        uint id [[thread_position_in_grid]]) {
+    uint lid = id & 31;
+    float val = in[id];
+    // Exchange within SIMD group
+    float shuffled = simd_shuffle(val, lid ^ 16);  // swap with opposite lane
+    out[id] = shuffled;
+}
+
+kernel void simd_prefix_sum(device const float* in [[buffer(0)]],
+                           device float* out [[buffer(1)]],
+                           constant uint& size [[buffer(2)]],
+                           uint id [[thread_position_in_grid]]) {
+    float sum = in[id];
+    sum += simd_shuffle_xor(sum, 16);
+    sum += simd_shuffle_xor(sum, 8);
+    sum += simd_shuffle_xor(sum, 4);
+    sum += simd_shuffle_xor(sum, 2);
+    sum += simd_shuffle_xor(sum, 1);
+    out[id] = sum;
+}
+
+// ============================================================
+// 23. TREE-BASED PARALLEL REDUCTION
+// vs sequential reduction
+// ============================================================
+
+kernel void reduce_sequential(device const float* in [[buffer(0)]],
+                             device float* out [[buffer(1)]],
+                             constant uint& size [[buffer(2)]],
+                             uint id [[thread_position_in_grid]]) {
+    if (id == 0) {
+        float sum = 0.0f;
+        for (uint i = 0; i < size; i++) {
+            sum += in[i];
+        }
+        out[0] = sum;
+    }
+}
+
+kernel void reduce_shared_basic(device const float* in [[buffer(0)]],
+                               device float* out [[buffer(1)]],
+                               threadgroup float* shared [[threadgroup(0)]],
+                               constant uint& size [[buffer(2)]],
+                               uint id [[thread_position_in_grid]],
+                               uint lid [[thread_position_in_threadgroup]]) {
+    // Load into shared memory
+    shared[lid] = in[id];
+    threadgroup_barrier(mem_flags::mem_none);
+
+    // Sequential within threadgroup first
+    for (uint s = 1; s < 256; s *= 2) {
+        if ((lid % (s * 2)) == 0) {
+            shared[lid] += shared[lid + s];
+        }
+        threadgroup_barrier(mem_flags::mem_none);
+    }
+
+    if (lid == 0) {
+        out[0] = shared[0];
+    }
+}
+
+kernel void reduce_warp_level(device const float* in [[buffer(0)]],
+                             device float* out [[buffer(1)]],
+                             threadgroup float* shared [[threadgroup(0)]],
+                             constant uint& size [[buffer(2)]],
+                             uint id [[thread_position_in_grid]],
+                             uint lid [[thread_position_in_threadgroup]]) {
+    // Load into shared memory
+    shared[lid] = in[id];
+    threadgroup_barrier(mem_flags::mem_none);
+
+    // Parallel reduction in shared memory
+    for (uint s = 128; s > 32; s >>= 1) {
+        if (lid < s) {
+            shared[lid] += shared[lid + s];
+        }
+        threadgroup_barrier(mem_flags::mem_none);
+    }
+
+    // Warp-level reduction (no barrier needed for lid < 32)
+    if (lid < 32) {
+        shared[lid] += shared[lid + 16];
+        shared[lid] += shared[lid + 8];
+        shared[lid] += shared[lid + 4];
+        shared[lid] += shared[lid + 2];
+        shared[lid] += shared[lid + 1];
+    }
+
+    if (lid == 0) {
+        out[0] = shared[0];
+    }
+}
+
+// ============================================================
+// 24. DUAL-BUFFER PIPELINING
+// Memory access and computation overlap
+// ============================================================
+
+kernel void dual_buffer_compute_a(device const float* inA [[buffer(0)]],
+                                  device const float* inB [[buffer(1)]],
+                                  device float* out [[buffer(2)]],
+                                  device float* temp [[buffer(3)]],
+                                  constant uint& size [[buffer(4)]],
+                                  uint id [[thread_position_in_grid]]) {
+    // Phase 1: Load data
+    temp[id] = inA[id];
+
+    // Phase 2: Compute
+    float sum = 0.0f;
+    for (uint i = 0; i < 16; i++) {
+        sum += temp[(id + i) % size] * inB[(id + i) % size];
+    }
+    out[id] = sum;
+}
+
+kernel void dual_buffer_compute_b(device const float* temp [[buffer(3)]],
+                                  device const float* inB [[buffer(1)]],
+                                  device float* out [[buffer(2)]],
+                                  constant uint& size [[buffer(4)]],
+                                  uint id [[thread_position_in_grid]]) {
+    float sum = 0.0f;
+    for (uint i = 0; i < 16; i++) {
+        sum += temp[(id + i) % size] * inB[(id + i) % size];
+    }
+    out[id] = sum;
+}
+
+// Single buffer baseline
+kernel void single_buffer_compute(device const float* in [[buffer(0)]],
+                                 device float* out [[buffer(1)]],
+                                 constant uint& size [[buffer(2)]],
+                                 uint id [[thread_position_in_grid]]) {
+    float val = in[id];
+    float sum = 0.0f;
+    for (uint i = 0; i < 16; i++) {
+        sum += val * in[(id + i) % size];
+    }
+    out[id] = sum;
 }
 """
 
@@ -2726,6 +2882,175 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     print("Dep Chain (mul):     \(String(format: "%.2f", gopsDepMul)) GOPS")
     print("Independent Ops:     \(String(format: "%.2f", gopsIndep)) GOPS")
     print("Dep vs Indep Ratio:  \(String(format: "%.2fx", gopsIndep / gopsDepAdd))")
+
+    // 13. SIMD GROUP OPERATIONS
+    print("\n--- 13. SIMD Group Operations ---")
+
+    guard let simdVoteAllFunc = deepLibrary.makeFunction(name: "simd_vote_all"),
+          let simdVoteAnyFunc = deepLibrary.makeFunction(name: "simd_vote_any"),
+          let simdShuffleFunc = deepLibrary.makeFunction(name: "simd_shuffle"),
+          let simdPrefixFunc = deepLibrary.makeFunction(name: "simd_prefix_sum"),
+          let simdVoteAllPipeline = try? device.makeComputePipelineState(function: simdVoteAllFunc),
+          let simdVoteAnyPipeline = try? device.makeComputePipelineState(function: simdVoteAnyFunc),
+          let simdShufflePipeline = try? device.makeComputePipelineState(function: simdShuffleFunc),
+          let simdPrefixPipeline = try? device.makeComputePipelineState(function: simdPrefixFunc) else {
+        print("Failed to create SIMD pipelines")
+        return
+    }
+
+    let simdSize = 256 * 1024
+    let simdIter = 100
+    guard let simdIn = device.makeBuffer(length: simdSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let simdOut = device.makeBuffer(length: simdSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create SIMD buffers")
+        return
+    }
+    var simdSz = UInt32(simdSize)
+
+    // SIMD Vote All
+    let startVoteAll = getTimeNanos()
+    for _ in 0..<simdIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(simdVoteAllPipeline)
+        encoder.setBuffer(simdIn, offset: 0, index: 0)
+        encoder.setBuffer(simdOut, offset: 0, index: 1)
+        encoder.setBytes(&simdSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: simdSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endVoteAll = getTimeNanos()
+    let gopsVoteAll = Double(simdSize) * Double(simdIter) / getElapsedSeconds(start: startVoteAll, end: endVoteAll) / 1e9
+
+    print("SIMD Vote All:   \(String(format: "%.2f", gopsVoteAll)) GOPS")
+
+    // SIMD Shuffle
+    let startShuffle = getTimeNanos()
+    for _ in 0..<simdIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(simdShufflePipeline)
+        encoder.setBuffer(simdIn, offset: 0, index: 0)
+        encoder.setBuffer(simdOut, offset: 0, index: 1)
+        encoder.setBytes(&simdSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: simdSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endShuffle = getTimeNanos()
+    let gopsShuffle = Double(simdSize) * Double(simdIter) / getElapsedSeconds(start: startShuffle, end: endShuffle) / 1e9
+
+    print("SIMD Shuffle:    \(String(format: "%.2f", gopsShuffle)) GOPS")
+
+    // SIMD Prefix Sum
+    let startPrefix = getTimeNanos()
+    for _ in 0..<simdIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(simdPrefixPipeline)
+        encoder.setBuffer(simdIn, offset: 0, index: 0)
+        encoder.setBuffer(simdOut, offset: 0, index: 1)
+        encoder.setBytes(&simdSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: simdSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endPrefix = getTimeNanos()
+    let gopsPrefix = Double(simdSize) * Double(simdIter) / getElapsedSeconds(start: startPrefix, end: endPrefix) / 1e9
+
+    print("SIMD Prefix Sum: \(String(format: "%.2f", gopsPrefix)) GOPS")
+
+    // 14. TREE-BASED REDUCTION
+    print("\n--- 14. Parallel Reduction Algorithms ---")
+
+    guard let reduceSeqFunc = deepLibrary.makeFunction(name: "reduce_sequential"),
+          let reduceSharedFunc = deepLibrary.makeFunction(name: "reduce_shared_basic"),
+          let reduceWarpFunc = deepLibrary.makeFunction(name: "reduce_warp_level"),
+          let reduceSeqPipeline = try? device.makeComputePipelineState(function: reduceSeqFunc),
+          let reduceSharedPipeline = try? device.makeComputePipelineState(function: reduceSharedFunc),
+          let reduceWarpPipeline = try? device.makeComputePipelineState(function: reduceWarpFunc) else {
+        print("Failed to create reduction pipelines")
+        return
+    }
+
+    let reduceSize = 256 * 1024
+    let reduceIter = 10
+    guard let reduceIn = device.makeBuffer(length: reduceSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let reduceOut = device.makeBuffer(length: 1024 * MemoryLayout<Float>.size, options: .storageModeShared),
+          let reduceShared = device.makeBuffer(length: 1024 * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create reduction buffers")
+        return
+    }
+    var reduceSz = UInt32(reduceSize)
+
+    // Sequential Reduction
+    let startSeq = getTimeNanos()
+    for _ in 0..<reduceIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(reduceSeqPipeline)
+        encoder.setBuffer(reduceIn, offset: 0, index: 0)
+        encoder.setBuffer(reduceOut, offset: 0, index: 1)
+        encoder.setBytes(&reduceSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: 1, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 1, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endSeq = getTimeNanos()
+    let gopsSeq = Double(reduceSize) * Double(reduceIter) / getElapsedSeconds(start: startSeq, end: endSeq) / 1e9
+
+    print("Sequential Reduce:  \(String(format: "%.2f", gopsSeq)) GOPS (baseline)")
+
+    // Shared Memory Reduction
+    let startShared = getTimeNanos()
+    for _ in 0..<reduceIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(reduceSharedPipeline)
+        encoder.setBuffer(reduceIn, offset: 0, index: 0)
+        encoder.setBuffer(reduceOut, offset: 0, index: 1)
+        encoder.setBuffer(reduceShared, offset: 0, index: 2)
+        encoder.setBytes(&reduceSz, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: reduceSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endShared = getTimeNanos()
+    let gopsShared = Double(reduceSize) * Double(reduceIter) / getElapsedSeconds(start: startShared, end: endShared) / 1e9
+
+    print("Shared Reduce:     \(String(format: "%.2f", gopsShared)) GOPS")
+
+    // Warp-Level Reduction
+    let startWarp = getTimeNanos()
+    for _ in 0..<reduceIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(reduceWarpPipeline)
+        encoder.setBuffer(reduceIn, offset: 0, index: 0)
+        encoder.setBuffer(reduceOut, offset: 0, index: 1)
+        encoder.setBuffer(reduceShared, offset: 0, index: 2)
+        encoder.setBytes(&reduceSz, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: reduceSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endWarp = getTimeNanos()
+    let gopsWarp = Double(reduceSize) * Double(reduceIter) / getElapsedSeconds(start: startWarp, end: endWarp) / 1e9
+
+    print("Warp-Level Reduce: \(String(format: "%.2f", gopsWarp)) GOPS")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")

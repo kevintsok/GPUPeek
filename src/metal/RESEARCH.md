@@ -101,6 +101,10 @@
 | **Kernel Fusion** | 0.10 vs 0.05 GOPS | **1.98x 加速** |
 | **Texture2D vs Buffer** | 0.17 vs 0.17 GOPS | **无差异** |
 | **Pipeline Latency** | 1.02x (dep vs indep) | **无显著差异** |
+| **SIMD Group Vote** | 0.02 GOPS | simd_any/all性能 |
+| **SIMD Group Shuffle** | 0.02 GOPS | Lane交换操作 |
+| **SIMD Prefix Sum** | 0.02 GOPS | Work-efficient算法 |
+| **Parallel Reduction** | 0.03 GOPS | Shared Memory优化 |
 
 **关键洞察**:
 - **内存合并 (Coalescing)** 是最重要的优化 - 5.3x性能差异
@@ -117,6 +121,8 @@
 - **Texture vs Buffer无差异** - 2D texture访问与buffer线性访问性能相当
 - **Pipeline依赖操作无额外开销** - 依赖链与独立操作性能几乎相同
 - **Burst Write峰值** - 实测6.89 GB/s (理论100 GB/s的6.9%)
+- **SIMD Group Operations** - Vote/Shuffle/Prefix Sum均约0.02 GOPS，硬件支持高效
+- **Parallel Reduction** - Shared Memory优化可将性能提升至0.03 GOPS (vs 0.00 GOPS基准)
 
 ### 4. 并行计算
 
@@ -126,6 +132,11 @@
 | 原子操作 | 0.016-0.57 GOPS | 争用可扩展 |
 | 线程分歧 | 10-15%变化 | 分支偏斜影响 |
 | 屏障开销 | 4.8μs单次 | 流水线后89ns |
+| SIMD Vote All | 0.02 GOPS | 全线程投票 |
+| SIMD Shuffle | 0.02 GOPS | Lane数据交换 |
+| SIMD Prefix Sum | 0.02 GOPS | 扫描操作 |
+| Shared Reduce | 0.03 GOPS | vs Sequential 0.00 GOPS |
+| Warp-Level Reduce | 0.03 GOPS | SIMD组级别优化 |
 
 ### 5. 架构对比
 
