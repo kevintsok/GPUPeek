@@ -21,6 +21,7 @@ pip install -r requirements.txt
 | `plot_barrier_sync.py` | Barrier 同步图表 | `sm_120/barrier/data/` |
 | `plot_atomic_ops.py` | 原子操作图表 | `sm_120/atomic/data/` |
 | `plot_tensor_core.py` | Tensor Core 图表 | `sm_120/wmma/data/` |
+| `plot_warp_specialize.py` | Warp Specialization 图表 | `sm_120/warp_specialize/data/` |
 | `plot_multi_stream.py` | Multi-Stream 图表 | `sm_120/multi_stream/data/`, `sm_120/cuda_graph/data/` |
 | `plot_fp_precision.py` | FP8/FP4/FP6 精度图表 | `sm_120/fp8/data/`, `sm_120/fp4_fp6/data/` |
 
@@ -37,6 +38,7 @@ python plot_atomic_ops.py
 python plot_tensor_core.py
 python plot_multi_stream.py
 python plot_fp_precision.py
+python plot_warp_specialize.py
 ```
 
 ## 输出格式

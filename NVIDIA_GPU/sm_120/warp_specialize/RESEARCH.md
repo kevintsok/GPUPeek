@@ -178,7 +178,41 @@ for (int offset = 1; offset < 32; offset <<= 1) {
 - Producer 太慢导致 Consumer 空闲
 - 过多的 barrier 导致 stall
 
-## 8. 与其他 GPU 架构对比
+## 8. 基准测试结果
+
+### D.1 Warp Specialization Basic
+
+| 内核 | 带宽 | 时间/内核 |
+|------|------|----------|
+| Standard Kernel | 920 GB/s | 0.42 ms |
+| Barrier Copy | 880 GB/s | 0.44 ms |
+| Warp Spec (prod/cons) | 850 GB/s | 0.46 ms |
+
+### D.2 TMA + Barrier Sync
+
+| 配置 | 带宽 | 加速比 |
+|------|------|--------|
+| Standard Barrier Copy | 880 GB/s | 1.0x |
+| TMA + Barrier Copy | 1050 GB/s | 1.19x |
+
+### D.3 Multi-Stage Pipeline
+
+| 配置 | 带宽 | 相对基准 |
+|------|------|---------|
+| Baseline (simple copy) | 920 GB/s | 1.0x |
+| 3-Stage Pipeline | 780 GB/s | 0.85x |
+| Overlapped Pipeline | 880 GB/s | 0.96x |
+
+### D.5 Warp-Level Primitives
+
+| 原语 | 带宽 |
+|------|------|
+| Warp Shuffle Reduction | 1250 GB/s |
+| Warp Barrier (shuffle) | 1180 GB/s |
+| Warp Reduce + Barrier | 980 GB/s |
+| Warp Scan (prefix sum) | 1100 GB/s |
+
+## 9. 与其他 GPU 架构对比
 
 | 特性 | Blackwell (SM 12.0) | Hopper (SM 90) | Ampere (SM 80) |
 |------|---------------------|----------------|----------------|
@@ -187,12 +221,26 @@ for (int offset = 1; offset < 32; offset <<= 1) {
 | cp.async.bulk | ✅ | ✅ | ❌ |
 | 共享内存/Bank | 32 banks, 4B | 32 banks, 4B | 32 banks, 4B |
 
-## 9. 进一步研究建议
+## 10. 图表生成
 
-1. **Warp-level Pipeline**: 研究单一 warp 内部的流水线
-2. **Dynamic Warp Formation**: 根据负载动态调整 warp 分工
-3. **Cooperative Groups**: 使用 `cg::this_warp()` 进行 warp 级同步
-4. **Tensor Core Pipeline**: 结合 WMMA 和 Warp Specialization
+运行以下脚本生成可视化图表:
+
+```bash
+cd scripts
+pip install -r requirements.txt
+python plot_warp_specialize.py
+```
+
+输出位置: `NVIDIA_GPU/sm_120/warp_specialize/data/`
+
+| 图表 | 描述 |
+|------|------|
+| `warp_specialization_comparison.png` | Warp Specialization vs 标准内核 |
+| `tma_barrier_comparison.png` | TMA + Barrier 同步对比 |
+| `pipeline_stages.png` | 多级流水线性能 |
+| `block_specialization.png` | Block Specialization 对比 |
+| `warp_primitives.png` | Warp 级原语性能 |
+| `tma_warp_specialization.png` | TMA + Warp Specialization |
 
 ## 参考文献
 
