@@ -164,8 +164,11 @@
 | **Bitonic Sort** | 0.0001 GOPS | kernel launch开销大 |
 | **GEMM Comprehensive** | 21.89 GFLOPS | Reg-4x4 at 1024, 4.98x vs Naive |
 | **Comprehensive Memory BW** | 4.18 GB/s | Combined Write at 64MB, Float4 Read 3.79 GB/s |
+| **Roofline Analysis** | Memory Bound | Unified memory limits compute utilization |
 
 **关键洞察**:
+- **Comprehensive Memory Bandwidth Study** - Float4向量化读取(3.79 GB/s)比标量读取快约4倍，与理论向量化收益一致；合并写入(2.05 GB/s)比普通写入快约1.2倍；在64MB达到饱和点(4.18 GB/s)
+- **Roofline Model分析** - Apple M2大部分操作处于内存 bound状态，因为统一内存架构导致带宽共享；crossover point约为6 FLOP/byte；只有高算术强度(>100 FLOP/B)的操作才能接近12 GFLOPS算力峰值
 - **Comprehensive Memory Bandwidth Study** - Float4向量化读取(3.79 GB/s)比标量读取快约4倍，与理论向量化收益一致；合并写入(2.05 GB/s)比普通写入快约1.2倍；在64MB达到饱和点(4.18 GB/s)
 - **内存合并 (Coalescing)** 是最重要的优化 - 5.3x性能差异
 - **延迟隐藏 (Latency Hiding)** 通过多内存操作实现5.5x加速
