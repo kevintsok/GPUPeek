@@ -29,6 +29,7 @@ pip install -r requirements.txt
 | `plot_multi_stream.py` | Multi-Stream 图表 | `sm_120/multi_stream/data/` |
 | `plot_cuda_graph.py` | CUDA Graph 图表 | `sm_120/cuda_graph/data/` |
 | `plot_fp_precision.py` | FP8/FP4/FP6 精度图表 | `sm_120/fp8/data/`, `sm_120/fp4_fp6/data/` |
+| `plot_cooperative_groups.py` | Cooperative Groups 图表 | `sm_120/cooperative_groups/data/` |
 
 ## 使用方法
 
@@ -44,6 +45,7 @@ python plot_tensor_core.py
 python plot_multi_stream.py
 python plot_cuda_graph.py
 python plot_fp_precision.py
+python plot_cooperative_groups.py
 python plot_warp_specialize.py
 python plot_dp4a.py
 python plot_mbarrier.py
