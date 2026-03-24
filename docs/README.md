@@ -13,7 +13,7 @@
 
 | 文件 | 架构 | 描述 |
 |------|------|------|
-| [../src/sm_120/RESEARCH.md](../src/sm_120/RESEARCH.md) | SM 12.0 (Blackwell) | RTX 5080 详细研究数据 |
+| [../NVIDIA_GPU/sm_120/RESEARCH.md](../NVIDIA_GPU/sm_120/RESEARCH.md) | SM 12.0 (Blackwell) | RTX 5080 详细研究数据 |
 
 ## 报告内容概览
 
