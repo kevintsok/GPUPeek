@@ -1470,6 +1470,51 @@ kernel void single_buffer_compute(device const float* in [[buffer(0)]],
     }
     out[id] = sum;
 }
+
+// ============================================================
+// Radix Sort Kernels
+// ============================================================
+
+// Radix Sort: Histogram phase (count occurrences of each digit)
+kernel void radix_histogram(device const uint* in [[buffer(0)]],
+                            device atomic_uint* histogram [[buffer(1)]],
+                            constant uint& size [[buffer(2)]],
+                            constant uint& pass [[buffer(3)]],
+                            uint id [[thread_position_in_grid]]) {
+    if (id >= size) return;
+    uint val = in[id];
+    uint digit = (val >> (pass * 4)) & 0xF;  // 4-bit digit (0-15)
+    atomic_fetch_add_explicit(&histogram[digit], 1, memory_order_relaxed);
+}
+
+// Radix Sort: Prefix sum (exclusive scan on histogram)
+kernel void radix_prefix_sum(device const uint* histogram [[buffer(0)]],
+                            device uint* prefix [[buffer(1)]]) {
+    // 16 elements (radix 16 = 4 bits per pass)
+    uint sum = 0;
+    for (uint i = 0; i < 16; i++) {
+        prefix[i] = sum;
+        sum += histogram[i];
+    }
+}
+
+// Radix Sort: Reorder phase (scatter to buckets using prefix sums)
+kernel void radix_reorder(device const uint* in [[buffer(0)]],
+                         device uint* out [[buffer(1)]],
+                         device const uint* histogram [[buffer(2)]],
+                         device const uint* prefix [[buffer(3)]],
+                         device atomic_uint* counters [[buffer(4)]],
+                         constant uint& size [[buffer(5)]],
+                         constant uint& pass [[buffer(6)]],
+                         uint id [[thread_position_in_grid]]) {
+    if (id >= size) return;
+    uint val = in[id];
+    uint digit = (val >> (pass * 4)) & 0xF;
+
+    uint bucketStart = prefix[digit];
+    uint offset = atomic_fetch_add_explicit(&counters[digit], 1, memory_order_relaxed);
+    out[bucketStart + offset] = val;
+}
 """
 
 // MARK: - FP16 Deep Dive Shader Library
@@ -4214,6 +4259,105 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
 
     print("Compact Naive: \(String(format: "%.3f", compactGopsNaive)) GOPS")
     print("Compact Tiled: \(String(format: "%.3f", compactGopsTiled)) GOPS")
+
+    // ============================================================
+    // 22. RADIX SORT
+    // Tests parallel sorting with histogram and scatter patterns
+    // ============================================================
+    print("\n--- 22. Radix Sort Analysis ---")
+
+    guard let radixHistFunc = deepLibrary.makeFunction(name: "radix_histogram"),
+          let radixPrefixFunc = deepLibrary.makeFunction(name: "radix_prefix_sum"),
+          let radixReorderFunc = deepLibrary.makeFunction(name: "radix_reorder"),
+          let radixHistPipeline = try? device.makeComputePipelineState(function: radixHistFunc),
+          let radixPrefixPipeline = try? device.makeComputePipelineState(function: radixPrefixFunc),
+          let radixReorderPipeline = try? device.makeComputePipelineState(function: radixReorderFunc) else {
+        print("Failed to create radix sort pipelines")
+        return
+    }
+
+    let radixSize = 256 * 1024  // 256K elements
+    let radixIterations = 5
+    let radixPasses = 4  // 4-bit radix = 16 buckets, 4 passes for 32-bit values
+
+    guard let radixIn = device.makeBuffer(length: radixSize * MemoryLayout<UInt32>.size, options: .storageModeShared),
+          let radixOut = device.makeBuffer(length: radixSize * MemoryLayout<UInt32>.size, options: .storageModeShared),
+          let radixHistogram = device.makeBuffer(length: 16 * MemoryLayout<UInt32>.size, options: .storageModeShared),
+          let radixPrefix = device.makeBuffer(length: 16 * MemoryLayout<UInt32>.size, options: .storageModeShared),
+          let radixCounters = device.makeBuffer(length: 16 * MemoryLayout<UInt32>.size, options: .storageModeShared) else {
+        print("Failed to create radix sort buffers")
+        return
+    }
+
+    // Initialize input with random uint values
+    let radixInPtr = radixIn.contents().bindMemory(to: UInt32.self, capacity: radixSize)
+    for i in 0..<radixSize {
+        radixInPtr[i] = UInt32.random(in: 0...UInt32.max)
+    }
+
+    var radixSizeVar = UInt32(radixSize)
+
+    // Radix sort: 3-phase approach (histogram -> prefix -> reorder)
+    let radixStart = getTimeNanos()
+    for _ in 0..<radixIterations {
+        for pass in 0..<radixPasses {
+            // Phase 1: Histogram
+            var passVar = UInt32(pass)
+
+            // Reset histogram
+            let histPtr = radixHistogram.contents().bindMemory(to: UInt32.self, capacity: 16)
+            for i in 0..<16 { histPtr[i] = 0 }
+            let countersPtr = radixCounters.contents().bindMemory(to: UInt32.self, capacity: 16)
+            for i in 0..<16 { countersPtr[i] = 0 }
+
+            guard let cmd1 = queue.makeCommandBuffer(),
+                  let enc1 = cmd1.makeComputeCommandEncoder() else { continue }
+            enc1.setComputePipelineState(radixHistPipeline)
+            enc1.setBuffer(radixIn, offset: 0, index: 0)
+            enc1.setBuffer(radixHistogram, offset: 0, index: 1)
+            enc1.setBytes(&radixSizeVar, length: MemoryLayout<UInt32>.size, index: 2)
+            enc1.setBytes(&passVar, length: MemoryLayout<UInt32>.size, index: 3)
+            enc1.dispatchThreads(MTLSize(width: radixSize, height: 1, depth: 1),
+                                threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            enc1.endEncoding()
+            cmd1.commit()
+            cmd1.waitUntilCompleted()
+
+            // Phase 2: Prefix sum (single thread)
+            guard let cmd2 = queue.makeCommandBuffer(),
+                  let enc2 = cmd2.makeComputeCommandEncoder() else { continue }
+            enc2.setComputePipelineState(radixPrefixPipeline)
+            enc2.setBuffer(radixHistogram, offset: 0, index: 0)
+            enc2.setBuffer(radixPrefix, offset: 0, index: 1)
+            enc2.dispatchThreads(MTLSize(width: 16, height: 1, depth: 1),
+                                threadsPerThreadgroup: MTLSize(width: 16, height: 1, depth: 1))
+            enc2.endEncoding()
+            cmd2.commit()
+            cmd2.waitUntilCompleted()
+
+            // Phase 3: Reorder
+            guard let cmd3 = queue.makeCommandBuffer(),
+                  let enc3 = cmd3.makeComputeCommandEncoder() else { continue }
+            enc3.setComputePipelineState(radixReorderPipeline)
+            enc3.setBuffer(radixIn, offset: 0, index: 0)
+            enc3.setBuffer(radixOut, offset: 0, index: 1)
+            enc3.setBuffer(radixHistogram, offset: 0, index: 2)
+            enc3.setBuffer(radixPrefix, offset: 0, index: 3)
+            enc3.setBuffer(radixCounters, offset: 0, index: 4)
+            enc3.setBytes(&radixSizeVar, length: MemoryLayout<UInt32>.size, index: 5)
+            enc3.setBytes(&passVar, length: MemoryLayout<UInt32>.size, index: 6)
+            enc3.dispatchThreads(MTLSize(width: radixSize, height: 1, depth: 1),
+                                threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            enc3.endEncoding()
+            cmd3.commit()
+            cmd3.waitUntilCompleted()
+        }
+    }
+    let radixEnd = getTimeNanos()
+    let radixOps = Int64(radixSize) * Int64(radixIterations) * Int64(radixPasses) * 3  // 3 phases
+    let radixGops = Double(radixOps) / getElapsedSeconds(start: radixStart, end: radixEnd) / 1e9
+
+    print("Radix Sort (256K x 4 passes): \(String(format: "%.3f", radixGops)) GOPS")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")

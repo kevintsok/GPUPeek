@@ -123,6 +123,7 @@
 | **Stencil Iterated** | 0.091 GOPS | 5次迭代stencil |
 | **Stream Compact Naive** | 0.026 GOPS | 原子操作过滤 |
 | **Stream Compact Tiled** | 0.022 GOPS | 简化版tiled |
+| **Radix Sort (3-phase)** | 0.017 GOPS | Histogram+Prefix+Reorder |
 | **Indirect Gather** | 0.031 GOPS | 索引读取操作 |
 | **Indirect Scatter** | 0.034 GOPS | 索引写入操作 |
 | **Double Buffer** | 0.018 GOPS | 与单缓冲相当(未重叠) |
@@ -149,6 +150,7 @@
 - **Matrix Transpose** - Shared Memory分块比Naive快1.2x，减少了bank冲突和非合并访问
 - **Stencil Computation** - Shared Memory带halo单元比Naive快1.2x，减少了重复的全局内存访问
 - **Stream Compaction** - 原子操作实现过滤，性能约0.026 GOPS
+- **Radix Sort** - 3阶段(直方图+前缀和+重排)排序，0.017 GOPS，受限于原子争用
 - **Advanced Atomics** - Fetch Add/Min/Max约0.04 GOPS，CAS最慢(0.012 GOPS)因需要重试机制
 - **Memory Ordering** - Metal仅支持memory_order_relaxed（设备地址空间），其他语义(acquire/release/seq_cst)仅适用于threadgroup地址空间
 - **Indirect Addressing** - Gather/Scatter约0.03 GOPS，索引访问比顺序访问慢但适合图算法等场景
