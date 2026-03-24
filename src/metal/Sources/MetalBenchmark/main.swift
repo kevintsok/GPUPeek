@@ -2116,6 +2116,88 @@ kernel void bfs_init(device uint* distances [[buffer(0)]],
         frontier[id] = 0xFFFFFFFF;
     }
 }
+
+// ============================================================
+// Heat Equation / Jacobi Iteration
+// Solves 2D heat equation: T_new = alpha * Laplacian(T_old)
+// ============================================================
+
+// Jacobi iteration: one step of heat equation update
+kernel void jacobi_iteration(device const float* in [[buffer(0)]],
+                           device float* out [[buffer(1)]],
+                           device const float* alpha [[buffer(2)]],
+                           constant uint2& size [[buffer(3)]],
+                           uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= size.x || gid.y >= size.y) return;
+
+    // Boundary conditions: fixed temperature (Dirichlet)
+    if (gid.x == 0 || gid.x == size.x - 1 || gid.y == 0 || gid.y == size.y - 1) {
+        out[gid.y * size.x + gid.x] = in[gid.y * size.x + gid.x];
+        return;
+    }
+
+    // Get 4 neighbors
+    float center = in[gid.y * size.x + gid.x];
+    float left = in[gid.y * size.x + (gid.x - 1)];
+    float right = in[gid.y * size.x + (gid.x + 1)];
+    float up = in[(gid.y - 1) * size.x + gid.x];
+    float down = in[(gid.y + 1) * size.x + gid.x];
+
+    // Laplacian = (left + right + up + down - 4*center) / dx^2
+    // Simplified: out = center + alpha * (left + right + up + down - 4*center)
+    out[gid.y * size.x + gid.x] = center + alpha[0] * (left + right + up + down - 4.0f * center);
+}
+
+// Jacobi iteration with shared memory optimization
+kernel void jacobi_iteration_shared(device const float* in [[buffer(0)]],
+                                  device float* out [[buffer(1)]],
+                                  device const float* alpha [[buffer(2)]],
+                                  threadgroup float* tile [[threadgroup(0)]],
+                                  constant uint2& size [[buffer(3)]],
+                                  uint2 gid [[thread_position_in_grid]],
+                                  uint2 lid [[thread_position_in_threadgroup]]) {
+    uint tileSize = 16;
+    if (gid.x >= size.x || gid.y >= size.y) return;
+
+    // Load tile into shared memory
+    uint2 tilePos = uint2(lid.x + 1, lid.y + 1);  // Skip boundary
+    uint2 globalPos = uint2(gid.x, gid.y);
+    uint localIdx = lid.y * (tileSize + 2) + lid.x;
+
+    // Load center
+    tile[localIdx] = in[globalPos.y * size.x + globalPos.x];
+
+    // Load halo cells
+    if (lid.x == 0 && gid.x > 0) {
+        tile[localIdx - 1] = in[globalPos.y * size.x + (globalPos.x - 1)];
+    }
+    if (lid.x == tileSize - 1 && gid.x < size.x - 1) {
+        tile[localIdx + 1] = in[globalPos.y * size.x + (globalPos.x + 1)];
+    }
+    if (lid.y == 0 && gid.y > 0) {
+        tile[localIdx - tileSize] = in[(globalPos.y - 1) * size.x + globalPos.x];
+    }
+    if (lid.y == tileSize - 1 && gid.y < size.y - 1) {
+        tile[localIdx + tileSize] = in[(globalPos.y + 1) * size.x + globalPos.x];
+    }
+
+    threadgroup_barrier(mem_flags::mem_none);
+
+    // Boundary: keep original value
+    if (gid.x == 0 || gid.x == size.x - 1 || gid.y == 0 || gid.y == size.y - 1) {
+        out[gid.y * size.x + gid.x] = tile[localIdx];
+        return;
+    }
+
+    // Compute Laplacian
+    float center = tile[localIdx];
+    float left = tile[localIdx - 1];
+    float right = tile[localIdx + 1];
+    float up = tile[localIdx - (tileSize + 2)];
+    float down = tile[localIdx + (tileSize + 2)];
+
+    out[gid.y * size.x + gid.x] = center + alpha[0] * (left + right + up + down - 4.0f * center);
+}
 """
 
 // MARK: - FP16 Deep Dive Shader Library
@@ -5537,6 +5619,86 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     let bfsGops = Double(bfsOps) / getElapsedSeconds(start: bfsStart, end: bfsEnd) / 1e9
 
     print("BFS (65K vertices, 256K edges): \(String(format: "%.3f", bfsGops)) GOPS")
+
+    // ============================================================
+    // 30. HEAT EQUATION / JACOBI ITERATION
+    // Tests iterative PDE solver on 2D grid
+    // ============================================================
+    print("\n--- 30. Heat Equation / Jacobi Iteration ---")
+
+    guard let jacobiFunc = deepLibrary.makeFunction(name: "jacobi_iteration"),
+          let jacobiPipeline = try? device.makeComputePipelineState(function: jacobiFunc) else {
+        print("Failed to create Jacobi pipeline")
+        return
+    }
+
+    // Grid size: 1024x1024
+    let jacobiWidth: UInt32 = 1024
+    let jacobiHeight: UInt32 = 1024
+    let jacobiIterations = 100
+
+    guard let jacobiIn = device.makeBuffer(length: Int(jacobiWidth * jacobiHeight) * MemoryLayout<Float>.size, options: .storageModeShared),
+          let jacobiOut = device.makeBuffer(length: Int(jacobiWidth * jacobiHeight) * MemoryLayout<Float>.size, options: .storageModeShared),
+          let jacobiAlpha = device.makeBuffer(length: MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create Jacobi buffers")
+        return
+    }
+
+    // Initialize grid with some heat source
+    let jacobiInPtr = jacobiIn.contents().bindMemory(to: Float.self, capacity: Int(jacobiWidth * jacobiHeight))
+    for i in 0..<Int(jacobiWidth * jacobiHeight) {
+        jacobiInPtr[i] = Float(20.0)  // Room temperature
+    }
+
+    // Add a heat source in the center
+    let centerX = Int(jacobiWidth / 2)
+    let centerY = Int(jacobiHeight / 2)
+    for dy in -10..<10 {
+        for dx in -10..<10 {
+            let idx = (centerY + dy) * Int(jacobiWidth) + (centerX + dx)
+            if idx >= 0 && idx < Int(jacobiWidth * jacobiHeight) {
+                jacobiInPtr[idx] = Float(100.0)  // Heat source
+            }
+        }
+    }
+
+    // Alpha (thermal diffusivity)
+    let alphaPtr = jacobiAlpha.contents().bindMemory(to: Float.self, capacity: 1)
+    alphaPtr.pointee = Float(0.25)
+
+    var jacobiSize = simd_uint2(jacobiWidth, jacobiHeight)
+
+    // Alternating buffers
+    var jacobiSrc = jacobiIn
+    var jacobiDst = jacobiOut
+
+    // Jacobi iterations
+    let jacobiStart = getTimeNanos()
+    for i in 0..<jacobiIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(jacobiPipeline)
+        encoder.setBuffer(jacobiSrc, offset: 0, index: 0)
+        encoder.setBuffer(jacobiDst, offset: 0, index: 1)
+        encoder.setBuffer(jacobiAlpha, offset: 0, index: 2)
+        encoder.setBytes(&jacobiSize, length: MemoryLayout<simd_uint2>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: Int(jacobiWidth), height: Int(jacobiHeight), depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+
+        // Swap buffers
+        swap(&jacobiSrc, &jacobiDst)
+    }
+    let jacobiEnd = getTimeNanos()
+
+    // Operations: 5 loads + 1 store per interior point
+    let interiorPoints = Int64((jacobiWidth - 2) * (jacobiHeight - 2))
+    let jacobiOps = interiorPoints * Int64(jacobiIterations) * 6  // 5 FLOPs per point
+    let jacobiGops = Double(jacobiOps) / getElapsedSeconds(start: jacobiStart, end: jacobiEnd) / 1e9
+
+    print("Jacobi (1024x1024, 100 iterations): \(String(format: "%.3f", jacobiGops)) GOPS")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")

@@ -132,6 +132,7 @@
 | **GEMM Register Blocked** | 13.14 GOPS | 4x4 blocking, 512x512 |
 | **FFT Radix-2** | 0.01 GOPS | 1024 elements, Cooley-Tukey |
 | **Graph BFS** | 0.040 GOPS | 65K vertices, 256K edges |
+| **Jacobi Iteration** | 0.538 GOPS | 1024x1024 grid, 100 iterations |
 | **Indirect Gather** | 0.031 GOPS | 索引读取操作 |
 | **Indirect Scatter** | 0.034 GOPS | 索引写入操作 |
 | **Double Buffer** | 0.018 GOPS | 与单缓冲相当(未重叠) |
@@ -166,6 +167,7 @@
 - **GEMM Register Blocking** - 13.14 GOPS (512x512)，4x4寄存器分块利用float4向量化，接近roofline峰值
 - **FFT Radix-2** - 0.01 GOPS (1024元素)，O(n log n)复数运算受限于蝶形单元的顺序依赖
 - **Graph BFS** - 0.040 GOPS (65K顶点, 256K边)，图遍历受限于随机内存访问和原子争用
+- **Heat Equation (Jacobi)** - 0.538 GOPS (1024x1024网格, 100次迭代)，规则网格计算达到较高性能，内存访问局部性好
 - **Advanced Atomics** - Fetch Add/Min/Max约0.04 GOPS，CAS最慢(0.012 GOPS)因需要重试机制
 - **Memory Ordering** - Metal仅支持memory_order_relaxed（设备地址空间），其他语义(acquire/release/seq_cst)仅适用于threadgroup地址空间
 - **Indirect Addressing** - Gather/Scatter约0.03 GOPS，索引访问比顺序访问慢但适合图算法等场景
