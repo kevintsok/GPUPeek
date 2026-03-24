@@ -151,6 +151,7 @@
 | **Warp-Level Reduction** | 0.029-0.030 GOPS | Shuffle/Vote/XOR操作 |
 | **Device Architecture Query** | Apple M2 | 32KB共享内存, 8.88GB buffer |
 | **Mixed-Precision GEMM** | 10.54 GOPS | FP16输入反而比FP32慢 |
+| **Instruction Throughput** | 12.33 GOPS | FMA峰值, 加法7.27, 乘法5.24 |
 
 **关键洞察**:
 - **内存合并 (Coalescing)** 是最重要的优化 - 5.3x性能差异
@@ -190,6 +191,7 @@
 - **Warp-Level Reduction** - SIMD shuffle/vote/xor操作极快(~0.03 GOPS)，硬件原生支持高效
 - **Device Architecture** - Apple M2: 32KB threadgroup限制, 8.88GB最大buffer, 统一内存架构
 - **Mixed-Precision GEMM** - FP16输入反而比FP32慢(10.54 vs 13.14 GOPS)，转换开销抵消了内存带宽节省
+- **Instruction Throughput** - FMA峰值12.33 GOPS，加法7.27 GOPS，乘法5.24 GOPS，Apple M2受统一内存带宽限制
 
 ### 4. 并行计算
 

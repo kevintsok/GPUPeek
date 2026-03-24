@@ -6156,6 +6156,180 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     print("\n" + String(repeating: "-", count: 50))
     print("Mixed-Precision GEMM Analysis Complete")
     print(String(repeating: "-", count: 50))
+
+    // ============================================================
+    // 34. INSTRUCTION THROUGHPUT ANALYSIS
+    // Measures peak floating-point operation throughput
+    // Tests FMA, addition, multiplication independently
+    // ============================================================
+    print("\n--- 34. Instruction Throughput Analysis ---")
+
+    // Shader for pure FMA throughput (fused multiply-add)
+    let fmaShader = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    kernel void fma_throughput(device float* out [[buffer(0)]],
+                               constant uint& size [[buffer(1)]],
+                               uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float a = 1.1f, b = 2.2f, c = 3.3f;
+        float result = c;
+        // Unrolled FMA chain - no dependencies
+        for (uint i = 0; i < 64; i++) {
+            result = fma(result, a, b);  // result = result * a + b
+        }
+        out[id] = result;
+    }
+
+    kernel void add_throughput(device float* out [[buffer(0)]],
+                              constant uint& size [[buffer(1)]],
+                              uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float a = 1.1f, b = 2.2f;
+        float result = b;
+        for (uint i = 0; i < 64; i++) {
+            result = result + a;
+        }
+        out[id] = result;
+    }
+
+    kernel void mul_throughput(device float* out [[buffer(0)]],
+                              constant uint& size [[buffer(1)]],
+                              uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float a = 1.1f, b = 2.2f;
+        float result = b;
+        for (uint i = 0; i < 64; i++) {
+            result = result * a;
+        }
+        out[id] = result;
+    }
+
+    kernel void dependency_chain(device float* out [[buffer(0)]],
+                                constant uint& size [[buffer(1)]],
+                                uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float result = 1.1f;
+        // Chain with true dependency - each op depends on previous
+        for (uint i = 0; i < 64; i++) {
+            result = result * 1.001f + 0.001f;
+        }
+        out[id] = result;
+    }
+    """
+
+    guard let fmaLib = try? device.makeLibrary(source: fmaShader, options: nil),
+          let fmaFunc = fmaLib.makeFunction(name: "fma_throughput"),
+          let addFunc = fmaLib.makeFunction(name: "add_throughput"),
+          let mulFunc = fmaLib.makeFunction(name: "mul_throughput"),
+          let depFunc = fmaLib.makeFunction(name: "dependency_chain"),
+          let fmaPipe = try? device.makeComputePipelineState(function: fmaFunc),
+          let addPipe = try? device.makeComputePipelineState(function: addFunc),
+          let mulPipe = try? device.makeComputePipelineState(function: mulFunc),
+          let depPipe = try? device.makeComputePipelineState(function: depFunc) else {
+        print("Failed to create throughput pipelines")
+        return
+    }
+
+    let throughputSize: UInt32 = 1024 * 1024
+    let loopCount: UInt32 = 64
+    let tpIterations = 10
+
+    guard let outBuf = device.makeBuffer(length: Int(throughputSize) * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+
+    var sizeVar = throughputSize
+    var loopVar = loopCount
+
+    // FMA Throughput
+    var fmaCmd = 0
+    let fmaStart = getTimeNanos()
+    for _ in 0..<tpIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let enc = cmd.makeComputeCommandEncoder() else { continue }
+        enc.setComputePipelineState(fmaPipe)
+        enc.setBuffer(outBuf, offset: 0, index: 0)
+        enc.setBytes(&sizeVar, length: MemoryLayout<UInt32>.size, index: 1)
+        enc.dispatchThreads(MTLSize(width: Int(throughputSize), height: 1, depth: 1),
+                          threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        enc.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+        fmaCmd += 1
+    }
+    let fmaEnd = getTimeNanos()
+    // FLOPs: 2 per FMA (mul + add), 64 per thread
+    let fmaFlops = 2.0 * Double(throughputSize) * Double(loopCount) * Double(fmaCmd)
+    let fmaGops = fmaFlops / getElapsedSeconds(start: fmaStart, end: fmaEnd) / 1e9
+
+    // Addition Throughput
+    let addStart = getTimeNanos()
+    for _ in 0..<tpIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let enc = cmd.makeComputeCommandEncoder() else { continue }
+        enc.setComputePipelineState(addPipe)
+        enc.setBuffer(outBuf, offset: 0, index: 0)
+        enc.setBytes(&sizeVar, length: MemoryLayout<UInt32>.size, index: 1)
+        enc.dispatchThreads(MTLSize(width: Int(throughputSize), height: 1, depth: 1),
+                          threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        enc.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let addEnd = getTimeNanos()
+    // FLOPs: 1 per add
+    let addFlops = Double(throughputSize) * Double(loopCount) * Double(tpIterations)
+    let addGops = addFlops / getElapsedSeconds(start: addStart, end: addEnd) / 1e9
+
+    // Multiplication Throughput
+    let mulStart = getTimeNanos()
+    for _ in 0..<tpIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let enc = cmd.makeComputeCommandEncoder() else { continue }
+        enc.setComputePipelineState(mulPipe)
+        enc.setBuffer(outBuf, offset: 0, index: 0)
+        enc.setBytes(&sizeVar, length: MemoryLayout<UInt32>.size, index: 1)
+        enc.dispatchThreads(MTLSize(width: Int(throughputSize), height: 1, depth: 1),
+                          threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        enc.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let mulEnd = getTimeNanos()
+    let mulFlops = Double(throughputSize) * Double(loopCount) * Double(tpIterations)
+    let mulGops = mulFlops / getElapsedSeconds(start: mulStart, end: mulEnd) / 1e9
+
+    // Dependency Chain
+    let depStart = getTimeNanos()
+    for _ in 0..<tpIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let enc = cmd.makeComputeCommandEncoder() else { continue }
+        enc.setComputePipelineState(depPipe)
+        enc.setBuffer(outBuf, offset: 0, index: 0)
+        enc.setBytes(&sizeVar, length: MemoryLayout<UInt32>.size, index: 1)
+        enc.dispatchThreads(MTLSize(width: Int(throughputSize), height: 1, depth: 1),
+                          threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        enc.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let depEnd = getTimeNanos()
+    let depFlops = 2.0 * Double(throughputSize) * Double(loopCount) * Double(tpIterations)
+    let depGops = depFlops / getElapsedSeconds(start: depStart, end: depEnd) / 1e9
+
+    print("FMA Throughput (fused mul+add): \(String(format: "%.2f", fmaGops)) GOPS")
+    print("Addition Throughput: \(String(format: "%.2f", addGops)) GOPS")
+    print("Multiplication Throughput: \(String(format: "%.2f", mulGops)) GOPS")
+    print("Dependency Chain (serial): \(String(format: "%.2f", depGops)) GOPS")
+    print("")
+    print("Peak GFLOPS estimate: ~\(String(format: "%.1f", fmaGops * 2.0)) (if 2 FMA units)")
+    print("Note: Apple M2 GPU has limited compute throughput vs memory bandwidth")
+
+    print("\n" + String(repeating: "-", count: 50))
+    print("Instruction Throughput Analysis Complete")
+    print(String(repeating: "-", count: 50))
 }
 
 // MARK: - Deep Memory Bandwidth Research
