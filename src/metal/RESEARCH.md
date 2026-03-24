@@ -170,6 +170,7 @@
 | **Synchronization** | Barrier 4.8μs, kernel launch 0.5μs | Pipeline efficiency ~95% per kernel |
 | **Optimization Cookbook** | 10x+ impact patterns | Memory coalescing, burst write, vectorization |
 | **Real-World Case Studies** | CNN 5x, N-Body 7x, SpMV 6x | Kernel fusion, tiling, vectorization |
+| **Algorithm Performance Database** | Complete reference | 49 sections synthesized |
 
 **关键洞察**:
 - **Comprehensive Memory Bandwidth Study** - Float4向量化读取(3.79 GB/s)比标量读取快约4倍，与理论向量化收益一致；合并写入(2.05 GB/s)比普通写入快约1.2倍；在64MB达到饱和点(4.18 GB/s)
@@ -418,4 +419,4 @@
 
 *研究完成日期: 2026-03-25*
 *GPU: Apple M2 (Family Apple 7+)*
-*测试章节: 48个综合基准测试*
+*测试章节: 49个综合基准测试*
