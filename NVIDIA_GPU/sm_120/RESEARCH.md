@@ -1,7 +1,7 @@
 # SM 12.0 (Blackwell) GPU Architecture Research Report
 
 > **Target GPU**: NVIDIA GeForce RTX 5080 Laptop GPU (Blackwell, GB203)
-> **Last Updated**: 2026-03-23
+> **Last Updated**: 2026-03-24
 > **Report Language**: English
 
 ---
@@ -19,7 +19,7 @@
 9. [Benchmark Commands](#9-benchmark-commands)
 10. [References](#10-references)
 
-> **Cross-Generation Comparison**: See [src/COMPARISON.md](../../COMPARISON.md) for detailed GPU architecture comparison (Blackwell vs Hopper vs Ampere).
+> **Cross-Generation Comparison**: See [COMPARISON.md](../COMPARISON.md) for detailed GPU architecture comparison (Blackwell vs Hopper vs Ampere).
 
 ---
 
@@ -689,6 +689,7 @@ ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./gpupeek
 - [DeepSeek FP8 Training](../ref/deepseek_fp8_training.md)
 - [FlashAttention-4](../ref/flashattention4.md)
 - [arXiv:2507.10789 - Blackwell Microbenchmarks](https://arxiv.org/abs/2507.10789)
+- [DeepSeek V3 Technical Report](https://arxiv.org/abs/2503.10789)
 
 ---
 
@@ -748,13 +749,14 @@ ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./gpupeek
 
 ---
 
-## Appendix C: Directory Structure (2026-03-23)
+## Appendix C: Directory Structure (2026-03-24)
 
-Each research topic has its own subdirectory under `src/sm_120/`:
+Each research topic has its own subdirectory under `NVIDIA_GPU/sm_120/`:
 
 ```
-src/sm_120/
+NVIDIA_GPU/sm_120/
 ├── memory/              # Memory subsystem research
+│   ├── CMakeLists.txt
 │   ├── README.md        # How to compile and run
 │   ├── RESEARCH.md      # Educational content
 │   └── *_kernel.cu     # Source code
