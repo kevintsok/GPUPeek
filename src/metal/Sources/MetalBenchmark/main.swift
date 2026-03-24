@@ -3337,6 +3337,93 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     print("Scatter (indexed write): \(String(format: "%.3f", gopsScatter)) GOPS")
     print("Gather+Process: \(String(format: "%.3f", gopsGatherProc)) GOPS")
 
+    // 16. DOUBLE BUFFERING / PIPELINING
+    print("\n--- 16. Double Buffering Analysis ---")
+
+    guard let dualAFunc = deepLibrary.makeFunction(name: "dual_buffer_compute_a"),
+          let dualBFunc = deepLibrary.makeFunction(name: "dual_buffer_compute_b"),
+          let singleBufFunc = deepLibrary.makeFunction(name: "single_buffer_compute"),
+          let dualAPipeline = try? device.makeComputePipelineState(function: dualAFunc),
+          let dualBPipeline = try? device.makeComputePipelineState(function: dualBFunc),
+          let singleBufPipeline = try? device.makeComputePipelineState(function: singleBufFunc) else {
+        print("Failed to create double buffering pipelines")
+        return
+    }
+
+    let dblSize = 256 * 1024
+    let dblIter = 50
+    guard let dblInA = device.makeBuffer(length: dblSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let dblInB = device.makeBuffer(length: dblSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let dblOut = device.makeBuffer(length: dblSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let dblTemp = device.makeBuffer(length: dblSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create double buffering buffers")
+        return
+    }
+
+    var dblSz = UInt32(dblSize)
+
+    // Single Buffer Baseline
+    let startSingle = getTimeNanos()
+    for _ in 0..<dblIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(singleBufPipeline)
+        encoder.setBuffer(dblInA, offset: 0, index: 0)
+        encoder.setBuffer(dblOut, offset: 0, index: 1)
+        encoder.setBytes(&dblSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: dblSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endSingle = getTimeNanos()
+    let gopsSingle = Double(dblSize) * Double(dblIter) / getElapsedSeconds(start: startSingle, end: endSingle) / 1e9
+
+    // Double Buffer - Phase A
+    let startDualA = getTimeNanos()
+    for _ in 0..<dblIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(dualAPipeline)
+        encoder.setBuffer(dblInA, offset: 0, index: 0)
+        encoder.setBuffer(dblInB, offset: 0, index: 1)
+        encoder.setBuffer(dblOut, offset: 0, index: 2)
+        encoder.setBuffer(dblTemp, offset: 0, index: 3)
+        encoder.setBytes(&dblSz, length: MemoryLayout<UInt32>.size, index: 4)
+        encoder.dispatchThreads(MTLSize(width: dblSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endDualA = getTimeNanos()
+    let gopsDualA = Double(dblSize) * Double(dblIter) / getElapsedSeconds(start: startDualA, end: endDualA) / 1e9
+
+    // Double Buffer - Phase B (continuation)
+    let startDualB = getTimeNanos()
+    for _ in 0..<dblIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(dualBPipeline)
+        encoder.setBuffer(dblInA, offset: 0, index: 0)
+        encoder.setBuffer(dblInB, offset: 0, index: 1)
+        encoder.setBuffer(dblOut, offset: 0, index: 2)
+        encoder.setBuffer(dblTemp, offset: 0, index: 3)
+        encoder.setBytes(&dblSz, length: MemoryLayout<UInt32>.size, index: 4)
+        encoder.dispatchThreads(MTLSize(width: dblSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endDualB = getTimeNanos()
+    let gopsDualB = Double(dblSize) * Double(dblIter) / getElapsedSeconds(start: startDualB, end: endDualB) / 1e9
+
+    print("Single Buffer: \(String(format: "%.3f", gopsSingle)) GOPS (baseline)")
+    print("Double Buffer A: \(String(format: "%.3f", gopsDualA)) GOPS")
+    print("Double Buffer B: \(String(format: "%.3f", gopsDualB)) GOPS")
+
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")
     print(String(repeating: "=", count: 60))
