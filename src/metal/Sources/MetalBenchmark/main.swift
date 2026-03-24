@@ -6330,6 +6330,93 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     print("\n" + String(repeating: "-", count: 50))
     print("Instruction Throughput Analysis Complete")
     print(String(repeating: "-", count: 50))
+
+    // ============================================================
+    // 35. 3x3 CONVOLUTION (CNN BASIC OPERATION)
+    // Tests matrix multiply with sliding window access pattern
+    // ============================================================
+    print("\n--- 35. 3x3 Convolution Analysis ---")
+
+    // Use a simple 3x3 filter that just sums neighbors
+    let convShader = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    kernel void conv3x3(device const float* input [[buffer(0)]],
+                         device float* output [[buffer(1)]],
+                         constant uint& width [[buffer(2)]],
+                         uint id [[thread_position_in_grid]]) {
+        uint x = id % width;
+        uint y = id / width;
+        if (x < 1 || y < 1 || x >= width - 1 || y >= width - 1) {
+            output[id] = 0.0f;
+            return;
+        }
+        float sum = 0.0f;
+        sum += input[(y-1) * width + (x-1)];
+        sum += input[(y-1) * width + x];
+        sum += input[(y-1) * width + (x+1)];
+        sum += input[y * width + (x-1)];
+        sum += input[y * width + x];
+        sum += input[y * width + (x+1)];
+        sum += input[(y+1) * width + (x-1)];
+        sum += input[(y+1) * width + x];
+        sum += input[(y+1) * width + (x+1)];
+        output[id] = sum;
+    }
+    """
+
+    guard let convLib = try? device.makeLibrary(source: convShader, options: nil) else {
+        print("Failed to compile convolution shader")
+        return
+    }
+    guard let convFunc = convLib.makeFunction(name: "conv3x3"),
+          let convPipe = try? device.makeComputePipelineState(function: convFunc) else {
+        print("Failed to create convolution pipeline")
+        return
+    }
+
+    let convSize: UInt32 = 1024 * 1024
+    let convIterations = 10
+
+    guard let convInput = device.makeBuffer(length: Int(convSize) * MemoryLayout<Float>.size, options: .storageModeShared),
+          let convOutput = device.makeBuffer(length: Int(convSize) * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+
+    // Initialize input
+    let convInPtr = convInput.contents().bindMemory(to: Float.self, capacity: Int(convSize))
+    for i in 0..<Int(convSize) {
+        convInPtr[i] = Float.random(in: 0.0...1.0)
+    }
+
+    var convWidthVar: UInt32 = 1024
+
+    let convStart = getTimeNanos()
+    for _ in 0..<convIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let enc = cmd.makeComputeCommandEncoder() else { continue }
+        enc.setComputePipelineState(convPipe)
+        enc.setBuffer(convInput, offset: 0, index: 0)
+        enc.setBuffer(convOutput, offset: 0, index: 1)
+        enc.setBytes(&convWidthVar, length: MemoryLayout<UInt32>.size, index: 2)
+        enc.dispatchThreads(MTLSize(width: Int(convSize), height: 1, depth: 1),
+                          threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        enc.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let convEnd = getTimeNanos()
+    // FLOPs: 9 adds per pixel
+    let convFlops = 9.0 * Double(convSize) * Double(convIterations)
+    let convGops = convFlops / getElapsedSeconds(start: convStart, end: convEnd) / 1e9
+
+    print("3x3 Convolution (1M pixels, 1024x1024): \(String(format: "%.3f", convGops)) GOPS")
+    print("(GOPS = 9 FLOPs per pixel)")
+
+    print("\n" + String(repeating: "-", count: 50))
+    print("3x3 Convolution Analysis Complete")
+    print(String(repeating: "-", count: 50))
 }
 
 // MARK: - Deep Memory Bandwidth Research
