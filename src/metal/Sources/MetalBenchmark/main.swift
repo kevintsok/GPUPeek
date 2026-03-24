@@ -6417,6 +6417,107 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     print("\n" + String(repeating: "-", count: 50))
     print("3x3 Convolution Analysis Complete")
     print(String(repeating: "-", count: 50))
+
+    // ============================================================
+    // 36. N-BODY SIMULATION (GRAVITATIONAL PARTICLES)
+    // Tests O(n^2) pair-wise interaction computation
+    // Common in astrophysics and molecular dynamics
+    // ============================================================
+    print("\n--- 36. N-Body Simulation Analysis ---")
+
+    let nbodyShader = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    // N-body: compute gravitational force on each body from all others
+    // Uses softening to avoid singularity at zero distance
+    kernel void nbody_naive(device float4* pos [[buffer(0)]],
+                           device float3* vel [[buffer(1)]],
+                           device float3* acc [[buffer(2)]],
+                           constant uint& numBodies [[buffer(3)]],
+                           uint id [[thread_position_in_grid]]) {
+        if (id >= numBodies) return;
+
+        float G = 1.0f;
+        float softening = 0.01f;
+
+        float3 myPos = pos[id].xyz;
+        float3 accel = float3(0.0f);
+
+        // Compute pairwise gravitational forces
+        for (uint j = 0; j < numBodies; j++) {
+            if (id == j) continue;
+            float3 otherPos = pos[j].xyz;
+            float3 r = otherPos - myPos;
+            float distSq = r.x * r.x + r.y * r.y + r.z * r.z + softening * softening;
+            float dist = sqrt(distSq);
+            float invDist = 1.0f / (dist * dist * dist);
+            accel += G * r * invDist;
+        }
+
+        acc[id] = accel;
+    }
+    """
+
+    guard let nbodyLib = try? device.makeLibrary(source: nbodyShader, options: nil) else {
+        print("Failed to compile nbody shader")
+        return
+    }
+    guard let nbodyFunc = nbodyLib.makeFunction(name: "nbody_naive"),
+          let nbodyPipe = try? device.makeComputePipelineState(function: nbodyFunc) else {
+        print("Failed to create nbody pipeline")
+        return
+    }
+
+    let nbodyCount: UInt32 = 1024
+    let nbodyIterations = 5
+
+    guard let nbodyPos = device.makeBuffer(length: Int(nbodyCount) * MemoryLayout<simd_float4>.size, options: .storageModeShared),
+          let nbodyVel = device.makeBuffer(length: Int(nbodyCount) * MemoryLayout<simd_float3>.size, options: .storageModeShared),
+          let nbodyAcc = device.makeBuffer(length: Int(nbodyCount) * MemoryLayout<simd_float3>.size, options: .storageModeShared) else {
+        return
+    }
+
+    // Initialize positions and velocities
+    let nbodyPosPtr = nbodyPos.contents().bindMemory(to: simd_float4.self, capacity: Int(nbodyCount))
+    for i in 0..<Int(nbodyCount) {
+        nbodyPosPtr[i] = simd_float4(Float.random(in: -100...100),
+                               Float.random(in: -100...100),
+                               Float.random(in: -100...100),
+                               1.0)  // mass
+    }
+
+    var nbodyCountVar = nbodyCount
+
+    let nbodyStart = getTimeNanos()
+    for _ in 0..<nbodyIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let enc = cmd.makeComputeCommandEncoder() else { continue }
+        enc.setComputePipelineState(nbodyPipe)
+        enc.setBuffer(nbodyPos, offset: 0, index: 0)
+        enc.setBuffer(nbodyVel, offset: 0, index: 1)
+        enc.setBuffer(nbodyAcc, offset: 0, index: 2)
+        enc.setBytes(&nbodyCountVar, length: MemoryLayout<UInt32>.size, index: 3)
+        enc.dispatchThreads(MTLSize(width: Int(nbodyCount), height: 1, depth: 1),
+                          threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        enc.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let nbodyEnd = getTimeNanos()
+
+    // FLOPs: For n bodies, we compute n*(n-1)/2 pairwise interactions
+    // Each interaction: ~20 FLOPs (distance calc, inverse, multiply, add)
+    // Total FLOPs per iteration = n * (n-1) * 20
+    let nbodyFlops = Double(nbodyCount) * Double(nbodyCount - 1) * 20.0 * Double(nbodyIterations)
+    let nbodyGops = nbodyFlops / getElapsedSeconds(start: nbodyStart, end: nbodyEnd) / 1e9
+
+    print("N-Body Simulation (\(nbodyCount) bodies): \(String(format: "%.4f", nbodyGops)) GOPS")
+    print("(O(n²) = \(nbodyCount * nbodyCount) pairwise interactions)")
+
+    print("\n" + String(repeating: "-", count: 50))
+    print("N-Body Simulation Analysis Complete")
+    print(String(repeating: "-", count: 50))
 }
 
 // MARK: - Deep Memory Bandwidth Research
