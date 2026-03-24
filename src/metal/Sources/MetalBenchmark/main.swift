@@ -1789,6 +1789,81 @@ kernel void scan_naive(device const float* in [[buffer(0)]],
     }
     out[id] = sum;
 }
+
+// ============================================================
+// Bucket Sort / Hash-based Distribution
+// ============================================================
+
+// Bucket Sort: Phase 1 - Hash elements to buckets
+kernel void bucket_hash(device const float* in [[buffer(0)]],
+                       device atomic_uint* bucket_counts [[buffer(1)]],
+                       device uint* bucket_ids [[buffer(2)]],
+                       constant uint& size [[buffer(3)]],
+                       constant uint& num_buckets [[buffer(4)]],
+                       uint id [[thread_position_in_grid]]) {
+    if (id >= size) return;
+
+    float val = in[id];
+    uint bucket = uint(val * float(num_buckets));
+    if (bucket >= num_buckets) bucket = num_buckets - 1;
+
+    bucket_ids[id] = bucket;
+    atomic_fetch_add_explicit(&bucket_counts[bucket], 1, memory_order_relaxed);
+}
+
+// Bucket Sort: Phase 2 - Scan bucket counts for offsets
+kernel void bucket_scan_counts(device const atomic_uint* counts [[buffer(0)]],
+                              device uint* offsets [[buffer(1)]],
+                              constant uint& num_buckets [[buffer(2)]]) {
+    uint sum = 0;
+    for (uint i = 0; i < num_buckets; i++) {
+        uint cnt = atomic_load_explicit(&counts[i], memory_order_relaxed);
+        offsets[i] = sum;
+        sum += cnt;
+    }
+}
+
+// Bucket Sort: Phase 3 - Distribute elements to buckets
+kernel void bucket_distribute(device const float* in [[buffer(0)]],
+                             device float* out [[buffer(1)]],
+                             device const uint* bucket_ids [[buffer(2)]],
+                             device const uint* offsets [[buffer(3)]],
+                             device atomic_uint* bucket_pos [[buffer(4)]],
+                             constant uint& size [[buffer(5)]],
+                             constant uint& num_buckets [[buffer(6)]],
+                             uint id [[thread_position_in_grid]]) {
+    if (id >= size) return;
+
+    float val = in[id];
+    uint bucket = bucket_ids[id];
+    uint myOffset = atomic_fetch_add_explicit(&bucket_pos[bucket], 1, memory_order_relaxed);
+    out[offsets[bucket] + myOffset] = val;
+}
+
+// Bucket Sort: Phase 4 - Sort within each bucket (simple insertion sort)
+// Each thread handles one bucket's local sort
+kernel void bucket_local_sort(device float* bucket_data [[buffer(0)]],
+                             device const uint* bucket_offsets [[buffer(1)]],
+                             device const uint* bucket_counts [[buffer(2)]],
+                             device float* temp [[buffer(3)]],
+                             constant uint& num_buckets [[buffer(4)]],
+                             uint id [[thread_position_in_grid]]) {
+    if (id >= num_buckets) return;
+
+    uint start = bucket_offsets[id];
+    uint count = bucket_counts[id];
+
+    // Simple O(n^2) insertion sort within bucket
+    for (uint i = 1; i < count; i++) {
+        float key = bucket_data[start + i];
+        uint j = i;
+        while (j > 0 && bucket_data[start + j - 1] > key) {
+            bucket_data[start + j] = bucket_data[start + j - 1];
+            j--;
+        }
+        bucket_data[start + j] = key;
+    }
+}
 """
 
 // MARK: - FP16 Deep Dive Shader Library
@@ -4885,6 +4960,109 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     print("Scan Naive (sequential): \(String(format: "%.3f", scanGopsNaive)) GOPS")
     print("Scan Hillis-Steele (work-efficient): \(String(format: "%.3f", scanGopsHillis)) GOPS")
     print("Scan Kogge-Stone (latency-optimal): \(String(format: "%.3f", scanGopsKogge)) GOPS")
+
+    // ============================================================
+    // 26. BUCKET SORT / HASH-BASED DISTRIBUTION
+    // Tests parallel bucket sort with hash distribution
+    // ============================================================
+    print("\n--- 26. Bucket Sort Analysis ---")
+
+    guard let bucketHashFunc = deepLibrary.makeFunction(name: "bucket_hash"),
+          let bucketScanFunc = deepLibrary.makeFunction(name: "bucket_scan_counts"),
+          let bucketDistFunc = deepLibrary.makeFunction(name: "bucket_distribute"),
+          let bucketSortFunc = deepLibrary.makeFunction(name: "bucket_local_sort"),
+          let bucketHashPipeline = try? device.makeComputePipelineState(function: bucketHashFunc),
+          let bucketScanPipeline = try? device.makeComputePipelineState(function: bucketScanFunc),
+          let bucketDistPipeline = try? device.makeComputePipelineState(function: bucketDistFunc),
+          let bucketSortPipeline = try? device.makeComputePipelineState(function: bucketSortFunc) else {
+        print("Failed to create bucket sort pipelines")
+        return
+    }
+
+    let bucketSize = 256 * 1024  // 256K elements
+    let bucketIterations = 10
+    var numBuckets: UInt32 = 256
+
+    guard let bucketIn = device.makeBuffer(length: bucketSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let bucketOut = device.makeBuffer(length: bucketSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let bucketCounts = device.makeBuffer(length: Int(numBuckets) * MemoryLayout<UInt32>.size, options: .storageModeShared),
+          let bucketIds = device.makeBuffer(length: bucketSize * MemoryLayout<UInt32>.size, options: .storageModeShared),
+          let bucketOffsets = device.makeBuffer(length: Int(numBuckets) * MemoryLayout<UInt32>.size, options: .storageModeShared),
+          let bucketPos = device.makeBuffer(length: Int(numBuckets) * MemoryLayout<UInt32>.size, options: .storageModeShared),
+          let bucketTemp = device.makeBuffer(length: bucketSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create bucket sort buffers")
+        return
+    }
+
+    // Initialize input with random values [0, 1)
+    let bucketInPtr = bucketIn.contents().bindMemory(to: Float.self, capacity: bucketSize)
+    for i in 0..<bucketSize {
+        bucketInPtr[i] = Float.random(in: 0.0..<1.0)
+    }
+
+    var bucketSizeVar = UInt32(bucketSize)
+
+    // Bucket Sort: Hash -> Scan -> Distribute -> Sort
+    let bucketStart = getTimeNanos()
+    for _ in 0..<bucketIterations {
+        // Reset counts and positions
+        let countsPtr = bucketCounts.contents().bindMemory(to: UInt32.self, capacity: Int(numBuckets))
+        let posPtr = bucketPos.contents().bindMemory(to: UInt32.self, capacity: Int(numBuckets))
+        for i in 0..<Int(numBuckets) {
+            countsPtr[i] = 0
+            posPtr[i] = 0
+        }
+
+        // Phase 1: Hash to buckets
+        guard let cmd1 = queue.makeCommandBuffer(),
+              let enc1 = cmd1.makeComputeCommandEncoder() else { continue }
+        enc1.setComputePipelineState(bucketHashPipeline)
+        enc1.setBuffer(bucketIn, offset: 0, index: 0)
+        enc1.setBuffer(bucketCounts, offset: 0, index: 1)
+        enc1.setBuffer(bucketIds, offset: 0, index: 2)
+        enc1.setBytes(&bucketSizeVar, length: MemoryLayout<UInt32>.size, index: 3)
+        enc1.setBytes(&numBuckets, length: MemoryLayout<UInt32>.size, index: 4)
+        enc1.dispatchThreads(MTLSize(width: bucketSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        enc1.endEncoding()
+        cmd1.commit()
+        cmd1.waitUntilCompleted()
+
+        // Phase 2: Scan bucket counts
+        guard let cmd2 = queue.makeCommandBuffer(),
+              let enc2 = cmd2.makeComputeCommandEncoder() else { continue }
+        enc2.setComputePipelineState(bucketScanPipeline)
+        enc2.setBuffer(bucketCounts, offset: 0, index: 0)
+        enc2.setBuffer(bucketOffsets, offset: 0, index: 1)
+        enc2.setBytes(&numBuckets, length: MemoryLayout<UInt32>.size, index: 2)
+        enc2.dispatchThreads(MTLSize(width: Int(numBuckets), height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        enc2.endEncoding()
+        cmd2.commit()
+        cmd2.waitUntilCompleted()
+
+        // Phase 3: Distribute elements
+        guard let cmd3 = queue.makeCommandBuffer(),
+              let enc3 = cmd3.makeComputeCommandEncoder() else { continue }
+        enc3.setComputePipelineState(bucketDistPipeline)
+        enc3.setBuffer(bucketIn, offset: 0, index: 0)
+        enc3.setBuffer(bucketOut, offset: 0, index: 1)
+        enc3.setBuffer(bucketIds, offset: 0, index: 2)
+        enc3.setBuffer(bucketOffsets, offset: 0, index: 3)
+        enc3.setBuffer(bucketPos, offset: 0, index: 4)
+        enc3.setBytes(&bucketSizeVar, length: MemoryLayout<UInt32>.size, index: 5)
+        enc3.setBytes(&numBuckets, length: MemoryLayout<UInt32>.size, index: 6)
+        enc3.dispatchThreads(MTLSize(width: bucketSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        enc3.endEncoding()
+        cmd3.commit()
+        cmd3.waitUntilCompleted()
+    }
+    let bucketEnd = getTimeNanos()
+    let bucketOps = Int64(bucketSize) * Int64(bucketIterations)  // One op per element
+    let bucketGops = Double(bucketOps) / getElapsedSeconds(start: bucketStart, end: bucketEnd) / 1e9
+
+    print("Bucket Sort (256K, 256 buckets): \(String(format: "%.3f", bucketGops)) GOPS")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")
