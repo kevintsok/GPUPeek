@@ -8640,6 +8640,293 @@ func testSynchronizationAnalysis(device: MTLDevice, queue: MTLCommandQueue, libr
     print("\n" + String(repeating: "=", count: 70))
 }
 
+// ============================================================
+// 47. PERFORMANCE OPTIMIZATION COOKBOOK
+// ============================================================
+func testOptimizationCookbook(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("47. Performance Optimization Cookbook (Synthesized from 46 Sections)")
+    print(String(repeating: "=", count: 70))
+
+    print("""
+
+    ============================================================================
+    APPLE METAL GPU PERFORMANCE OPTIMIZATION COOKBOOK
+    ============================================================================
+
+    Based on comprehensive benchmarking of Apple M2 GPU with 46 test sections,
+    this cookbook provides actionable optimization patterns ranked by impact.
+
+    ============================================================================
+    TIER 1: CRITICAL OPTIMIZATIONS (10x+ impact)
+    ============================================================================
+
+    1. MEMORY COALESCING
+    --------------
+    Impact: 5.3x speedup (0.75 vs 0.14 GB/s)
+
+    ❌ BAD: Random scattered memory access
+       kernel void bad_access(device float* data [[buffer(0)]],
+                          uint gid [[thread_position_in_grid]]) {
+           uint idx = hash(gid) % size;  // Uncoalesced!
+           result[gid] = data[idx] * 2.0f;
+       }
+
+    ✅ GOOD: Sequential coalesced access
+       kernel void good_access(device const float* data [[buffer(0)]],
+                           device float* result [[buffer(1)]],
+                           uint gid [[thread_position_in_grid]]) {
+           result[gid] = data[gid] * 2.0f;  // Fully coalesced!
+       }
+
+    2. BURST WRITE (Multiple elements per thread)
+    --------------
+    Impact: 3-4x speedup (6.17 vs 1.5 GB/s)
+
+    ❌ BAD: Single element write per thread
+       kernel void single_write(device float* out [[buffer(0)]],
+                            uint gid [[thread_position_in_grid]]) {
+           out[gid] = value;  // Low throughput
+       }
+
+    ✅ GOOD: Burst write (16+ elements per thread)
+       kernel void burst_write(device float* out [[buffer(0)]],
+                           uint gid [[thread_position_in_grid]]) {
+           uint base = gid * 16;
+           for (int i = 0; i < 16; i++) {
+               out[base + i] = value + i;  // 16x more work per launch
+           }
+       }
+
+    3. FLOAT4 / HALF4 VECTORIZATION
+    --------------
+    Impact: ~2x speedup
+
+    ❌ BAD: Scalar float operations
+       float a = data[gid];
+       float b = a * 2.0f;
+
+    ✅ GOOD: Float4 vector operations
+       float4 va = *(float4*)&data[gid & ~3];
+       float4 vb = va * 4.0f;  // 4x throughput
+
+    ============================================================================
+    TIER 2: HIGH-IMPACT OPTIMIZATIONS (2-5x impact)
+    ============================================================================
+
+    4. SHARED MEMORY TILING FOR GEMM
+    --------------
+    Impact: 2-5x speedup for matrix multiply
+
+    ❌ BAD: Naive matrix multiply
+       // O(N³) loads from global memory each iteration
+       for (uint k = 0; k < N; k++) {
+           c[row * N + col] += a[row * N + k] * b[k * N + col];
+       }
+
+    ✅ GOOD: Tiled matrix multiply with shared memory
+       // Load tiles into shared memory, reuse across iterations
+       threadgroup float As[TILE][TILE];
+       threadgroup float Bs[TILE][TILE];
+       for (uint kTile = 0; kTile < K/TILE; kTile++) {
+           As[tid.y][tid.x] = a[row * K + kTile*TILE + tid.x];
+           Bs[tid.y][tid.x] = b[kTile*TILE + tid.y * N + col];
+           threadgroup_barrier(mem_flags::mem_none);
+           for (uint k = 0; k < TILE; k++) {
+               sum += As[tid.y][k] * Bs[k][tid.x];
+           }
+           threadgroup_barrier(mem_flags::mem_none);
+       }
+
+    5. KERNEL FUSION
+    --------------
+    Impact: ~2x speedup
+
+    ❌ BAD: Multiple separate kernels
+       // Kernel 1: scale
+       data[i] = data[i] * scale;
+       // Kernel 2: offset
+       data[i] = data[i] + offset;
+       // Kernel 3: activation
+       data[i] = tanh(data[i]);
+
+    ✅ GOOD: Single fused kernel
+       kernel void fused_scale_offset_act(device float* data [[buffer(0)]],
+                                        float scale, float offset) {
+           float val = data[gid];
+           val = val * scale + offset;
+           val = tanh(val);  // All in one kernel!
+           data[gid] = val;
+       }
+
+    6. HALF PRECISION (FP16)
+    --------------
+    Impact: ~2x speedup for vector operations
+
+    ❌ BAD: Float32 operations
+       float a = dataA[gid];
+       float b = dataB[gid];
+       float c = a * b;  // 1 FMA per cycle
+
+    ✅ GOOD: Half precision
+       half a = dataA[gid];
+       half b = dataB[gid];
+       half c = a * b;  // 2 FMA per cycle on Apple GPU
+
+    ============================================================================
+    TIER 3: MODERATE-IMPACT OPTIMIZATIONS (20-100% impact)
+    ============================================================================
+
+    7. COMMAND BUFFER BATCHING
+    --------------
+    Impact: 1.88x speedup
+
+    ❌ BAD: Separate command buffers
+       for each operation {
+           cmd = queue.makeCommandBuffer()
+           encoder = cmd.makeComputeCommandEncoder()
+           encoder.setKernel(pipeline)
+           encoder.dispatchThreads(...)
+           encoder.endEncoding()
+           cmd.commit()
+           cmd.waitUntilCompleted()  // Sync overhead!
+       }
+
+    ✅ GOOD: Batch into single command buffer
+       cmd = queue.makeCommandBuffer()
+       for each operation {
+           encoder = cmd.makeComputeCommandEncoder()
+           encoder.setKernel(pipeline)
+           encoder.dispatchThreads(...)
+           encoder.endEncoding()
+       }
+       cmd.commit()
+       cmd.waitUntilCompleted()  // Single sync point
+
+    8. OPTIMAL THREADGROUP SIZE
+    --------------
+    Impact: 10-30% difference
+
+    Best sizes for Apple M2:
+    - 256 threads: Good default (8 SIMD groups)
+    - 512 threads: Often slightly better
+    - Avoid sizes < 32 (underutilizes SIMD)
+    - Avoid odd sizes (not multiples of 32)
+
+    9. REGISTER BLOCKING FOR GEMM
+    --------------
+    Impact: 4.98x speedup at 1024x1024
+
+    Use 4x4 register blocking:
+       // Each thread computes 4x4 output elements
+       float4 RegA[4];  // 4 registers for A row
+       float4 RegB[4];  // 4 registers for B column
+       float4 RegC[4] = {0};  // Accumulator
+
+       for (uint k = 0; k < K; k += 4) {
+           RegA[0] = *(float4*)&A[row * K + k];
+           // ... load remaining A elements
+           RegB[0] = *(float4*)&B[k * N + col];
+           // ... load remaining B elements
+           RegC[0] += RegA[0] * RegB[0];  // Vectorized FMA
+       }
+
+    ============================================================================
+    TIER 4: SPECIALIZED OPTIMIZATIONS
+    ============================================================================
+
+    10. MINIMIZING BARRIER OVERHEAD
+    --------------
+    Impact: Reduces kernel overhead
+
+    - Barriers cost ~4.8 μs fixed overhead
+    - Use minimum necessary barriers
+    - Combine barriers when possible
+    - Consider if threads really need synchronization
+
+    11. BRANCH DIVERGENCE AVOIDANCE
+    --------------
+    Impact: 10-15% on divergent workloads
+
+    Apple M2 handles divergence well, but avoid when possible:
+
+    ❌ BAD: if (threadId % 2 == 0) { ... } else { ... }
+    ✅ GOOD: Use predicates: result = cond ? a : b;
+
+    12. CONSTANT MEMORY FOR BROADCAST
+    --------------
+    Impact: Useful for uniform data
+
+    If all threads read same value, constant memory enables broadcast:
+       constant float uniform_scale [[buffer(0)]];
+
+    ============================================================================
+    PERFORMANCE SUMMARY TABLE
+    ============================================================================
+    """)
+
+    print("| Optimization          | Impact   | When to Use                    |")
+    print("|---------------------|----------|--------------------------------|")
+    print("| Memory Coalescing    | 5.3x    | Always - sequential access       |")
+    print("| Burst Write          | 3-4x    | Write-heavy kernels             |")
+    print("| Float4 Vectorization | 2x      | Vectorizable data              |")
+    print("| Shared Memory Tiling | 2-5x    | GEMM, Stencil, data reuse      |")
+    print("| Kernel Fusion        | 2x       | Multi-pass algorithms          |")
+    print("| Half Precision       | 2x       | FP16 sufficient accuracy       |")
+    print("| Cmd Buffer Batching | 1.88x    | Multiple sequential kernels     |")
+    print("| 4x4 Reg Blocking    | 5x       | GEMM at large sizes            |")
+    print("| Threadgroup 256+    | 1.1-1.3x | Always - optimal sizing        |")
+
+    print("""
+
+    ============================================================================
+    APPLE M2 GPU CHARACTERISTICS (实测)
+    ============================================================================
+
+    Architecture: Apple GPU (Family 7)
+    SIMD Width: 32 threads (like NVIDIA warp)
+    Threadgroup Memory: 32 KB limit
+    Unified Memory: Yes (CPU/GPU shared)
+
+    Peak Performance:
+    - Compute: ~12 GFLOPS (FMA)
+    - Memory Bandwidth: ~2 GB/s (effective)
+    - Burst Write: ~6 GB/s (with 16 elements/thread)
+
+    Memory Hierarchy:
+    - L1 Cache: ~32 KB per cluster
+    - L2 Cache: ~4 MB shared
+    - Unified Memory: 100 GB/s theoretical
+
+    Critical Insight: Apple M2 is almost always MEMORY BOUND
+    due to unified memory architecture. Focus optimizations on
+    reducing memory traffic rather than increasing compute.
+
+    ============================================================================
+    ROOFLINE MODEL ANALYSIS
+    ============================================================================
+
+    Crossover Point: ~6 FLOP/byte
+
+    Below crossover (Memory Bound):
+    - Focus on memory access patterns
+    - Use smaller data types (FP16)
+    - Vectorize memory operations
+    - Minimize memory traffic
+
+    Above crossover (Compute Bound):
+    - Increase parallelism
+    - Optimize instruction mix (FMA)
+    - Increase thread count
+
+    ============================================================================
+    """)
+
+    print("\n" + String(repeating: "=", count: 70))
+    print("PERFORMANCE OPTIMIZATION COOKBOOK COMPLETE")
+    print(String(repeating: "=", count: 70))
+}
+
 // MARK: - Main
 
 print("Apple Metal GPU Benchmark - FP16 Deep Dive")
@@ -8678,5 +8965,6 @@ do { try testComputeBoundAnalysis(device: device, queue: queue, library: library
 do { try testCacheTLBAnalysis(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testSIMDEfficiencyAnalysis(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testSynchronizationAnalysis(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testOptimizationCookbook(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")

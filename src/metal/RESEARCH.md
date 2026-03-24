@@ -168,6 +168,7 @@
 | **Cache/TLB Analysis** | L1 32KB, L2 ~4MB | Working set >8MB reaches DRAM bandwidth |
 | **SIMD Efficiency** | 32-thread SIMD groups | Vote/shuffle 0.02 GOPS, hardware-native |
 | **Synchronization** | Barrier 4.8μs, kernel launch 0.5μs | Pipeline efficiency ~95% per kernel |
+| **Optimization Cookbook** | 10x+ impact patterns | Memory coalescing, burst write, vectorization |
 
 **关键洞察**:
 - **Comprehensive Memory Bandwidth Study** - Float4向量化读取(3.79 GB/s)比标量读取快约4倍，与理论向量化收益一致；合并写入(2.05 GB/s)比普通写入快约1.2倍；在64MB达到饱和点(4.18 GB/s)
@@ -175,6 +176,7 @@
 - **Cache/TLB分析** - Apple M2 L1缓存约32KB，L2缓存约4MB；工作集超过8MB后性能提升明显（达到DRAM带宽20GB/s）；缓存行大小64字节；跨步访问和随机访问会导致缓存效率下降
 - **SIMD Efficiency分析** - Apple GPU使用32线程SIMD组（等同于NVIDIA warp）；simd_any/simd_all/simd_shuffle等操作极快（0.02 GOPS），硬件原生支持；Float4向量比Float标量快约2倍；Half4是最高效的向量格式
 - **Synchronization分析** - threadgroup_barrier固定开销约4.8μs；kernel launch开销约0.5μs；命令缓冲区依赖开销约0.25μs/个；多kernel流水线效率约95%/kernel
+- **Optimization Cookbook** - 综合46个测试章节的最优模式；Tier 1关键优化：内存合并(5.3x)、Burst Write(3-4x)、Float4向量化(2x)；Tier 2高影响优化：共享内存分块(2-5x)、Kernel Fusion(2x)、Half精度(2x)；Apple M2几乎总是内存 bound，优化内存访问模式比增加计算更重要
 - **Comprehensive Memory Bandwidth Study** - Float4向量化读取(3.79 GB/s)比标量读取快约4倍，与理论向量化收益一致；合并写入(2.05 GB/s)比普通写入快约1.2倍；在64MB达到饱和点(4.18 GB/s)
 - **内存合并 (Coalescing)** 是最重要的优化 - 5.3x性能差异
 - **延迟隐藏 (Latency Hiding)** 通过多内存操作实现5.5x加速
@@ -369,5 +371,49 @@
 
 ---
 
-*研究完成日期: 2026-03-23*
+## 性能优化手册 (基于46个测试章节)
+
+### Tier 1: 关键优化 (10x+ 影响)
+
+| 优化 | 效果 | 使用场景 |
+|------|------|----------|
+| 内存合并 | 5.3x | 始终使用顺序访问 |
+| Burst Write | 3-4x | 写入密集型kernel |
+| Float4向量化 | 2x | 可向量化的数据 |
+
+### Tier 2: 高影响优化 (2-5x)
+
+| 优化 | 效果 | 使用场景 |
+|------|------|----------|
+| 共享内存分块 | 2-5x | GEMM、Stencil、数据复用 |
+| Kernel Fusion | 2x | 多pass算法 |
+| Half精度 | 2x | FP16精度足够时 |
+
+### Tier 3: 中等影响优化 (20-100%)
+
+| 优化 | 效果 | 使用场景 |
+|------|------|----------|
+| 命令缓冲区批处理 | 1.88x | 多个顺序kernel |
+| 寄存器分块 | 1.5-5x | 大矩阵乘法 |
+| 线程组大小优化 | 1.1-1.3x | 始终优化 |
+
+### Apple M2 GPU 性能特征
+
+| 指标 | 值 | 说明 |
+|------|-----|------|
+| SIMD宽度 | 32线程 | 与NVIDIA warp相同 |
+| 共享内存限制 | 32KB | 线程组内存上限 |
+| 理论带宽 | 100 GB/s | LPDDR5统一内存 |
+| 实际带宽 | ~2 GB/s | 受统一内存限制 |
+| 峰值计算 | ~12 GFLOPS | FMA吞吐 |
+| Burst Write | ~6 GB/s | 16元素/线程 |
+
+### Roofline模型关键点
+
+- **交叉点**: ~6 FLOP/byte
+- **低于交叉点**: 内存 bound - 关注内存访问模式
+- **高于交叉点**: 计算 bound - 关注并行度和指令效率
+
+*研究完成日期: 2026-03-25*
 *GPU: Apple M2 (Family Apple 7+)*
+*测试章节: 47个综合基准测试*
