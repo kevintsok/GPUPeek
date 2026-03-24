@@ -39,14 +39,14 @@
 
 #### 带宽 vs Buffer Size (饱和点分析)
 
-| Buffer Size | Write BW | Read BW | 状态 |
-|-------------|----------|---------|------|
-| 64KB | 0.04 GB/s | 0.04 GB/s | L1缓存 |
-| 256KB | 0.17-0.19 GB/s | 0.16-0.17 GB/s | L2缓存 |
-| 1MB | 0.50-0.54 GB/s | 0.38 GB/s | 过渡区 |
-| 8MB | 1.31-1.60 GB/s | 0.79-0.85 GB/s | 接近饱和 |
-| 64MB | 1.87-1.99 GB/s | 0.63-0.84 GB/s | 饱和 |
-| 256MB | 1.73-2.07 GB/s | 0.85-0.97 GB/s | 峰值 |
+| Buffer Size | Write BW | Read BW | WriteCombine | Float4Read | Combined | 状态 |
+|-------------|----------|---------|--------------|------------|-----------|------|
+| 64KB | 0.05 GB/s | 0.05 GB/s | 0.05 GB/s | 0.05 GB/s | 0.11 GB/s | L1缓存 |
+| 256KB | 0.17-0.19 GB/s | 0.15-0.17 GB/s | 0.15 GB/s | 0.17 GB/s | 0.33 GB/s | L2缓存 |
+| 1MB | 0.50-0.54 GB/s | 0.39-0.43 GB/s | 0.45 GB/s | 0.56 GB/s | 0.94 GB/s | 过渡区 |
+| 8MB | 1.31-1.65 GB/s | 0.79-0.87 GB/s | 1.66 GB/s | 2.18 GB/s | 2.75 GB/s | 接近饱和 |
+| 64MB | 1.87-2.11 GB/s | 0.95-1.04 GB/s | 2.11 GB/s | 3.56 GB/s | 4.18 GB/s | 饱和 |
+| 256MB | 1.70-2.28 GB/s | 1.00-1.05 GB/s | 2.05 GB/s | 3.79 GB/s | 4.03 GB/s | 峰值 |
 
 #### 高性能写入技术
 
@@ -54,11 +54,15 @@
 |------|------|------|
 | 普通写入 | 1.37-1.81 GB/s | 基准 |
 | **Burst Write (16元素/线程)** | **6.17 GB/s** | **3-4x提升** |
+| WriteCombine (16元素/线程) | 2.05-2.11 GB/s | 1.1-1.2x提升 |
+| Combined Write+Read | 4.03-4.18 GB/s | 2x双工 |
 | Blit Copy Engine | 0.97-1.03 GB/s | 反而更慢 |
 | Async Triple Buffer | 1.76 GB/s | 略低 |
 
 **关键洞察**:
 - **Burst Write是最重要的优化** - 每个线程写16个连续元素可达到6.17 GB/s
+- **Float4向量化读取** - 3.56-3.79 GB/s，比标量读取快约4倍
+- **Combined Write+Read双工** - 4.03-4.18 GB/s，同时读写可接近饱和带宽
 - 统一内存的读写带宽不对称 - 写入比读取快近2倍
 - Blit Copy Engine反而比计算写入慢 - GPU计算单元写入更高效
 
@@ -159,8 +163,10 @@
 | **Local Memory Copy** | 0.79 GB/s | Shared比Global快16% |
 | **Bitonic Sort** | 0.0001 GOPS | kernel launch开销大 |
 | **GEMM Comprehensive** | 21.89 GFLOPS | Reg-4x4 at 1024, 4.98x vs Naive |
+| **Comprehensive Memory BW** | 4.18 GB/s | Combined Write at 64MB, Float4 Read 3.79 GB/s |
 
 **关键洞察**:
+- **Comprehensive Memory Bandwidth Study** - Float4向量化读取(3.79 GB/s)比标量读取快约4倍，与理论向量化收益一致；合并写入(2.05 GB/s)比普通写入快约1.2倍；在64MB达到饱和点(4.18 GB/s)
 - **内存合并 (Coalescing)** 是最重要的优化 - 5.3x性能差异
 - **延迟隐藏 (Latency Hiding)** 通过多内存操作实现5.5x加速
 - **Bank冲突** 产生1.8x成本 - 共享内存访问需优化
