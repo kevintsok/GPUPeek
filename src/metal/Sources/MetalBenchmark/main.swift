@@ -1864,6 +1864,151 @@ kernel void bucket_local_sort(device float* bucket_data [[buffer(0)]],
         bucket_data[start + j] = key;
     }
 }
+
+// ============================================================
+// GEMM with Register Blocking
+// Uses 4x4 register blocking for better performance
+// C = A * B, where A is MxK, B is KxN, C is MxN
+// ============================================================
+
+// GEMM: Register-blocked 4x4 (each thread computes 4x4 block)
+kernel void gemm_register_blocked(device const float* A [[buffer(0)]],
+                                device const float* B [[buffer(1)]],
+                                device float* C [[buffer(2)]],
+                                constant uint& M [[buffer(3)]],
+                                constant uint& K [[buffer(4)]],
+                                constant uint& N [[buffer(5)]],
+                                uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= N / 4 || gid.y >= M / 4) return;
+
+    // Block sizes
+    uint blockN = 4;
+    uint blockM = 4;
+    uint blockK = 4;
+
+    // Accumulator for 4x4 block
+    float4 c00 = 0.0f, c01 = 0.0f, c02 = 0.0f, c03 = 0.0f;
+    float4 c10 = 0.0f, c11 = 0.0f, c12 = 0.0f, c13 = 0.0f;
+    float4 c20 = 0.0f, c21 = 0.0f, c22 = 0.0f, c23 = 0.0f;
+    float4 c30 = 0.0f, c31 = 0.0f, c32 = 0.0f, c33 = 0.0f;
+
+    // Loop over K dimension in blocks
+    for (uint k = 0; k < K; k += blockK) {
+        // Load 4x4 block of A
+        float4 a0 = float4(A[(gid.y * blockM + 0) * K + k],
+                          A[(gid.y * blockM + 0) * K + k + 1],
+                          A[(gid.y * blockM + 0) * K + k + 2],
+                          A[(gid.y * blockM + 0) * K + k + 3]);
+        float4 a1 = float4(A[(gid.y * blockM + 1) * K + k],
+                          A[(gid.y * blockM + 1) * K + k + 1],
+                          A[(gid.y * blockM + 1) * K + k + 2],
+                          A[(gid.y * blockM + 1) * K + k + 3]);
+        float4 a2 = float4(A[(gid.y * blockM + 2) * K + k],
+                          A[(gid.y * blockM + 2) * K + k + 1],
+                          A[(gid.y * blockM + 2) * K + k + 2],
+                          A[(gid.y * blockM + 2) * K + k + 3]);
+        float4 a3 = float4(A[(gid.y * blockM + 3) * K + k],
+                          A[(gid.y * blockM + 3) * K + k + 1],
+                          A[(gid.y * blockM + 3) * K + k + 2],
+                          A[(gid.y * blockM + 3) * K + k + 3]);
+
+        // Load 4x4 block of B (column-major to row-major conversion)
+        float4 b0 = float4(B[k * N + gid.x * blockN],
+                          B[(k + 1) * N + gid.x * blockN],
+                          B[(k + 2) * N + gid.x * blockN],
+                          B[(k + 3) * N + gid.x * blockN]);
+        float4 b1 = float4(B[k * N + gid.x * blockN + 1],
+                          B[(k + 1) * N + gid.x * blockN + 1],
+                          B[(k + 2) * N + gid.x * blockN + 1],
+                          B[(k + 3) * N + gid.x * blockN + 1]);
+        float4 b2 = float4(B[k * N + gid.x * blockN + 2],
+                          B[(k + 1) * N + gid.x * blockN + 2],
+                          B[(k + 2) * N + gid.x * blockN + 2],
+                          B[(k + 3) * N + gid.x * blockN + 2]);
+        float4 b3 = float4(B[k * N + gid.x * blockN + 3],
+                          B[(k + 1) * N + gid.x * blockN + 3],
+                          B[(k + 2) * N + gid.x * blockN + 3],
+                          B[(k + 3) * N + gid.x * blockN + 3]);
+
+        // Multiply accumulate: C_block += A_block * B_block
+        c00 += a0 * b0.x + a1 * b0.y + a2 * b0.z + a3 * b0.w;
+        c01 += a0 * b1.x + a1 * b1.y + a2 * b1.z + a3 * b1.w;
+        c02 += a0 * b2.x + a1 * b2.y + a2 * b2.z + a3 * b2.w;
+        c03 += a0 * b3.x + a1 * b3.y + a2 * b3.z + a3 * b3.w;
+
+        c10 += a0 * b0.x + a1 * b0.y + a2 * b0.z + a3 * b0.w;
+        c11 += a0 * b1.x + a1 * b1.y + a2 * b1.z + a3 * b1.w;
+        c12 += a0 * b2.x + a1 * b2.y + a2 * b2.z + a3 * b2.w;
+        c13 += a0 * b3.x + a1 * b3.y + a2 * b3.z + a3 * b3.w;
+
+        c20 += a0 * b0.x + a1 * b0.y + a2 * b0.z + a3 * b0.w;
+        c21 += a0 * b1.x + a1 * b1.y + a2 * b1.z + a3 * b1.w;
+        c22 += a0 * b2.x + a1 * b2.y + a2 * b2.z + a3 * b2.w;
+        c23 += a0 * b3.x + a1 * b3.y + a2 * b3.z + a3 * b3.w;
+
+        c30 += a0 * b0.x + a1 * b0.y + a2 * b0.z + a3 * b0.w;
+        c31 += a0 * b1.x + a1 * b1.y + a2 * b1.z + a3 * b1.w;
+        c32 += a0 * b2.x + a1 * b2.y + a2 * b2.z + a3 * b2.w;
+        c33 += a0 * b3.x + a1 * b3.y + a2 * b3.z + a3 * b3.w;
+    }
+
+    // Store results (row-major)
+    uint cRowStart = gid.y * blockM;
+    uint cColStart = gid.x * blockN;
+    C[cRowStart * N + cColStart] = c00.x;
+    C[cRowStart * N + cColStart + 1] = c01.x;
+    C[cRowStart * N + cColStart + 2] = c02.x;
+    C[cRowStart * N + cColStart + 3] = c03.x;
+    C[(cRowStart + 1) * N + cColStart] = c10.y;
+    C[(cRowStart + 1) * N + cColStart + 1] = c11.y;
+    C[(cRowStart + 1) * N + cColStart + 2] = c12.y;
+    C[(cRowStart + 1) * N + cColStart + 3] = c13.y;
+    C[(cRowStart + 2) * N + cColStart] = c20.z;
+    C[(cRowStart + 2) * N + cColStart + 1] = c21.z;
+    C[(cRowStart + 2) * N + cColStart + 2] = c22.z;
+    C[(cRowStart + 2) * N + cColStart + 3] = c23.z;
+    C[(cRowStart + 3) * N + cColStart] = c30.w;
+    C[(cRowStart + 3) * N + cColStart + 1] = c31.w;
+    C[(cRowStart + 3) * N + cColStart + 2] = c32.w;
+    C[(cRowStart + 3) * N + cColStart + 3] = c33.w;
+}
+
+// GEMM: Shared memory tiled (baseline for comparison)
+kernel void gemm_shared_tiled(device const float* A [[buffer(0)]],
+                            device const float* B [[buffer(1)]],
+                            device float* C [[buffer(2)]],
+                            threadgroup float* Asub [[threadgroup(0)]],
+                            threadgroup float* Bsub [[threadgroup(1)]],
+                            constant uint& M [[buffer(3)]],
+                            constant uint& K [[buffer(4)]],
+                            constant uint& N [[buffer(5)]],
+                            uint2 gid [[thread_position_in_grid]],
+                            uint2 lid [[thread_position_in_threadgroup]]) {
+    uint tileSize = 16;
+    uint row = gid.y * tileSize + lid.y;
+    uint col = gid.x * tileSize + lid.x;
+
+    float sum = 0.0f;
+    for (uint t = 0; t < (K + tileSize - 1) / tileSize; t++) {
+        uint aIdx = row * K + t * tileSize + lid.x;
+        uint bIdx = (t * tileSize + lid.y) * N + col;
+        if (aIdx < M * K && bIdx < K * N) {
+            Asub[lid.y * tileSize + lid.x] = A[aIdx];
+            Bsub[lid.y * tileSize + lid.x] = B[bIdx];
+        }
+        threadgroup_barrier(mem_flags::mem_none);
+        for (uint k = 0; k < tileSize; k++) {
+            uint aCol = t * tileSize + k;
+            if (aCol < K && row < M && (t * tileSize + lid.y) < K && col < N) {
+                sum += Asub[lid.y * tileSize + k] * Bsub[k * tileSize + lid.x];
+            }
+        }
+        threadgroup_barrier(mem_flags::mem_none);
+    }
+    if (row < M && col < N) {
+        C[row * N + col] = sum;
+    }
+}
 """
 
 // MARK: - FP16 Deep Dive Shader Library
@@ -5063,6 +5208,73 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     let bucketGops = Double(bucketOps) / getElapsedSeconds(start: bucketStart, end: bucketEnd) / 1e9
 
     print("Bucket Sort (256K, 256 buckets): \(String(format: "%.3f", bucketGops)) GOPS")
+
+    // ============================================================
+    // 27. GEMM WITH REGISTER BLOCKING
+    // Tests matrix multiply with 4x4 register blocking
+    // ============================================================
+    print("\n--- 27. GEMM Register Blocking Analysis ---")
+
+    guard let gemmRegBlockFunc = deepLibrary.makeFunction(name: "gemm_register_blocked"),
+          let gemmSharedFunc = deepLibrary.makeFunction(name: "gemm_shared_tiled"),
+          let gemmRegBlockPipeline = try? device.makeComputePipelineState(function: gemmRegBlockFunc),
+          let gemmSharedPipeline = try? device.makeComputePipelineState(function: gemmSharedFunc) else {
+        print("Failed to create GEMM pipelines")
+        return
+    }
+
+    // Square matrices: 512x512
+    let gemmM: UInt32 = 512
+    let gemmK: UInt32 = 512
+    let gemmN: UInt32 = 512
+    let gemmIterations = 10
+
+    guard let gemmA = device.makeBuffer(length: Int(gemmM * gemmK) * MemoryLayout<Float>.size, options: .storageModeShared),
+          let gemmB = device.makeBuffer(length: Int(gemmK * gemmN) * MemoryLayout<Float>.size, options: .storageModeShared),
+          let gemmC = device.makeBuffer(length: Int(gemmM * gemmN) * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create GEMM buffers")
+        return
+    }
+
+    // Initialize matrices
+    let gemmAPtr = gemmA.contents().bindMemory(to: Float.self, capacity: Int(gemmM * gemmK))
+    let gemmBPtr = gemmB.contents().bindMemory(to: Float.self, capacity: Int(gemmK * gemmN))
+    for i in 0..<Int(gemmM * gemmK) {
+        gemmAPtr[i] = Float.random(in: 0.0...1.0)
+    }
+    for i in 0..<Int(gemmK * gemmN) {
+        gemmBPtr[i] = Float.random(in: 0.0...1.0)
+    }
+
+    var gemmMVar = gemmM
+    var gemmKVar = gemmK
+    var gemmNVar = gemmN
+
+    // Register-blocked GEMM
+    let gemmStartReg = getTimeNanos()
+    for _ in 0..<gemmIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(gemmRegBlockPipeline)
+        encoder.setBuffer(gemmA, offset: 0, index: 0)
+        encoder.setBuffer(gemmB, offset: 0, index: 1)
+        encoder.setBuffer(gemmC, offset: 0, index: 2)
+        encoder.setBytes(&gemmMVar, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.setBytes(&gemmKVar, length: MemoryLayout<UInt32>.size, index: 4)
+        encoder.setBytes(&gemmNVar, length: MemoryLayout<UInt32>.size, index: 5)
+        encoder.dispatchThreads(MTLSize(width: Int(gemmN) / 4, height: Int(gemmM) / 4, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 8, height: 8, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let gemmEndReg = getTimeNanos()
+
+    // FLOPs: 2 * M * K * N (multiply-adds)
+    let gemmFlops = 2.0 * Double(gemmM) * Double(gemmK) * Double(gemmN) * Double(gemmIterations)
+    let gemmGopsReg = gemmFlops / getElapsedSeconds(start: gemmStartReg, end: gemmEndReg) / 1e9
+
+    print("GEMM Register Blocked (512x512): \(String(format: "%.2f", gemmGopsReg)) GOPS")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")
