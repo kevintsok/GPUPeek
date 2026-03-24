@@ -6518,6 +6518,130 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     print("\n" + String(repeating: "-", count: 50))
     print("N-Body Simulation Analysis Complete")
     print(String(repeating: "-", count: 50))
+
+    // ============================================================
+    // 37. RAY-SPHERE INTERSECTION (RAY TRACING PRIMITIVE)
+    // Tests ray tracing core operation - ray vs primitive intersection
+    // Used extensively in ray tracers and collision detection
+    // ============================================================
+    print("\n--- 37. Ray-Sphere Intersection Analysis ---")
+
+    let rayShader = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    kernel void ray_sphere(device float4* rays [[buffer(0)]],
+                          device float4* spheres [[buffer(1)]],
+                          device float* hitT [[buffer(2)]],
+                          constant uint& numRays [[buffer(3)]],
+                          constant uint& numSpheres [[buffer(4)]],
+                          uint id [[thread_position_in_grid]]) {
+        if (id >= numRays) return;
+
+        float3 ro = rays[id].xyz;
+        float3 rd = float3(0.0, 0.0, 1.0);
+        float tMin = 1e9;
+
+        for (uint s = 0; s < numSpheres; s++) {
+            float3 sc = spheres[s].xyz;
+            float sr = spheres[s].w;
+            float3 oc = ro - sc;
+            float b = dot(oc, rd);
+            float c = dot(oc, oc) - sr * sr;
+            float disc = b * b - c;
+            if (disc > 0.0f) {
+                float t = -b - sqrt(disc);
+                if (t > 0.0f && t < tMin) {
+                    tMin = t;
+                }
+            }
+        }
+        hitT[id] = tMin;
+    }
+    """
+
+    guard let rayLib = try? device.makeLibrary(source: rayShader, options: nil) else {
+        print("Failed to compile ray shader")
+        return
+    }
+    guard let rayFunc = rayLib.makeFunction(name: "ray_sphere"),
+          let rayPipe = try? device.makeComputePipelineState(function: rayFunc) else {
+        print("Failed to create ray pipeline")
+        return
+    }
+
+    let rayCount: UInt32 = 1024 * 1024  // 1M rays
+    let sphereCount: UInt32 = 64        // 64 spheres
+    let rayIterations = 10
+
+    guard let rayBuffer = device.makeBuffer(length: Int(rayCount) * MemoryLayout<simd_float4>.size, options: .storageModeShared),
+          let sphereBuffer = device.makeBuffer(length: Int(sphereCount) * MemoryLayout<simd_float4>.size, options: .storageModeShared),
+          let hitBuffer = device.makeBuffer(length: Int(rayCount) * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+
+    // Initialize rays (origin at z=-10, looking forward)
+    let rayPtr = rayBuffer.contents().bindMemory(to: simd_float4.self, capacity: Int(rayCount))
+    for i in 0..<Int(rayCount) {
+        let zPos = Float.random(in: -10.0..<(-5.0))
+        rayPtr[i] = simd_float4(
+            Float.random(in: -5...5),
+            Float.random(in: -5...5),
+            zPos,
+            0
+        )
+    }
+
+    // Initialize spheres (random positions and radii)
+    let spherePtr = sphereBuffer.contents().bindMemory(to: simd_float4.self, capacity: Int(sphereCount))
+    for i in 0..<Int(sphereCount) {
+        spherePtr[i] = simd_float4(
+            Float.random(in: -10...10),
+            Float.random(in: -10...10),
+            Float.random(in: 0...10),
+            Float.random(in: 0.5...2.0)
+        )
+    }
+
+    var rayCountVar = rayCount
+    var sphereCountVar = sphereCount
+
+    let rayStart = getTimeNanos()
+    for _ in 0..<rayIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let enc = cmd.makeComputeCommandEncoder() else { continue }
+        enc.setComputePipelineState(rayPipe)
+        enc.setBuffer(rayBuffer, offset: 0, index: 0)
+        enc.setBuffer(sphereBuffer, offset: 0, index: 1)
+        enc.setBuffer(hitBuffer, offset: 0, index: 2)
+        enc.setBytes(&rayCountVar, length: MemoryLayout<UInt32>.size, index: 3)
+        enc.setBytes(&sphereCountVar, length: MemoryLayout<UInt32>.size, index: 4)
+        enc.dispatchThreads(MTLSize(width: Int(rayCount), height: 1, depth: 1),
+                          threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        enc.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let rayEnd = getTimeNanos()
+
+    // FLOPs per ray-sphere test: ~20 ops (dot products, sqrt, etc.)
+    // Total: numRays * numSpheres * 20
+    let rayFlops = Double(rayCount) * Double(sphereCount) * 20.0 * Double(rayIterations)
+    let rayGops = rayFlops / getElapsedSeconds(start: rayStart, end: rayEnd) / 1e9
+
+    // Count hits
+    let hitPtr = hitBuffer.contents().bindMemory(to: Float.self, capacity: Int(rayCount))
+    var hitSum: Float = 0
+    for i in 0..<Int(rayCount) {
+        if (hitPtr[i] > 0) { hitSum += 1 }
+    }
+
+    print("Ray-Sphere Intersection (\(rayCount) rays x \(sphereCount) spheres): \(String(format: "%.4f", rayGops)) GOPS")
+    print("Hit rate: \(String(format: "%.1f", (hitSum / Float(rayCount)) * 100))%")
+
+    print("\n" + String(repeating: "-", count: 50))
+    print("Ray-Sphere Intersection Analysis Complete")
+    print(String(repeating: "-", count: 50))
 }
 
 // MARK: - Deep Memory Bandwidth Research
