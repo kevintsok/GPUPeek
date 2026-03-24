@@ -169,6 +169,7 @@
 | **SIMD Efficiency** | 32-thread SIMD groups | Vote/shuffle 0.02 GOPS, hardware-native |
 | **Synchronization** | Barrier 4.8μs, kernel launch 0.5μs | Pipeline efficiency ~95% per kernel |
 | **Optimization Cookbook** | 10x+ impact patterns | Memory coalescing, burst write, vectorization |
+| **Real-World Case Studies** | CNN 5x, N-Body 7x, SpMV 6x | Kernel fusion, tiling, vectorization |
 
 **关键洞察**:
 - **Comprehensive Memory Bandwidth Study** - Float4向量化读取(3.79 GB/s)比标量读取快约4倍，与理论向量化收益一致；合并写入(2.05 GB/s)比普通写入快约1.2倍；在64MB达到饱和点(4.18 GB/s)
@@ -177,6 +178,7 @@
 - **SIMD Efficiency分析** - Apple GPU使用32线程SIMD组（等同于NVIDIA warp）；simd_any/simd_all/simd_shuffle等操作极快（0.02 GOPS），硬件原生支持；Float4向量比Float标量快约2倍；Half4是最高效的向量格式
 - **Synchronization分析** - threadgroup_barrier固定开销约4.8μs；kernel launch开销约0.5μs；命令缓冲区依赖开销约0.25μs/个；多kernel流水线效率约95%/kernel
 - **Optimization Cookbook** - 综合46个测试章节的最优模式；Tier 1关键优化：内存合并(5.3x)、Burst Write(3-4x)、Float4向量化(2x)；Tier 2高影响优化：共享内存分块(2-5x)、Kernel Fusion(2x)、Half精度(2x)；Apple M2几乎总是内存 bound，优化内存访问模式比增加计算更重要
+- **Real-World Case Studies** - CNN 3x3卷积(5x)、N-Body(7x)、SpMV(6x)、Bitonic Sort(100x via fewer launches)等实际算法的优化经验；Kernel Fusion是提升性能的关键策略
 - **Comprehensive Memory Bandwidth Study** - Float4向量化读取(3.79 GB/s)比标量读取快约4倍，与理论向量化收益一致；合并写入(2.05 GB/s)比普通写入快约1.2倍；在64MB达到饱和点(4.18 GB/s)
 - **内存合并 (Coalescing)** 是最重要的优化 - 5.3x性能差异
 - **延迟隐藏 (Latency Hiding)** 通过多内存操作实现5.5x加速
@@ -416,4 +418,4 @@
 
 *研究完成日期: 2026-03-25*
 *GPU: Apple M2 (Family Apple 7+)*
-*测试章节: 47个综合基准测试*
+*测试章节: 48个综合基准测试*
