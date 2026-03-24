@@ -21,8 +21,8 @@ get_filename_component(PROJECT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." ABSOL
 
 target_include_directories(gpupeek_deep PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${PROJECT_ROOT}/src/common
-    ${PROJECT_ROOT}/src/sm_120
+    ${PROJECT_ROOT}/NVIDIA_GPU/common
+    ${PROJECT_ROOT}/NVIDIA_GPU/sm_120
     ${CUDAToolkit_INCLUDE_DIRS}
 )
 

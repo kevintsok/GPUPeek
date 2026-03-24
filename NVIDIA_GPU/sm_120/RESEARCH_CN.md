@@ -750,10 +750,10 @@ ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./gpupeek
 
 ## 附录 C: 目录结构 (2026-03-23)
 
-每个研究专题在 `src/sm_120/` 下有自己的子目录：
+每个研究专题在 `NVIDIA_GPU/sm_120/` 下有自己的子目录：
 
 ```
-src/sm_120/
+NVIDIA_GPU/sm_120/
 ├── memory/              # 内存子系统研究
 │   ├── README.md        # 编译和运行指南
 │   ├── RESEARCH.md      # 教学资料

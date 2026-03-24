@@ -20,12 +20,12 @@ add_executable(gpupeek_memory
 )
 
 # Use CMAKE_CURRENT_SOURCE_DIR to reference project files
-get_filename_component(PROJECT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." ABSOLUTE)
+get_filename_component(PROJECT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../.." ABSOLUTE)
 
 target_include_directories(gpupeek_memory PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${PROJECT_ROOT}/src/common
-    ${PROJECT_ROOT}/src/sm_120
+    ${PROJECT_ROOT}/NVIDIA_GPU/common
+    ${PROJECT_ROOT}/NVIDIA_GPU/sm_120
     ${CUDAToolkit_INCLUDE_DIRS}
 )
 
