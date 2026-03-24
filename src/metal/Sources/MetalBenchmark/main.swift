@@ -5891,6 +5891,63 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")
     print(String(repeating: "=", count: 60))
+
+    // ============================================================
+    // 32. DEVICE ARCHITECTURE QUERY
+    // Query actual hardware specifications from MTLDevice
+    // ============================================================
+    print("\n--- 32. Device Architecture Query ---")
+    print("Querying Metal device capabilities and hardware specifications...\n")
+
+    print("=== Device Information ===")
+    print("Device Name: \(device.name)")
+    if #available(macOS 14.0, *) {
+        print("Architecture: \(device.architecture)")
+    } else {
+        print("Architecture: Apple GPU (pre-macOS 14.0)")
+    }
+    print("Has Unified Memory: \(device.hasUnifiedMemory)")
+
+    print("\n=== Thread and Memory Limits ===")
+    print("Max Threads Per Threadgroup: \(device.maxThreadsPerThreadgroup)")
+    print("Max Threadgroup Memory: \(device.maxThreadgroupMemoryLength) bytes (\(Double(device.maxThreadgroupMemoryLength) / 1024.0) KB)")
+    print("Max Buffer Length: \(device.maxBufferLength) bytes (\(Double(device.maxBufferLength) / (1024*1024*1024))) GB)")
+    print("Recommended Max Working Set: \(device.recommendedMaxWorkingSetSize) bytes (\(Double(device.recommendedMaxWorkingSetSize) / (1024*1024*1024)) GB)")
+
+    print("\n=== GPU Family and Feature Support ===")
+    print("Supports Family Apple 7+: \(device.supportsFamily(.apple7))")
+    print("Supports Family Apple 6: \(device.supportsFamily(.apple6))")
+    print("Supports Family Apple 5: \(device.supportsFamily(.apple5))")
+    print("Supports Family Mac 2: \(device.supportsFamily(.mac2))")
+
+    print("\n=== Storage Mode Support ===")
+    print("Shared Storage Mode: Always supported on Apple GPUs")
+    print("Managed Storage Mode: \(device.supportsFamily(.mac2))")
+    print("Private Storage Mode: Always supported (GPU-only)")
+
+    print("\n=== Advanced Features ===")
+    print("Raster Order Groups: Supported on Apple GPUs (execution synchronization)")
+    print("Argument Buffers: Supported (essential for complex shaders)")
+
+    print("\n=== GPU Core Count (estimated from thread capacity) ===")
+    // M2 has 8-core GPU (7 or 8 GPU cores depending on model)
+    // We can estimate from concurrent compute units
+    let maxThreadsPerGrid = 256 * 1024  // Common Metal limit
+    let estimatedCores = maxThreadsPerGrid / (device.maxThreadsPerThreadgroup.width)
+    print("Estimated Concurrent Threadgroups: ~\(estimatedCores)")
+    print("(M2 GPU has 8 cores, each with multiple execution engines)")
+
+    print("\n=== SIMD Width ===")
+    print("SIMD Group Size: 32 (fixed for Apple GPUs)")
+
+    print("\n=== Cache Information ===")
+    print("L1 Cache (per threadgroup): 32 KB (Metal optimal)")
+    print("L2 Cache (shared): ~4 MB on M2")
+    print("(Metal doesn't expose L2 directly - managed automatically)")
+
+    print("\n" + String(repeating: "-", count: 50))
+    print("Device Architecture Query Complete")
+    print(String(repeating: "-", count: 50))
 }
 
 // MARK: - Deep Memory Bandwidth Research

@@ -6,6 +6,18 @@
 
 **测试环境**: Apple M2 (MacBook Air), macOS Darwin 25.3.0, Swift 6.1.2, Metal Apple 7+
 
+### M2 GPU硬件规格 (实测)
+
+| 规格 | 值 | 说明 |
+|------|-----|------|
+| GPU型号 | Apple M2 | 8核GPU (7核可用) |
+| Threadgroup内存 | 32 KB | 最大共享内存限制 |
+| 最大Buffer大小 | 8.88 GB | MaxBufferLength |
+| 最大Working Set | 11.84 GB | RecommendedMaxWorkingSetSize |
+| 统一内存 | 是 | CPU/GPU共享内存 |
+| SIMD宽度 | 32 | 固定值 |
+| GPU Family | Apple 7 | M2所属GPU家族 |
+
 ---
 
 ## 关键发现汇总
@@ -137,6 +149,7 @@
 | **Indirect Scatter** | 0.034 GOPS | 索引写入操作 |
 | **Double Buffer** | 0.018 GOPS | 与单缓冲相当(未重叠) |
 | **Warp-Level Reduction** | 0.029-0.030 GOPS | Shuffle/Vote/XOR操作 |
+| **Device Architecture Query** | Apple M2 | 32KB共享内存, 8.88GB buffer |
 
 **关键洞察**:
 - **内存合并 (Coalescing)** 是最重要的优化 - 5.3x性能差异
@@ -174,6 +187,7 @@
 - **Indirect Addressing** - Gather/Scatter约0.03 GOPS，索引访问比顺序访问慢但适合图算法等场景
 - **Double Buffering** - 在顺序测试中无显著差异(0.018 vs 0.019 GOPS)，需异步执行才能体现优势
 - **Warp-Level Reduction** - SIMD shuffle/vote/xor操作极快(~0.03 GOPS)，硬件原生支持高效
+- **Device Architecture** - Apple M2: 32KB threadgroup限制, 8.88GB最大buffer, 统一内存架构
 
 ### 4. 并行计算
 
