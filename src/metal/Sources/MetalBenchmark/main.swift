@@ -2198,6 +2198,96 @@ kernel void jacobi_iteration_shared(device const float* in [[buffer(0)]],
 
     out[gid.y * size.x + gid.x] = center + alpha[0] * (left + right + up + down - 4.0f * center);
 }
+
+// ============================================================
+// Warp-Level Reduction Primitives
+// Tests SIMD group vote, shuffle, and reduce operations
+// ============================================================
+
+// Warp reduction using SIMD shuffle
+kernel void warp_reduce_shuffle(device const float* in [[buffer(0)]],
+                               device float* out [[buffer(1)]],
+                               constant uint& size [[buffer(2)]],
+                               uint id [[thread_position_in_grid]]) {
+    if (id >= size) return;
+
+    float val = in[id];
+
+    // Warp-level shuffle reduction
+    for (uint offset = 16; offset > 0; offset /= 2) {
+        val += simd_shuffle_down(val, offset);
+    }
+
+    // First lane of each warp writes result
+    if ((id % 32) == 0) {
+        out[id / 32] = val;
+    }
+}
+
+// SIMD vote any - returns true if any thread in warp has condition
+kernel void warp_vote_any(device const float* in [[buffer(0)]],
+                        device uint* out [[buffer(1)]],
+                        constant uint& threshold [[buffer(2)]],
+                        constant uint& size [[buffer(3)]],
+                        uint id [[thread_position_in_grid]]) {
+    if (id >= size) return;
+
+    bool pred = in[id] > float(threshold);
+    bool result = simd_any(pred);
+
+    if ((id % 32) == 0) {
+        out[id / 32] = result ? 1u : 0u;
+    }
+}
+
+// SIMD vote all - returns true if all threads in warp have condition
+kernel void warp_vote_all(device const float* in [[buffer(0)]],
+                        device uint* out [[buffer(1)]],
+                        constant uint& threshold [[buffer(2)]],
+                        constant uint& size [[buffer(3)]],
+                        uint id [[thread_position_in_grid]]) {
+    if (id >= size) return;
+
+    bool pred = in[id] > float(threshold);
+    bool result = simd_all(pred);
+
+    if ((id % 32) == 0) {
+        out[id / 32] = result ? 1u : 0u;
+    }
+}
+
+// SIMD shuffle with xor pattern - lane i gets value from lane i^mask
+kernel void warp_shuffle_xor(device const float* in [[buffer(0)]],
+                           device float* out [[buffer(1)]],
+                           constant uint& size [[buffer(2)]],
+                           constant uint& mask [[buffer(3)]],
+                           uint id [[thread_position_in_grid]]) {
+    if (id >= size) return;
+
+    float val = in[id];
+    float shuffled = simd_shuffle_xor(val, mask);
+
+    out[id] = shuffled;
+}
+
+// SIMD prefix sum within warp
+kernel void warp_prefix_sum(device const float* in [[buffer(0)]],
+                          device float* out [[buffer(1)]],
+                          constant uint& size [[buffer(2)]],
+                          uint id [[thread_position_in_grid]]) {
+    if (id >= size) return;
+
+    float val = in[id];
+    float sum = val;
+
+    // Sequential prefix within warp (simulate efficient scan)
+    for (uint i = 1; i < 32; i++) {
+        sum += simd_shuffle_up(val, i);
+        val = sum;
+    }
+
+    out[id] = sum;
+}
 """
 
 // MARK: - FP16 Deep Dive Shader Library
@@ -5699,6 +5789,104 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     let jacobiGops = Double(jacobiOps) / getElapsedSeconds(start: jacobiStart, end: jacobiEnd) / 1e9
 
     print("Jacobi (1024x1024, 100 iterations): \(String(format: "%.3f", jacobiGops)) GOPS")
+
+    // ============================================================
+    // 31. WARP-LEVEL REDUCTION PRIMITIVES
+    // Tests SIMD group vote, shuffle, and reduce operations
+    // ============================================================
+    print("\n--- 31. Warp-Level Reduction Analysis ---")
+
+    guard let warpReduceFunc = deepLibrary.makeFunction(name: "warp_reduce_shuffle"),
+          let warpVoteAnyFunc = deepLibrary.makeFunction(name: "warp_vote_any"),
+          let warpVoteAllFunc = deepLibrary.makeFunction(name: "warp_vote_all"),
+          let warpShuffleFunc = deepLibrary.makeFunction(name: "warp_shuffle_xor"),
+          let warpReducePipeline = try? device.makeComputePipelineState(function: warpReduceFunc),
+          let warpVoteAnyPipeline = try? device.makeComputePipelineState(function: warpVoteAnyFunc),
+          let warpVoteAllPipeline = try? device.makeComputePipelineState(function: warpVoteAllFunc),
+          let warpShufflePipeline = try? device.makeComputePipelineState(function: warpShuffleFunc) else {
+        print("Failed to create warp reduction pipelines")
+        return
+    }
+
+    let warpSize = 256 * 1024  // 256K elements = 8192 warps
+    let warpIterations = 100
+
+    guard let warpIn = device.makeBuffer(length: warpSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let warpOut = device.makeBuffer(length: warpSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create warp buffers")
+        return
+    }
+
+    // Initialize input
+    let warpInPtr = warpIn.contents().bindMemory(to: Float.self, capacity: warpSize)
+    for i in 0..<warpSize {
+        warpInPtr[i] = Float(1.0)
+    }
+
+    var warpSizeVar = UInt32(warpSize)
+    var threshold: UInt32 = 50
+    var mask: UInt32 = 7
+
+    // Warp shuffle reduction
+    let warpStart = getTimeNanos()
+    for _ in 0..<warpIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(warpReducePipeline)
+        encoder.setBuffer(warpIn, offset: 0, index: 0)
+        encoder.setBuffer(warpOut, offset: 0, index: 1)
+        encoder.setBytes(&warpSizeVar, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: warpSize, height: 1, depth: 1),
+                            threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let warpEnd = getTimeNanos()
+    let warpOps = Int64(warpSize) * Int64(warpIterations)  // 1 reduce per element
+    let warpGops = Double(warpOps) / getElapsedSeconds(start: warpStart, end: warpEnd) / 1e9
+
+    // Warp vote any
+    let warpAnyStart = getTimeNanos()
+    for _ in 0..<warpIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(warpVoteAnyPipeline)
+        encoder.setBuffer(warpIn, offset: 0, index: 0)
+        encoder.setBuffer(warpOut, offset: 0, index: 1)
+        encoder.setBytes(&threshold, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.setBytes(&warpSizeVar, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: warpSize, height: 1, depth: 1),
+                            threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let warpAnyEnd = getTimeNanos()
+    let warpAnyGops = Double(warpOps) / getElapsedSeconds(start: warpAnyStart, end: warpAnyEnd) / 1e9
+
+    // Warp shuffle xor
+    let warpShufStart = getTimeNanos()
+    for _ in 0..<warpIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(warpShufflePipeline)
+        encoder.setBuffer(warpIn, offset: 0, index: 0)
+        encoder.setBuffer(warpOut, offset: 0, index: 1)
+        encoder.setBytes(&warpSizeVar, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.setBytes(&mask, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: warpSize, height: 1, depth: 1),
+                            threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let warpShufEnd = getTimeNanos()
+    let warpShufGops = Double(warpOps) / getElapsedSeconds(start: warpShufStart, end: warpShufEnd) / 1e9
+
+    print("Warp Shuffle Reduce: \(String(format: "%.3f", warpGops)) GOPS")
+    print("Warp Vote Any: \(String(format: "%.3f", warpAnyGops)) GOPS")
+    print("Warp Shuffle XOR: \(String(format: "%.3f", warpShufGops)) GOPS")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")

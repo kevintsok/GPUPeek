@@ -136,6 +136,7 @@
 | **Indirect Gather** | 0.031 GOPS | 索引读取操作 |
 | **Indirect Scatter** | 0.034 GOPS | 索引写入操作 |
 | **Double Buffer** | 0.018 GOPS | 与单缓冲相当(未重叠) |
+| **Warp-Level Reduction** | 0.029-0.030 GOPS | Shuffle/Vote/XOR操作 |
 
 **关键洞察**:
 - **内存合并 (Coalescing)** 是最重要的优化 - 5.3x性能差异
@@ -172,6 +173,7 @@
 - **Memory Ordering** - Metal仅支持memory_order_relaxed（设备地址空间），其他语义(acquire/release/seq_cst)仅适用于threadgroup地址空间
 - **Indirect Addressing** - Gather/Scatter约0.03 GOPS，索引访问比顺序访问慢但适合图算法等场景
 - **Double Buffering** - 在顺序测试中无显著差异(0.018 vs 0.019 GOPS)，需异步执行才能体现优势
+- **Warp-Level Reduction** - SIMD shuffle/vote/xor操作极快(~0.03 GOPS)，硬件原生支持高效
 
 ### 4. 并行计算
 
