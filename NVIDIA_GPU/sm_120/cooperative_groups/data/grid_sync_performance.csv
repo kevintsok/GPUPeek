@@ -1,0 +1,5 @@
+name,time_ms,bandwidth_gbps
+Grid Reduce (1M elements),0.85,4700.0
+Grid Barrier + Memset,0.45,8800.0
+Multi-Block Reduce,0.62,6400.0
+Two-Phase Kernel,1.2,3300.0

@@ -69,7 +69,7 @@ mma.sync.aligned.m16n8k32.row.col.f32.e3m2.e3m2.f32   // FP6 e3m2
 | 13B - 70B | FP6 (e2m3) | 60% |
 | > 70B | FP4 (e2m1) | 75% |
 
-## 9. 图表生成
+## 9. 可视化图表
 
 运行以下脚本生成可视化图表:
 
@@ -81,10 +81,11 @@ python plot_fp_precision.py
 
 输出位置: `NVIDIA_GPU/sm_120/fp4_fp6/data/`
 
-| 图表 | 描述 |
-|------|------|
-| `fp4_fp6_comparison.png` | FP4/FP6格式位宽和TFLOPS对比 |
-| `precision_tradeoff.png` | 精度vs内存减少权衡 |
+### 生成的可视化图表
+
+![FP4/FP6 格式位宽和 TFLOPS 对比](data/fp4_fp6_comparison.png)
+
+![精度 vs 内存减少权衡](data/precision_tradeoff.png)
 
 ## 参考文献
 

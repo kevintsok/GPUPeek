@@ -34,7 +34,7 @@ cudaGraphLaunch(graphExec, stream);
 
 ## 5. 性能特性
 
-### Launch 开销
+### 5.1 Launch 开销
 
 | 方法 | 延迟 | 描述 |
 |------|------|------|
@@ -43,9 +43,9 @@ cudaGraphLaunch(graphExec, stream);
 | CUDA Graph (后续启动) | ~0.02 ms | 快速启动 |
 | CUDA Graph (批量100个) | ~0.0018 ms/kernel | 分摊开销 |
 
-**可视化图表**: `data/launch_overhead.png`
+![Launch 开销对比](data/launch_overhead.png)
 
-### 吞吐对比
+### 5.2 吞吐对比
 
 | 方法 | 吞吐 |
 |------|------|
@@ -54,7 +54,9 @@ cudaGraphLaunch(graphExec, stream);
 | CUDA Graph (10 kernels) | ~1200 GB/s |
 | CUDA Graph (100 kernels) | ~1350 GB/s |
 
-**可视化图表**: `data/graph_speedup.png`, `data/kernel_count_speedup.png`
+![Graph 加速对比](data/graph_speedup.png)
+
+![内核数量 vs 加速](data/kernel_count_speedup.png)
 
 ## 6. 优势
 
@@ -83,6 +85,15 @@ python plot_cuda_graph.py
 ```
 
 输出位置: `NVIDIA_GPU/sm_120/cuda_graph/data/`
+
+### 生成的可视化图表
+
+| 图表 | 描述 |
+|------|------|
+| `launch_overhead.png` | Launch 开销对比 |
+| `graph_speedup.png` | Graph 加速效果 |
+| `pipeline_performance.png` | 流水线性能 |
+| `kernel_count_speedup.png` | 内核数量 vs 加速比 |
 
 ## 参考文献
 

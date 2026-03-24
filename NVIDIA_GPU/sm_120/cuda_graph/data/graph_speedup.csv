@@ -1,0 +1,5 @@
+name,speedup
+Single Kernel,1.0
+Single Kernel (Graph),1.5
+5 Kernels,1.0
+5 Kernels (Graph),2.5

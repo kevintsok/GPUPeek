@@ -72,7 +72,7 @@ mma.sync.aligned.m16n8k16.row.col.f32.e5m2.e5m2.f32   // FP8 E5M2
 | FP8 E4M3 | 0.25 | 32x | 4x |
 | FP8 E5M2 | 0.20 | 32x | 4x |
 
-## 10. 图表生成
+## 10. 可视化图表
 
 运行以下脚本生成可视化图表:
 
@@ -84,10 +84,11 @@ python plot_fp_precision.py
 
 输出位置: `NVIDIA_GPU/sm_120/fp8/data/`
 
-| 图表 | 描述 |
-|------|------|
-| `fp8_comparison.png` | FP8格式位宽和带宽对比 |
-| `memory_reduction.png` | 各精度格式内存减少因子 |
+### 生成的可视化图表
+
+![FP8 格式位宽和带宽对比](data/fp8_comparison.png)
+
+![各精度格式内存减少因子](data/memory_reduction.png)
 
 ## 参考文献
 

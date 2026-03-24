@@ -1,0 +1,4 @@
+name,latency_us,throughput_gbps
+Warp Broadcast (shuffle),0.5,8000.0
+Block Broadcast (__syncthreads),2.0,2000.0
+Grid Broadcast (grid.sync),15.0,260.0

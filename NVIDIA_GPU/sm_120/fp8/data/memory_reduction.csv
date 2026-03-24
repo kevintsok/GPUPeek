@@ -1,0 +1,7 @@
+format,reduction_factor,description
+FP32,0.5,Baseline
+FP16,1.0,Reference
+FP8,2.0,4x vs FP32
+FP6 e2m3,2.67,4x vs FP32
+FP6 e3m2,2.67,4x vs FP32
+FP4 e2m1,4.0,8x vs FP32

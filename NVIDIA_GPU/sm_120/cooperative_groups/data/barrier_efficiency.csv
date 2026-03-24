@@ -1,0 +1,4 @@
+name,time_ms_per_100_iterations
+No Barrier,0.15
+thread_block.sync(),0.45
+grid.sync(),8.5
