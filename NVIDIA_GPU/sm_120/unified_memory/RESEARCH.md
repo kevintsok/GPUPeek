@@ -62,6 +62,26 @@ cudaMemPrefetchAsync(ptr, size, deviceId, stream);
 | 复杂算法迭代 | Unified Memory + Prefetch |
 | 大型数据结构 | 分块预取策略 |
 
+## 9. 图表生成
+
+运行以下脚本生成可视化图表:
+
+```bash
+cd scripts
+pip install -r requirements.txt
+python plot_unified_memory.py
+```
+
+输出位置: `NVIDIA_GPU/sm_120/unified_memory/data/`
+
+| 图表 | 描述 |
+|------|------|
+| `access_patterns.png` | 访问模式带宽对比 |
+| `prefetch_comparison.png` | 预取策略效果对比 |
+| `write_performance.png` | 写入性能对比 |
+| `page_fault_overhead.png` | Page fault 开销分析 |
+| `migration_latency.png` | 页面迁移延迟 |
+
 ## 参考文献
 
 - [CUDA Programming Guide - Unified Memory](../ref/cuda_programming_guide.html)
