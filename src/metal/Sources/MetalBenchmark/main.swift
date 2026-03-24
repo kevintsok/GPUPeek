@@ -1280,6 +1280,101 @@ kernel void transpose_shared(device const float* in [[buffer(0)]],
 }
 
 // ============================================================
+// 27. STENCIL COMPUTATION
+// Tests shared memory for halo cells and multi-pass stencil operations
+// ============================================================
+
+kernel void stencil_naive(device const float* in [[buffer(0)]],
+                        device float* out [[buffer(1)]],
+                        constant uint& width [[buffer(2)]],
+                        constant uint& height [[buffer(3)]],
+                        uint2 gid [[thread_position_in_grid]]) {
+    // Naive 5-point stencil (up, down, left, right, center)
+    // Each thread loads its point and neighbors from global memory
+    uint row = gid.y;
+    uint col = gid.x;
+    uint idx = row * width + col;
+
+    if (row > 0 && row < height - 1 && col > 0 && col < width - 1) {
+        float center = in[idx];
+        float up = in[idx - width];
+        float down = in[idx + width];
+        float left = in[idx - 1];
+        float right = in[idx + 1];
+        out[idx] = (center + up + down + left + right) * 0.2f;
+    } else {
+        out[idx] = in[idx];  // Boundary copy
+    }
+}
+
+kernel void stencil_shared(device const float* in [[buffer(0)]],
+                         device float* out [[buffer(1)]],
+                         constant uint& width [[buffer(2)]],
+                         constant uint& height [[buffer(3)]],
+                         uint2 gid [[thread_position_in_grid]]) {
+    // Shared memory stencil - uses threadgroups for halo cells
+    // Tile size 16x16 with 1-cell halo = 18x18 shared memory
+    uint tileSize = 16;
+    uint halo = 1;
+
+    // Calculate position
+    uint tileRow = (gid.y / tileSize) * tileSize;
+    uint tileCol = (gid.x / tileSize) * tileSize;
+    uint localRow = gid.y % tileSize;
+    uint localCol = gid.x % tileSize;
+    uint sharedIdx = (localRow + halo) * (tileSize + 2 * halo) + (localCol + halo);
+
+    // Shared memory tile with halo
+    threadgroup float tile[324];  // 18x18 = 324 elements
+
+    // Load tile including halo
+    uint loadRow = tileRow + localRow;
+    uint loadCol = tileCol + localCol;
+    if (loadRow < height && loadCol < width) {
+        tile[sharedIdx] = in[loadRow * width + loadCol];
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    // Compute stencil
+    if (localRow > 0 && localRow < tileSize - 1 &&
+        localCol > 0 && localCol < tileSize - 1 &&
+        gid.y > 0 && gid.y < height - 1 &&
+        gid.x > 0 && gid.x < width - 1) {
+        float center = tile[sharedIdx];
+        float up = tile[sharedIdx - (tileSize + 2 * halo)];
+        float down = tile[sharedIdx + (tileSize + 2 * halo)];
+        float left = tile[sharedIdx - 1];
+        float right = tile[sharedIdx + 1];
+        out[gid.y * width + gid.x] = (center + up + down + left + right) * 0.2f;
+    }
+}
+
+kernel void stencil_iterated(device const float* in [[buffer(0)]],
+                           device float* out [[buffer(1)]],
+                           constant uint& width [[buffer(2)]],
+                           constant uint& height [[buffer(3)]],
+                           uint2 gid [[thread_position_in_grid]]) {
+    // Iterated stencil - 5 iterations of 5-point stencil
+    uint row = gid.y;
+    uint col = gid.x;
+    uint idx = row * width + col;
+
+    if (row > 0 && row < height - 1 && col > 0 && col < width - 1) {
+        float val = in[idx];
+        for (uint iter = 0; iter < 5; iter++) {
+            float up = in[(row - 1) * width + col];
+            float down = in[(row + 1) * width + col];
+            float left = in[row * width + col - 1];
+            float right = in[row * width + col + 1];
+            val = (up + down + left + right + val) * 0.2f;
+        }
+        out[idx] = val;
+    } else {
+        out[idx] = in[idx];
+    }
+}
+
+// ============================================================
 // 24. DUAL-BUFFER PIPELINING
 // Memory access and computation overlap
 // ============================================================
@@ -3895,6 +3990,99 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
 
     print("Transpose Naive: \(String(format: "%.3f", transGopsNaive)) GOPS")
     print("Transpose Shared (tile): \(String(format: "%.3f", transGopsShared)) GOPS")
+
+    // ============================================================
+    // 20. STENCIL COMPUTATION
+    // Tests shared memory for halo cells and multi-pass stencil operations
+    // ============================================================
+    print("\n--- 20. Stencil Computation Analysis ---")
+
+    guard let stencilNaiveFunc = deepLibrary.makeFunction(name: "stencil_naive"),
+          let stencilSharedFunc = deepLibrary.makeFunction(name: "stencil_shared"),
+          let stencilIterFunc = deepLibrary.makeFunction(name: "stencil_iterated"),
+          let stencilNaivePipeline = try? device.makeComputePipelineState(function: stencilNaiveFunc),
+          let stencilSharedPipeline = try? device.makeComputePipelineState(function: stencilSharedFunc),
+          let stencilIterPipeline = try? device.makeComputePipelineState(function: stencilIterFunc) else {
+        print("Failed to create stencil pipelines")
+        return
+    }
+
+    // 1024x1024 grid
+    let stencilWidth: UInt32 = 1024
+    let stencilHeight: UInt32 = 1024
+    let stencilSize = Int(stencilWidth) * Int(stencilHeight)
+    let stencilIterations = 10
+
+    guard let stencilIn = device.makeBuffer(length: stencilSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let stencilOut = device.makeBuffer(length: stencilSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create stencil buffers")
+        return
+    }
+
+    var stenW = stencilWidth
+    var stenH = stencilHeight
+
+    // Naive stencil - global memory loads for each neighbor
+    let stencilStartNaive = getTimeNanos()
+    for _ in 0..<stencilIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(stencilNaivePipeline)
+        encoder.setBuffer(stencilIn, offset: 0, index: 0)
+        encoder.setBuffer(stencilOut, offset: 0, index: 1)
+        encoder.setBytes(&stenW, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.setBytes(&stenH, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: Int(stencilWidth), height: Int(stencilHeight), depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let stencilEndNaive = getTimeNanos()
+    let stencilOpsNaive = Double(stencilSize) * Double(stencilIterations)
+    let stencilGopsNaive = stencilOpsNaive / getElapsedSeconds(start: stencilStartNaive, end: stencilEndNaive) / 1e9
+
+    // Shared memory stencil
+    let stencilStartShared = getTimeNanos()
+    for _ in 0..<stencilIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(stencilSharedPipeline)
+        encoder.setBuffer(stencilIn, offset: 0, index: 0)
+        encoder.setBuffer(stencilOut, offset: 0, index: 1)
+        encoder.setBytes(&stenW, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.setBytes(&stenH, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: Int(stencilWidth), height: Int(stencilHeight), depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let stencilEndShared = getTimeNanos()
+    let stencilGopsShared = stencilOpsNaive / getElapsedSeconds(start: stencilStartShared, end: stencilEndShared) / 1e9
+
+    // Iterated stencil (5 iterations)
+    let stencilStartIter = getTimeNanos()
+    for _ in 0..<stencilIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(stencilIterPipeline)
+        encoder.setBuffer(stencilIn, offset: 0, index: 0)
+        encoder.setBuffer(stencilOut, offset: 0, index: 1)
+        encoder.setBytes(&stenW, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.setBytes(&stenH, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: Int(stencilWidth), height: Int(stencilHeight), depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let stencilEndIter = getTimeNanos()
+    let stencilGopsIter = stencilOpsNaive / getElapsedSeconds(start: stencilStartIter, end: stencilEndIter) / 1e9
+
+    print("Stencil Naive (global mem): \(String(format: "%.3f", stencilGopsNaive)) GOPS")
+    print("Stencil Shared (tile+halo): \(String(format: "%.3f", stencilGopsShared)) GOPS")
+    print("Stencil Iterated (5x): \(String(format: "%.3f", stencilGopsIter)) GOPS")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")
