@@ -1148,6 +1148,84 @@ kernel void shared_fill_and_sum(threadgroup float* shared [[threadgroup(0)]],
 }
 
 // ============================================================
+// 25. HISTOGRAM COMPUTATION
+// Tests atomic operations, memory access patterns, and parallel bins
+// ============================================================
+
+kernel void histogram_naive(device const float* data [[buffer(0)]],
+                          device atomic_uint* hist [[buffer(1)]],
+                          constant uint& size [[buffer(2)]],
+                          constant uint& bins [[buffer(3)]],
+                          uint id [[thread_position_in_grid]]) {
+    // Naive histogram - each thread computes one bin, causes atomic contention
+    uint bin = uint(data[id] * float(bins)) % bins;
+    atomic_fetch_add_explicit(&hist[bin], 1, memory_order_relaxed);
+}
+
+kernel void histogram_local(device const float* data [[buffer(0)]],
+                           device atomic_uint* hist [[buffer(1)]],
+                           constant uint& size [[buffer(2)]],
+                           constant uint& bins [[buffer(3)]],
+                           uint id [[thread_position_in_grid]]) {
+    // Local histogram with shared memory - reduce atomic contention
+    // Each threadgroup has private counts, merged at end
+    threadgroup uint local_hist[256];  // Local per threadgroup
+    uint lid = id % 256;
+    uint gid = id / 256;
+
+    // Initialize local histogram
+    if (lid < bins) {
+        local_hist[lid] = 0;
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    // Each thread increments its bin in local histogram
+    uint bin = uint(data[id] * float(bins)) % bins;
+    if (bin < bins) {
+        local_hist[bin]++;  // Regular increment, not atomic
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    // Merge local into global (one thread per bin)
+    if (lid < bins && gid == 0) {
+        atomic_fetch_add_explicit(&hist[lid], local_hist[lid], memory_order_relaxed);
+    }
+}
+
+kernel void histogram_strided(device const float* data [[buffer(0)]],
+                             device atomic_uint* hist [[buffer(1)]],
+                             constant uint& size [[buffer(2)]],
+                             constant uint& bins [[buffer(3)]],
+                             uint id [[thread_position_in_grid]]) {
+    // Strided histogram - each thread processes stride elements
+    uint stride = 256;
+    uint start = id * stride;
+    uint end = min(start + stride, size);
+
+    for (uint i = start; i < end; i++) {
+        uint bin = uint(data[i] * float(bins)) % bins;
+        atomic_fetch_add_explicit(&hist[bin], 1, memory_order_relaxed);
+    }
+}
+
+kernel void histogram_vectorized(device const float4* data [[buffer(0)]],
+                                 device atomic_uint* hist [[buffer(1)]],
+                                 constant uint& size [[buffer(2)]],
+                                 constant uint& bins [[buffer(3)]],
+                                 uint id [[thread_position_in_grid]]) {
+    // Vectorized histogram - each thread processes 4 elements
+    float4 val = data[id];
+    uint bin0 = uint(val.x * float(bins)) % bins;
+    uint bin1 = uint(val.y * float(bins)) % bins;
+    uint bin2 = uint(val.z * float(bins)) % bins;
+    uint bin3 = uint(val.w * float(bins)) % bins;
+    atomic_fetch_add_explicit(&hist[bin0], 1, memory_order_relaxed);
+    atomic_fetch_add_explicit(&hist[bin1], 1, memory_order_relaxed);
+    atomic_fetch_add_explicit(&hist[bin2], 1, memory_order_relaxed);
+    atomic_fetch_add_explicit(&hist[bin3], 1, memory_order_relaxed);
+}
+
+// ============================================================
 // 24. DUAL-BUFFER PIPELINING
 // Memory access and computation overlap
 // ============================================================
@@ -3584,6 +3662,114 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     print("Shared Seq (no conflict): \(String(format: "%.3f", tgGopsSeq)) GOPS")
     print("Shared Strided (conflict): \(String(format: "%.3f", tgGopsStride)) GOPS")
     print("Shared Fill+Sum: \(String(format: "%.3f", tgGopsSum)) GOPS")
+
+    // ============================================================
+    // 18. HISTOGRAM COMPUTATION
+    // Tests atomic operations and memory access patterns
+    // ============================================================
+    print("\n--- 18. Histogram Computation Analysis ---")
+
+    guard let histNaiveFunc = deepLibrary.makeFunction(name: "histogram_naive"),
+          let histLocalFunc = deepLibrary.makeFunction(name: "histogram_local"),
+          let histStridedFunc = deepLibrary.makeFunction(name: "histogram_strided"),
+          let histVecFunc = deepLibrary.makeFunction(name: "histogram_vectorized"),
+          let histNaivePipeline = try? device.makeComputePipelineState(function: histNaiveFunc),
+          let histLocalPipeline = try? device.makeComputePipelineState(function: histLocalFunc),
+          let histStridedPipeline = try? device.makeComputePipelineState(function: histStridedFunc),
+          let histVecPipeline = try? device.makeComputePipelineState(function: histVecFunc) else {
+        print("Failed to create histogram pipelines")
+        return
+    }
+
+    let histSize = 4 * 1024 * 1024  // 4M elements
+    let histBins: UInt32 = 256
+    let histIterations = 10
+
+    // Create data buffer (random values 0.0-1.0)
+    guard let histData = device.makeBuffer(length: histSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let histOutput = device.makeBuffer(length: Int(histBins) * MemoryLayout<UInt32>.size, options: .storageModeShared) else {
+        print("Failed to create histogram buffers")
+        return
+    }
+
+    // Initialize data with random values
+    let histDataPtr = histData.contents().bindMemory(to: Float.self, capacity: histSize)
+    for i in 0..<histSize {
+        histDataPtr[i] = Float.random(in: 0.0...1.0)
+    }
+
+    var histSz = UInt32(histSize)
+    var histBns = histBins
+
+    // Naive histogram - high atomic contention
+    let histStartNaive = getTimeNanos()
+    for _ in 0..<histIterations {
+        // Clear output
+        memset(histOutput.contents(), 0, Int(histBins) * MemoryLayout<UInt32>.size)
+
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(histNaivePipeline)
+        encoder.setBuffer(histData, offset: 0, index: 0)
+        encoder.setBuffer(histOutput, offset: 0, index: 1)
+        encoder.setBytes(&histSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.setBytes(&histBns, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: histSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let histEndNaive = getTimeNanos()
+    let histOpsNaive = Double(histSize) * Double(histIterations)
+    let histGopsNaive = histOpsNaive / getElapsedSeconds(start: histStartNaive, end: histEndNaive) / 1e9
+
+    // Strided histogram - less contention per thread
+    let histStartStride = getTimeNanos()
+    for _ in 0..<histIterations {
+        memset(histOutput.contents(), 0, Int(histBins) * MemoryLayout<UInt32>.size)
+
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(histStridedPipeline)
+        encoder.setBuffer(histData, offset: 0, index: 0)
+        encoder.setBuffer(histOutput, offset: 0, index: 1)
+        encoder.setBytes(&histSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.setBytes(&histBns, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: histSize / 256, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let histEndStride = getTimeNanos()
+    let histGopsStride = histOpsNaive / getElapsedSeconds(start: histStartStride, end: histEndStride) / 1e9
+
+    // Vectorized histogram - processes 4 elements per thread
+    let histStartVec = getTimeNanos()
+    let vecIterations = histIterations * 4  // 4 elements per thread
+    for _ in 0..<vecIterations {
+        memset(histOutput.contents(), 0, Int(histBins) * MemoryLayout<UInt32>.size)
+
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(histVecPipeline)
+        encoder.setBuffer(histData, offset: 0, index: 0)
+        encoder.setBuffer(histOutput, offset: 0, index: 1)
+        encoder.setBytes(&histSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.setBytes(&histBns, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: histSize / 4, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let histEndVec = getTimeNanos()
+    let histGopsVec = Double(histSize) * Double(vecIterations) / getElapsedSeconds(start: histStartVec, end: histEndVec) / 1e9
+
+    print("Histogram Naive (contention): \(String(format: "%.3f", histGopsNaive)) GOPS")
+    print("Histogram Strided: \(String(format: "%.3f", histGopsStride)) GOPS")
+    print("Histogram Vectorized (float4): \(String(format: "%.3f", histGopsVec)) GOPS")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")
