@@ -416,6 +416,51 @@ kernel void atomic_high_contention(device atomic_uint* counter [[buffer(0)]],
 }
 
 // ============================================================
+// 10b. ADVANCED ATOMIC OPERATIONS
+// ============================================================
+
+kernel void atomic_fetch_add_op(device atomic_uint* counter [[buffer(0)]],
+                               device uint* out [[buffer(1)]],
+                               constant uint& size [[buffer(2)]],
+                               uint id [[thread_position_in_grid]]) {
+    // atomic_fetch_add returns original value before addition
+    uint original = atomic_fetch_add_explicit(&counter[id % 256], 1, memory_order_relaxed);
+    out[id] = original;
+}
+
+kernel void atomic_min_op(device atomic_uint* counter [[buffer(0)]],
+                         device uint* out [[buffer(1)]],
+                         constant uint& size [[buffer(2)]],
+                         uint id [[thread_position_in_grid]]) {
+    // atomic_fetch_min returns original value before min
+    uint val = id % 1024;
+    uint original = atomic_fetch_min_explicit(&counter[0], val, memory_order_relaxed);
+    out[id] = original;
+}
+
+kernel void atomic_max_op(device atomic_uint* counter [[buffer(0)]],
+                         device uint* out [[buffer(1)]],
+                         constant uint& size [[buffer(2)]],
+                         uint id [[thread_position_in_grid]]) {
+    // atomic_fetch_max returns original value before max
+    uint val = id % 1024;
+    uint original = atomic_fetch_max_explicit(&counter[0], val, memory_order_relaxed);
+    out[id] = original;
+}
+
+kernel void atomic_compare_exchange_op(device atomic_uint* counter [[buffer(0)]],
+                                     device uint* out [[buffer(1)]],
+                                     constant uint& size [[buffer(2)]],
+                                     uint id [[thread_position_in_grid]]) {
+    // CAS loop - try to exchange values
+    uint expected = 0;
+    uint desired = id + 1;
+    bool exchanged = atomic_compare_exchange_weak_explicit(&counter[0], &expected, desired,
+                                                          memory_order_relaxed, memory_order_relaxed);
+    out[id] = exchanged ? desired : expected;
+}
+
+// ============================================================
 // 11. COMMAND BUFFER BATCHING TEST
 // ============================================================
 
@@ -1966,6 +2011,112 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     print("Low Contention:  \(String(format: "%.3f", gopsLow)) GOPS")
     print("High Contention: \(String(format: "%.3f", gopsHigh)) GOPS")
     print("Contention Cost: \(String(format: "%.1fx", gopsLow / gopsHigh))")
+
+    // Advanced Atomic Operations
+    guard let atomicFetchAddFunc = deepLibrary.makeFunction(name: "atomic_fetch_add_op"),
+          let atomicMinFunc = deepLibrary.makeFunction(name: "atomic_min_op"),
+          let atomicMaxFunc = deepLibrary.makeFunction(name: "atomic_max_op"),
+          let atomicCASFunc = deepLibrary.makeFunction(name: "atomic_compare_exchange_op"),
+          let atomicFetchAddPipeline = try? device.makeComputePipelineState(function: atomicFetchAddFunc),
+          let atomicMinPipeline = try? device.makeComputePipelineState(function: atomicMinFunc),
+          let atomicMaxPipeline = try? device.makeComputePipelineState(function: atomicMaxFunc),
+          let atomicCASPipeline = try? device.makeComputePipelineState(function: atomicCASFunc) else {
+        print("Failed to create advanced atomic pipelines")
+        return
+    }
+
+    let atomicAdvSize = 256 * 1024
+    guard let atomicAdvBuffer = device.makeBuffer(length: 256 * MemoryLayout<UInt32>.size, options: .storageModeShared),
+          let atomicOutBuffer = device.makeBuffer(length: atomicAdvSize * MemoryLayout<UInt32>.size, options: .storageModeShared) else {
+        return
+    }
+
+    // Initialize counter
+    let counterPtr = atomicAdvBuffer.contents().assumingMemoryBound(to: UInt32.self)
+    counterPtr[0] = 0
+
+    // Atomic Fetch Add
+    var sz = UInt32(atomicAdvSize)
+    let startFetchAdd = getTimeNanos()
+    for _ in 0..<iterations {
+        counterPtr[0] = 0
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(atomicFetchAddPipeline)
+        encoder.setBuffer(atomicAdvBuffer, offset: 0, index: 0)
+        encoder.setBuffer(atomicOutBuffer, offset: 0, index: 1)
+        encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: atomicAdvSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endFetchAdd = getTimeNanos()
+    let gopsFetchAdd = Double(atomicAdvSize) * Double(iterations) / getElapsedSeconds(start: startFetchAdd, end: endFetchAdd) / 1e9
+
+    // Atomic Min
+    let startMin = getTimeNanos()
+    for _ in 0..<iterations {
+        counterPtr[0] = 10000
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(atomicMinPipeline)
+        encoder.setBuffer(atomicAdvBuffer, offset: 0, index: 0)
+        encoder.setBuffer(atomicOutBuffer, offset: 0, index: 1)
+        encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: atomicAdvSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endMin = getTimeNanos()
+    let gopsMin = Double(atomicAdvSize) * Double(iterations) / getElapsedSeconds(start: startMin, end: endMin) / 1e9
+
+    // Atomic Max
+    let startMax = getTimeNanos()
+    for _ in 0..<iterations {
+        counterPtr[0] = 0
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(atomicMaxPipeline)
+        encoder.setBuffer(atomicAdvBuffer, offset: 0, index: 0)
+        encoder.setBuffer(atomicOutBuffer, offset: 0, index: 1)
+        encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: atomicAdvSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endMax = getTimeNanos()
+    let gopsMax = Double(atomicAdvSize) * Double(iterations) / getElapsedSeconds(start: startMax, end: endMax) / 1e9
+
+    // Atomic Compare-And-Swap
+    let startCAS = getTimeNanos()
+    for _ in 0..<iterations {
+        counterPtr[0] = 0
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(atomicCASPipeline)
+        encoder.setBuffer(atomicAdvBuffer, offset: 0, index: 0)
+        encoder.setBuffer(atomicOutBuffer, offset: 0, index: 1)
+        encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: atomicAdvSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endCAS = getTimeNanos()
+    let gopsCAS = Double(atomicAdvSize) * Double(iterations) / getElapsedSeconds(start: startCAS, end: endCAS) / 1e9
+
+    print("\n--- Advanced Atomic Operations ---")
+    print("Fetch Add: \(String(format: "%.3f", gopsFetchAdd)) GOPS")
+    print("Fetch Min: \(String(format: "%.3f", gopsMin)) GOPS")
+    print("Fetch Max: \(String(format: "%.3f", gopsMax)) GOPS")
+    print("Compare-And-Swap: \(String(format: "%.3f", gopsCAS)) GOPS")
 
     // 6. REGISTER PRESSURE TEST
     print("\n--- 6. Register Pressure Analysis ---")
