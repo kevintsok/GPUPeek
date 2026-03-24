@@ -156,6 +156,7 @@
 | **N-Body Simulation** | 0.74 GOPS | O(n²) = 1M交互, 计算受限 |
 | **Ray-Sphere Intersection** | 13.60 GOPS | 1M rays x 64 spheres, 100%命中率 |
 | **Matrix Square (A*A^T)** | 0.71 GOPS | 非合并访问, 内存受限 |
+| **Local Memory Copy** | 0.79 GB/s | Shared比Global快16% |
 
 **关键洞察**:
 - **内存合并 (Coalescing)** 是最重要的优化 - 5.3x性能差异
@@ -200,6 +201,7 @@
 - **N-Body Simulation** - 0.74 GOPS，O(n²)算法，计算密集型但受限于Apple M2算力
 - **Ray-Sphere Intersection** - 13.6 GOPS (1M rays x 64 spheres)，计算效率高，适合光线追踪应用
 - **Matrix Square (A*A^T)** - 0.71 GOPS，非合并内存访问导致性能低，神经网络backpropagation常见模式
+- **Local Memory Copy** - Shared memory写入反而比直接Global快16% (0.79 vs 0.68 GB/s)，可能与写入合并优化有关
 
 ### 4. 并行计算
 

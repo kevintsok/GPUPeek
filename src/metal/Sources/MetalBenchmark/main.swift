@@ -6764,6 +6764,161 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     print("\n" + String(repeating: "-", count: 50))
     print("Matrix Square Analysis Complete")
     print(String(repeating: "-", count: 50))
+
+    // ============================================================
+    // 39. LOCAL MEMORY COPY (GLOBAL TO THREADGROUP)
+    // Tests explicit global -> threadgroup memory copy bandwidth
+    // ============================================================
+    print("\n--- 39. Local Memory Copy Analysis ---")
+
+    let localCopyShader = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    // Each thread copies one element from global to threadgroup, then back
+    kernel void local_copy_global_to_shared(device const float* globalIn [[buffer(0)]],
+                                          device float* globalOut [[buffer(1)]],
+                                          threadgroup float* local [[threadgroup(0)]],
+                                          constant uint& size [[buffer(2)]],
+                                          uint id [[thread_position_in_grid]],
+                                          uint lid [[thread_position_in_threadgroup]]) {
+        if (id >= size) return;
+
+        // Global to Shared (local) copy
+        local[lid] = globalIn[id];
+        threadgroup_barrier(mem_flags::mem_none);
+
+        // Shared to Global copy (simulate use of local memory)
+        globalOut[id] = local[lid];
+    }
+
+    // Sequential copy without threadgroup (baseline)
+    kernel void local_copy_baseline(device const float* globalIn [[buffer(0)]],
+                                   device float* globalOut [[buffer(1)]],
+                                   constant uint& size [[buffer(2)]],
+                                   uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        globalOut[id] = globalIn[id];
+    }
+
+    // Block-strided copy (threads copy consecutive blocks)
+    kernel void local_copy_block(device const float* globalIn [[buffer(0)]],
+                                device float* globalOut [[buffer(1)]],
+                                constant uint& size [[buffer(2)]],
+                                uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+
+        uint blockSize = 256;
+        uint blockId = id / blockSize;
+        uint offset = id % blockSize;
+        uint srcBase = blockId * blockSize + offset;
+
+        float sum = 0.0f;
+        for (uint i = 0; i < blockSize; i++) {
+            uint idx = blockId * blockSize + i;
+            if (idx < size) {
+                sum += globalIn[idx];
+            }
+        }
+        globalOut[id] = sum / float(blockSize);
+    }
+    """
+
+    guard let localLib = try? device.makeLibrary(source: localCopyShader, options: nil) else {
+        print("Failed to compile local copy shader")
+        return
+    }
+    guard let copyG2SF = localLib.makeFunction(name: "local_copy_global_to_shared"),
+          let copyBaselineF = localLib.makeFunction(name: "local_copy_baseline"),
+          let copyBlockF = localLib.makeFunction(name: "local_copy_block"),
+          let copyG2SPipe = try? device.makeComputePipelineState(function: copyG2SF),
+          let copyBaselinePipe = try? device.makeComputePipelineState(function: copyBaselineF),
+          let copyBlockPipe = try? device.makeComputePipelineState(function: copyBlockF) else {
+        print("Failed to create local copy pipelines")
+        return
+    }
+
+    let copySize: UInt32 = 1024 * 1024  // 1M elements
+    let copyIterations = 10
+
+    guard let copyIn = device.makeBuffer(length: Int(copySize) * MemoryLayout<Float>.size, options: .storageModeShared),
+          let copyOut = device.makeBuffer(length: Int(copySize) * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+
+    // Initialize input
+    let copyInPtr = copyIn.contents().bindMemory(to: Float.self, capacity: Int(copySize))
+    for i in 0..<Int(copySize) {
+        copyInPtr[i] = Float(i)
+    }
+
+    var copySizeVar = copySize
+
+    // Baseline: Direct global to global copy
+    let baselineStart = getTimeNanos()
+    for _ in 0..<copyIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let enc = cmd.makeComputeCommandEncoder() else { continue }
+        enc.setComputePipelineState(copyBaselinePipe)
+        enc.setBuffer(copyIn, offset: 0, index: 0)
+        enc.setBuffer(copyOut, offset: 0, index: 1)
+        enc.setBytes(&copySizeVar, length: MemoryLayout<UInt32>.size, index: 2)
+        enc.dispatchThreads(MTLSize(width: Int(copySize), height: 1, depth: 1),
+                          threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        enc.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let baselineEnd = getTimeNanos()
+
+    // With threadgroup (global -> shared -> global)
+    let g2sStart = getTimeNanos()
+    for _ in 0..<copyIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let enc = cmd.makeComputeCommandEncoder() else { continue }
+        enc.setComputePipelineState(copyG2SPipe)
+        enc.setBuffer(copyIn, offset: 0, index: 0)
+        enc.setBuffer(copyOut, offset: 0, index: 1)
+        enc.setBytes(&copySizeVar, length: MemoryLayout<UInt32>.size, index: 2)
+        enc.dispatchThreads(MTLSize(width: Int(copySize), height: 1, depth: 1),
+                          threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        enc.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let g2sEnd = getTimeNanos()
+
+    // Block-strided
+    let blockStart = getTimeNanos()
+    for _ in 0..<copyIterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let enc = cmd.makeComputeCommandEncoder() else { continue }
+        enc.setComputePipelineState(copyBlockPipe)
+        enc.setBuffer(copyIn, offset: 0, index: 0)
+        enc.setBuffer(copyOut, offset: 0, index: 1)
+        enc.setBytes(&copySizeVar, length: MemoryLayout<UInt32>.size, index: 2)
+        enc.dispatchThreads(MTLSize(width: Int(copySize), height: 1, depth: 1),
+                          threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        enc.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let blockEnd = getTimeNanos()
+
+    // Calculate bandwidth (bytes per second)
+    let bytesPerIter = Double(copySize) * 2.0 * Double(MemoryLayout<Float>.size)
+    let baselineBW = bytesPerIter * Double(copyIterations) / getElapsedSeconds(start: baselineStart, end: baselineEnd) / 1e9
+    let g2sBW = bytesPerIter * Double(copyIterations) / getElapsedSeconds(start: g2sStart, end: g2sEnd) / 1e9
+    let blockBW = bytesPerIter * Double(copyIterations) / getElapsedSeconds(start: blockStart, end: blockEnd) / 1e9
+
+    print("Local Memory Copy (1M elements):")
+    print("  Baseline (global->global): \(String(format: "%.3f", baselineBW)) GB/s")
+    print("  Global->Shared->Global: \(String(format: "%.3f", g2sBW)) GB/s")
+    print("  Block-strided avg: \(String(format: "%.3f", blockBW)) GB/s")
+
+    print("\n" + String(repeating: "-", count: 50))
+    print("Local Memory Copy Analysis Complete")
+    print(String(repeating: "-", count: 50))
 }
 
 // MARK: - Deep Memory Bandwidth Research
