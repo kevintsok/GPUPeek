@@ -460,6 +460,10 @@ kernel void atomic_compare_exchange_op(device atomic_uint* counter [[buffer(0)]]
     out[id] = exchanged ? desired : expected;
 }
 
+// NOTE: Metal only supports memory_order_relaxed for device address space atomics.
+// Other memory orders (acquire, release, seq_cst) are only available for threadgroup
+// address space. This is a key architectural difference from CUDA.
+
 // ============================================================
 // 11. COMMAND BUFFER BATCHING TEST
 // ============================================================
@@ -2117,6 +2121,7 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     print("Fetch Min: \(String(format: "%.3f", gopsMin)) GOPS")
     print("Fetch Max: \(String(format: "%.3f", gopsMax)) GOPS")
     print("Compare-And-Swap: \(String(format: "%.3f", gopsCAS)) GOPS")
+    print("Note: Metal only supports memory_order_relaxed for device atomics")
 
     // 6. REGISTER PRESSURE TEST
     print("\n--- 6. Register Pressure Analysis ---")

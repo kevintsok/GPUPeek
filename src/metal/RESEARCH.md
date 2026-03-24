@@ -94,6 +94,7 @@
 | **Atomic Fetch Min** | 0.036 GOPS | 原子最小值 |
 | **Atomic Fetch Max** | 0.038 GOPS | 原子最大值 |
 | **Atomic Compare-And-Swap** | 0.012 GOPS | 原子比较交换，最慢 |
+| **Memory Ordering** | 仅支持relaxed | Metal仅支持memory_order_relaxed |
 | **Register Pressure** | 0.10 vs 0.10 GOPS | **1.0x 无影响** |
 | **Constant Memory** | 0.09 vs 0.09 GOPS | **1.0x 无差异** |
 | **Command Buffer Batching** | 0.16 vs 0.08 GOPS | **1.88x 加速** |
@@ -128,6 +129,7 @@
 - **SIMD Group Operations** - Vote/Shuffle/Prefix Sum均约0.02 GOPS，硬件支持高效
 - **Parallel Reduction** - Shared Memory优化可将性能提升至0.03 GOPS (vs 0.00 GOPS基准)
 - **Advanced Atomics** - Fetch Add/Min/Max约0.04 GOPS，CAS最慢(0.012 GOPS)因需要重试机制
+- **Memory Ordering** - Metal仅支持memory_order_relaxed（设备地址空间），其他语义(acquire/release/seq_cst)仅适用于threadgroup地址空间
 
 ### 4. 并行计算
 
