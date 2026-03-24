@@ -6919,6 +6919,133 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     print("\n" + String(repeating: "-", count: 50))
     print("Local Memory Copy Analysis Complete")
     print(String(repeating: "-", count: 50))
+
+    // ============================================================
+    // 40. BITONIC SORT (PARALLEL SORTING NETWORK)
+    // O(n log²n) with high parallelism - constant geometry
+    // ============================================================
+    print("\n--- 40. Bitonic Sort Analysis ---")
+
+    let bitonicShader = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    // Bitonic sort step - compare and swap
+    kernel void bitonic_step(device float* data [[buffer(0)]],
+                           constant uint& n [[buffer(1)]],
+                           constant uint& k [[buffer(2)]],  // 2^k elements in groups
+                           constant uint& j [[buffer(3)]],  // compare distance
+                           uint id [[thread_position_in_grid]]) {
+        if (id >= n) return;
+
+        uint ixj = id ^ j;  // partner index
+        if (ixj > id) {
+            bool asc = ((id & k) == 0);
+            float a = data[id];
+            float b = data[ixj];
+            if ((a > b && asc) || (a < b && !asc)) {
+                data[id] = b;
+                data[ixj] = a;
+            }
+        }
+    }
+
+    // One stage of bitonic merge
+    kernel void bitonic_merge(device float* data [[buffer(0)]],
+                            constant uint& n [[buffer(1)]],
+                            constant uint& k [[buffer(2)]],
+                            uint id [[thread_position_in_grid]]) {
+        if (id >= n) return;
+
+        uint j = 1;
+        while (j < k) {
+            j <<= 1;
+        }
+        j >>= 1;
+
+        uint ixj = id ^ j;
+        if (ixj > id) {
+            bool asc = ((id & k) == 0);
+            float a = data[id];
+            float b = data[ixj];
+            if ((a > b && asc) || (a < b && !asc)) {
+                data[id] = b;
+                data[ixj] = a;
+            }
+        }
+    }
+    """
+
+    guard let bitonicLib = try? device.makeLibrary(source: bitonicShader, options: nil) else {
+        print("Failed to compile bitonic shader")
+        return
+    }
+    guard let bitonicStepF = bitonicLib.makeFunction(name: "bitonic_step"),
+          let bitonicMergeF = bitonicLib.makeFunction(name: "bitonic_merge"),
+          let bitonicStepPipe = try? device.makeComputePipelineState(function: bitonicStepF),
+          let bitonicMergePipe = try? device.makeComputePipelineState(function: bitonicMergeF) else {
+        print("Failed to create bitonic pipelines")
+        return
+    }
+
+    let bitonicSize: UInt32 = 8192  // Must be power of 2
+    let bitonicIterations = 5
+
+    guard let bitonicData = device.makeBuffer(length: Int(bitonicSize) * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+
+    // Initialize with random data
+    let bitonicPtr = bitonicData.contents().bindMemory(to: Float.self, capacity: Int(bitonicSize))
+    for i in 0..<Int(bitonicSize) {
+        bitonicPtr[i] = Float.random(in: 0.0...1.0)
+    }
+
+    var bitonicN = bitonicSize
+
+    let bitonicStart = getTimeNanos()
+
+    // Bitonic sort: log(n) stages, each stage has log(n) steps
+    // Total: log²(n) kernel launches
+    var k: UInt32 = 1
+    var sortIterations = 0
+    while k < bitonicSize {
+        var j = k
+        while j > 0 {
+            // Run bitonic step
+            for _ in 0..<bitonicIterations {
+                guard let cmd = queue.makeCommandBuffer(),
+                      let enc = cmd.makeComputeCommandEncoder() else { continue }
+                enc.setComputePipelineState(bitonicStepPipe)
+                enc.setBuffer(bitonicData, offset: 0, index: 0)
+                enc.setBytes(&bitonicN, length: MemoryLayout<UInt32>.size, index: 1)
+                enc.setBytes(&k, length: MemoryLayout<UInt32>.size, index: 2)
+                enc.setBytes(&j, length: MemoryLayout<UInt32>.size, index: 3)
+                enc.dispatchThreads(MTLSize(width: Int(bitonicSize), height: 1, depth: 1),
+                                  threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+                enc.endEncoding()
+                cmd.commit()
+                cmd.waitUntilCompleted()
+            }
+            sortIterations += 1
+            j >>= 1
+        }
+        k <<= 1
+    }
+
+    let bitonicEnd = getTimeNanos()
+
+    // FLOPs: each step does 1 comparison per thread
+    // Total comparisons: n * log(n) * log(n)
+    let bitonicFlops = Double(bitonicSize) * Double(sortIterations)
+    let bitonicGops = bitonicFlops / getElapsedSeconds(start: bitonicStart, end: bitonicEnd) / 1e9
+
+    print("Bitonic Sort (\(bitonicSize) elements, \(sortIterations) steps): \(String(format: "%.4f", bitonicGops)) GOPS")
+    print("(n=8192, log²n=\(sortIterations) kernel launches)")
+
+    print("\n" + String(repeating: "-", count: 50))
+    print("Bitonic Sort Analysis Complete")
+    print(String(repeating: "-", count: 50))
 }
 
 // MARK: - Deep Memory Bandwidth Research
