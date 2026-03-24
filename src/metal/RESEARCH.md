@@ -99,6 +99,8 @@
 | **Vectorization (Half2)** | 0.19 GOPS | **2x快于Float2** |
 | **Memory Fence Overhead** | 0.17 vs 0.16 GOPS | **1.0x 无开销** |
 | **Kernel Fusion** | 0.10 vs 0.05 GOPS | **1.98x 加速** |
+| **Texture2D vs Buffer** | 0.17 vs 0.17 GOPS | **无差异** |
+| **Pipeline Latency** | 1.02x (dep vs indep) | **无显著差异** |
 
 **关键洞察**:
 - **内存合并 (Coalescing)** 是最重要的优化 - 5.3x性能差异
@@ -112,6 +114,9 @@
 - **Half2向量最优** - Half2比Float2快2x，Half4比Float4快2x
 - **Memory Fence无开销** - Threadgroup屏障在当前测试中无显著性能损失
 - **Kernel Fusion效果显著** - 融合操作比分离kernel快2x
+- **Texture vs Buffer无差异** - 2D texture访问与buffer线性访问性能相当
+- **Pipeline依赖操作无额外开销** - 依赖链与独立操作性能几乎相同
+- **Burst Write峰值** - 实测6.89 GB/s (理论100 GB/s的6.9%)
 
 ### 4. 并行计算
 

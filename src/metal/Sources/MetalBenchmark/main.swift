@@ -768,6 +768,112 @@ kernel void separate_ops_b(device const float* temp [[buffer(2)]],
     v = sqrt(v);
     out[id] = v / (b[id] + 0.001f);
 }
+
+// ============================================================
+// 19. TEXTURE VS BUFFER MEMORY ACCESS
+// Texture has L1/L2 cache, efficient for 2D spatial locality
+// ============================================================
+
+kernel void tex_read_linear(device const float* in [[buffer(0)]],
+                          device float* out [[buffer(1)]],
+                          constant uint& size [[buffer(2)]],
+                          uint id [[thread_position_in_grid]]) {
+    out[id] = in[id] * 2.0f + 1.0f;
+}
+
+kernel void tex_read_2d(uint2 gid [[thread_position_in_grid]],
+                       texture2d<float, access::read> tex [[texture(0)]],
+                       device float* out [[buffer(0)]],
+                       constant uint& width [[buffer(1)]]) {
+    float4 val = tex.read(gid);
+    out[gid.y * width + gid.x] = val.x * 2.0f + 1.0f;
+}
+
+kernel void tex_read_2d_half(uint2 gid [[thread_position_in_grid]],
+                            texture2d<half, access::read> tex [[texture(0)]],
+                            device half* out [[buffer(0)]],
+                            constant uint& width [[buffer(1)]]) {
+    half4 val = tex.read(gid);
+    out[gid.y * width + gid.x] = val.x * 2.0h + 1.0h;
+}
+
+kernel void tex_write_linear(device float* out [[buffer(0)]],
+                           constant uint& size [[buffer(1)]],
+                           uint id [[thread_position_in_grid]]) {
+    out[id] = float(id);
+}
+
+kernel void tex_write_2d(uint2 gid [[thread_position_in_grid]],
+                        texture2d<float, access::write> tex [[texture(0)]],
+                        constant float& val [[buffer(0)]]) {
+    tex.write(float4(val, val, val, val), gid);
+}
+
+// ============================================================
+// 20. TEXTURE CACHING BEHAVIOR
+// Sequential vs random access patterns with texture
+// ============================================================
+
+kernel void tex_seq_read(uint2 gid [[thread_position_in_grid]],
+                        texture2d<float, access::read> tex [[texture(0)]],
+                        device float* out [[buffer(0)]],
+                        constant uint& width [[buffer(1)]]) {
+    uint2 coord = uint2(gid.x % width, gid.y % (width / width));
+    float4 val = tex.read(coord);
+    out[gid.y * width + gid.x] = val.x;
+}
+
+kernel void tex_rand_read(uint2 gid [[thread_position_in_grid]],
+                         texture2d<float, access::read> tex [[texture(0)]],
+                         device float* out [[buffer(0)]],
+                         constant uint& width [[buffer(1)]]) {
+    uint2 coord = uint2((gid.x * 7919) % width, (gid.y * 6271) % width);
+    float4 val = tex.read(coord);
+    out[gid.y * width + gid.x] = val.x;
+}
+
+// ============================================================
+// 21. PIPELINE BUBBLES AND INSTRUCTION LATENCY
+// Measure impact of dependent operations
+// ============================================================
+
+kernel void dep_chain_add(device const float* in [[buffer(0)]],
+                         device float* out [[buffer(1)]],
+                         constant uint& size [[buffer(2)]],
+                         uint id [[thread_position_in_grid]]) {
+    float v = in[id];
+    v = v + 1.0f;
+    v = v + 1.0f;
+    v = v + 1.0f;
+    v = v + 1.0f;
+    v = v + 1.0f;
+    out[id] = v;
+}
+
+kernel void dep_chain_mul(device const float* in [[buffer(0)]],
+                         device float* out [[buffer(1)]],
+                         constant uint& size [[buffer(2)]],
+                         uint id [[thread_position_in_grid]]) {
+    float v = in[id];
+    v = v * 2.0f;
+    v = v * 2.0f;
+    v = v * 2.0f;
+    v = v * 2.0f;
+    v = v * 2.0f;
+    out[id] = v;
+}
+
+kernel void indep_ops(device const float* in [[buffer(0)]],
+                     device float* out [[buffer(1)]],
+                     constant uint& size [[buffer(2)]],
+                     uint id [[thread_position_in_grid]]) {
+    float v = in[id];
+    float a = v + 1.0f;
+    float b = v * 2.0f;
+    float c = v + 2.0f;
+    float d = v * 3.0f;
+    out[id] = a + b + c + d;
+}
 """
 
 // MARK: - FP16 Deep Dive Shader Library
@@ -2463,6 +2569,163 @@ func testDeepGPUResearch(device: MTLDevice, queue: MTLCommandQueue) throws {
     let bestOcc = max(gopsLowOcc, max(gopsMedOcc, gopsHighOccupancy))
     let bestOccName = bestOcc == gopsLowOcc ? "Low" : (bestOcc == gopsMedOcc ? "Med" : "High")
     print("Best Occupancy: \(bestOccName) with \(String(format: "%.2f", bestOcc)) GOPS")
+
+    // 11. TEXTURE MEMORY ACCESS
+    print("\n--- 11. Texture Memory Access Analysis ---")
+
+    guard let texLinearFunc = deepLibrary.makeFunction(name: "tex_read_linear"),
+          let tex2DFunc = deepLibrary.makeFunction(name: "tex_read_2d"),
+          let tex2DHalfFunc = deepLibrary.makeFunction(name: "tex_read_2d_half"),
+          let texLinearPipeline = try? device.makeComputePipelineState(function: texLinearFunc),
+          let tex2DPipeline = try? device.makeComputePipelineState(function: tex2DFunc),
+          let tex2DHalfPipeline = try? device.makeComputePipelineState(function: tex2DHalfFunc) else {
+        print("Failed to create texture pipelines")
+        return
+    }
+
+    let texSize = 2048
+    let texPixels = texSize * texSize
+    let texIter = 100
+
+    // Create texture descriptor
+    let texDesc = MTLTextureDescriptor()
+    texDesc.width = texSize
+    texDesc.height = texSize
+    texDesc.pixelFormat = .r32Float
+    texDesc.usage = [.shaderRead]
+    texDesc.storageMode = .shared
+
+    if let tex2D = device.makeTexture(descriptor: texDesc) {
+        guard let bufIn = device.makeBuffer(length: texPixels * MemoryLayout<Float>.size, options: .storageModeShared),
+              let bufOut = device.makeBuffer(length: texPixels * MemoryLayout<Float>.size, options: .storageModeShared) else {
+            print("Failed to create buffers")
+            return
+        }
+
+        var texSz = UInt32(texSize)
+
+        // Buffer linear read baseline
+        let startBuf = getTimeNanos()
+        for _ in 0..<texIter {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(texLinearPipeline)
+            encoder.setBuffer(bufIn, offset: 0, index: 0)
+            encoder.setBuffer(bufOut, offset: 0, index: 1)
+            encoder.setBytes(&texSz, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: texPixels, height: 1, depth: 1),
+                               threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endBuf = getTimeNanos()
+        let gopsBuf = Double(texPixels) * Double(texIter) / getElapsedSeconds(start: startBuf, end: endBuf) / 1e9
+
+        print("Buffer Linear Read: \(String(format: "%.2f", gopsBuf)) GOPS")
+
+        // 2D Texture read
+        let startTex = getTimeNanos()
+        for _ in 0..<texIter {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(tex2DPipeline)
+            encoder.setTexture(tex2D, index: 0)
+            encoder.setBuffer(bufOut, offset: 0, index: 0)
+            encoder.setBytes(&texSz, length: MemoryLayout<UInt32>.size, index: 1)
+            encoder.dispatchThreads(MTLSize(width: texSize, height: texSize, depth: 1),
+                               threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endTex = getTimeNanos()
+        let gopsTex = Double(texPixels) * Double(texIter) / getElapsedSeconds(start: startTex, end: endTex) / 1e9
+        print("Texture2D Float Read: \(String(format: "%.2f", gopsTex)) GOPS")
+    } else {
+        print("Failed to create texture")
+    }
+
+    // 12. PIPELINE LATENCY (Dependent vs Independent Ops)
+    print("\n--- 12. Pipeline Latency Analysis ---")
+
+    guard let depAddFunc = deepLibrary.makeFunction(name: "dep_chain_add"),
+          let depMulFunc = deepLibrary.makeFunction(name: "dep_chain_mul"),
+          let indepFunc = deepLibrary.makeFunction(name: "indep_ops"),
+          let depAddPipeline = try? device.makeComputePipelineState(function: depAddFunc),
+          let depMulPipeline = try? device.makeComputePipelineState(function: depMulFunc),
+          let indepPipeline = try? device.makeComputePipelineState(function: indepFunc) else {
+        print("Failed to create pipeline latency pipelines")
+        return
+    }
+
+    let pipeSize = 4 * 1024 * 1024
+    let pipeIter = 100
+    guard let pipeIn = device.makeBuffer(length: pipeSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let pipeOut = device.makeBuffer(length: pipeSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create pipeline buffers")
+        return
+    }
+    var pipeSz = UInt32(pipeSize)
+
+    // Dependent chain (add)
+    let startDepAdd = getTimeNanos()
+    for _ in 0..<pipeIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(depAddPipeline)
+        encoder.setBuffer(pipeIn, offset: 0, index: 0)
+        encoder.setBuffer(pipeOut, offset: 0, index: 1)
+        encoder.setBytes(&pipeSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: pipeSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endDepAdd = getTimeNanos()
+    let gopsDepAdd = Double(pipeSize) * Double(pipeIter) / getElapsedSeconds(start: startDepAdd, end: endDepAdd) / 1e9
+
+    // Dependent chain (mul)
+    let startDepMul = getTimeNanos()
+    for _ in 0..<pipeIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(depMulPipeline)
+        encoder.setBuffer(pipeIn, offset: 0, index: 0)
+        encoder.setBuffer(pipeOut, offset: 0, index: 1)
+        encoder.setBytes(&pipeSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: pipeSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endDepMul = getTimeNanos()
+    let gopsDepMul = Double(pipeSize) * Double(pipeIter) / getElapsedSeconds(start: startDepMul, end: endDepMul) / 1e9
+
+    // Independent ops
+    let startIndep = getTimeNanos()
+    for _ in 0..<pipeIter {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(indepPipeline)
+        encoder.setBuffer(pipeIn, offset: 0, index: 0)
+        encoder.setBuffer(pipeOut, offset: 0, index: 1)
+        encoder.setBytes(&pipeSz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: pipeSize, height: 1, depth: 1),
+                           threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endIndep = getTimeNanos()
+    let gopsIndep = Double(pipeSize) * Double(pipeIter) / getElapsedSeconds(start: startIndep, end: endIndep) / 1e9
+
+    print("Dep Chain (add):     \(String(format: "%.2f", gopsDepAdd)) GOPS")
+    print("Dep Chain (mul):     \(String(format: "%.2f", gopsDepMul)) GOPS")
+    print("Independent Ops:     \(String(format: "%.2f", gopsIndep)) GOPS")
+    print("Dep vs Indep Ratio:  \(String(format: "%.2fx", gopsIndep / gopsDepAdd))")
 
     print("\n" + String(repeating: "=", count: 60))
     print("Deep GPU Architecture Research Complete")
