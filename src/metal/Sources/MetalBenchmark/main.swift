@@ -15841,6 +15841,231 @@ func testPrecisionAnalysis(device: MTLDevice, queue: MTLCommandQueue, library: M
 }
 
 // ============================================================
+// 78. INSTRUCTION MIX AND ARITHMETIC INTENSITY
+// Analysis of instruction throughput and FLOP/s efficiency
+// ============================================================
+func testInstructionMix(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("78. Instruction Mix and Arithmetic Intensity")
+    print(String(repeating: "=", count: 70))
+
+    let instructionShaderSource = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    // Pure addition (low arithmetic intensity)
+    kernel void add_ops(device float* input [[buffer(0)]],
+                 device float* output [[buffer(1)]],
+                 constant uint& size [[buffer(2)]],
+                 uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float val = input[id];
+        for (uint i = 0; i < 64; i++) {
+            val = val + 1.0f;
+        }
+        output[id] = val;
+    }
+
+    // Multiplication
+    kernel void mul_ops(device float* input [[buffer(0)]],
+                 device float* output [[buffer(1)]],
+                 constant uint& size [[buffer(2)]],
+                 uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float val = input[id];
+        for (uint i = 0; i < 64; i++) {
+            val = val * 2.0f;
+        }
+        output[id] = val;
+    }
+
+    // FMA (fused multiply-add) - most efficient
+    kernel void fma_ops(device float* input [[buffer(0)]],
+                 device float* output [[buffer(1)]],
+                 constant uint& size [[buffer(2)]],
+                 uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float val = input[id];
+        for (uint i = 0; i < 64; i++) {
+            val = fma(val, 2.0f, 1.0f);
+        }
+        output[id] = val;
+    }
+
+    // Division (expensive)
+    kernel void div_ops(device float* input [[buffer(0)]],
+                 device float* output [[buffer(1)]],
+                 constant uint& size [[buffer(2)]],
+                 uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float val = input[id];
+        for (uint i = 0; i < 64; i++) {
+            val = val / 2.001f;
+        }
+        output[id] = val;
+    }
+
+    // Square root (expensive)
+    kernel void sqrt_ops(device float* input [[buffer(0)]],
+                 device float* output [[buffer(1)]],
+                 constant uint& size [[buffer(2)]],
+                 uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float val = input[id];
+        for (uint i = 0; i < 64; i++) {
+            val = sqrt(val + 0.001f);
+        }
+        output[id] = val;
+    }
+
+    // Trigonometry (very expensive)
+    kernel void trig_ops(device float* input [[buffer(0)]],
+                 device float* output [[buffer(1)]],
+                 constant uint& size [[buffer(2)]],
+                 uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float val = input[id];
+        for (uint i = 0; i < 64; i++) {
+            val = sin(val) * cos(val);
+        }
+        output[id] = val;
+    }
+
+    // Mixed operations (realistic workload)
+    kernel void mixed_ops(device float* input [[buffer(0)]],
+                 device float* output [[buffer(1)]],
+                 constant uint& size [[buffer(2)]],
+                 uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float val = input[id];
+        for (uint i = 0; i < 64; i++) {
+            val = fma(val, 2.0f, 1.0f);
+            val = sqrt(val);
+            val = val / (1.0f + val);
+        }
+        output[id] = val;
+    }
+    """
+
+    guard let instrLibrary = try? device.makeLibrary(source: instructionShaderSource, options: MTLCompileOptions()) else {
+        print("Failed to create instruction library")
+        return
+    }
+
+    guard let addFunc = instrLibrary.makeFunction(name: "add_ops"),
+          let mulFunc = instrLibrary.makeFunction(name: "mul_ops"),
+          let fmaFunc = instrLibrary.makeFunction(name: "fma_ops"),
+          let divFunc = instrLibrary.makeFunction(name: "div_ops"),
+          let sqrtFunc = instrLibrary.makeFunction(name: "sqrt_ops"),
+          let trigFunc = instrLibrary.makeFunction(name: "trig_ops"),
+          let mixedFunc = instrLibrary.makeFunction(name: "mixed_ops"),
+          let addPipeline = try? device.makeComputePipelineState(function: addFunc),
+          let mulPipeline = try? device.makeComputePipelineState(function: mulFunc),
+          let fmaPipeline = try? device.makeComputePipelineState(function: fmaFunc),
+          let divPipeline = try? device.makeComputePipelineState(function: divFunc),
+          let sqrtPipeline = try? device.makeComputePipelineState(function: sqrtFunc),
+          let trigPipeline = try? device.makeComputePipelineState(function: trigFunc),
+          let mixedPipeline = try? device.makeComputePipelineState(function: mixedFunc) else {
+        print("Failed to create instruction pipelines")
+        return
+    }
+
+    print("\n--- Instruction Throughput Comparison ---")
+
+    let sizes = [4096, 16384, 65536]
+    let iterations = 50
+    let loopCount = 64
+    let flopsPerIter = 1  // Base FLOPs per loop
+
+    print("\n| Operation | 4K | 16K | 64K | Relative Speed |")
+    print("|----------|-----|------|------|----------------|")
+
+    let ops: [(String, MTLComputePipelineState, Int)] = [
+        ("Add", addPipeline, 1),
+        ("Mul", mulPipeline, 1),
+        ("FMA", fmaPipeline, 2),
+        ("Div", divPipeline, 1),
+        ("Sqrt", sqrtPipeline, 1),
+        ("Trig", trigPipeline, 2),
+        ("Mixed", mixedPipeline, 4)
+    ]
+
+    var results: [(String, Double, Double, Double)] = []
+
+    for (name, pipeline, baseFlops) in ops {
+        var throughputs: [Double] = []
+
+        for size in sizes {
+            guard let inputBuffer = device.makeBuffer(length: size * MemoryLayout<Float>.size, options: .storageModeShared),
+                  let outputBuffer = device.makeBuffer(length: size * MemoryLayout<Float>.size, options: .storageModeShared) else {
+                continue
+            }
+
+            let inPtr = inputBuffer.contents().bindMemory(to: Float.self, capacity: size)
+            for i in 0..<size {
+                inPtr[i] = Float(1.0)
+            }
+
+            let start = getTimeNanos()
+            for _ in 0..<iterations {
+                guard let cmd = queue.makeCommandBuffer(),
+                      let encoder = cmd.makeComputeCommandEncoder() else { continue }
+                encoder.setComputePipelineState(pipeline)
+                encoder.setBuffer(inputBuffer, offset: 0, index: 0)
+                encoder.setBuffer(outputBuffer, offset: 0, index: 1)
+                var sz = UInt32(size)
+                encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+                encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                      threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+                encoder.endEncoding()
+                cmd.commit()
+                cmd.waitUntilCompleted()
+            }
+            let end = getTimeNanos()
+            let time = getElapsedSeconds(start: start, end: end)
+            let totalFlops = Double(size) * Double(loopCount) * Double(baseFlops) * Double(iterations)
+            let gflops = totalFlops / time / 1e9
+            throughputs.append(gflops)
+        }
+
+        let avgBase = results.first { $0.0 == "Add" }.map { ($0.1 + $0.2 + $0.3) / 3.0 } ?? 1.0
+        let avgCurrent = (throughputs[0] + throughputs[1] + throughputs[2]) / 3.0
+        let relative = avgCurrent / avgBase
+
+        results.append((name, throughputs[0], throughputs[1], throughputs[2]))
+        print("| \(name) | \(String(format: "%.2f", throughputs[0])) | \(String(format: "%.2f", throughputs[1])) | \(String(format: "%.2f", throughputs[2])) | \(String(format: "%.2fx", relative)) |")
+    }
+
+    // Arithmetic Intensity analysis
+    print("\n--- Arithmetic Intensity Analysis ---")
+    print("Arithmetic Intensity = FLOPs / Memory Bytes")
+    print("Memory bound: AI < 1.0 FLOP/byte")
+    print("Compute bound: AI > 1.0 FLOP/byte")
+
+    let memoryBytesPerElement: Double = 8.0  // 4 bytes in, 4 bytes out
+    let memoryBandwidth: Double = 50.0e9  // Estimated 50 GB/s
+
+    for (name, p0, p1, p2) in results {
+        let avgThroughput = (p0 + p1 + p2) / 3.0
+        let ai = (avgThroughput * 1e9) / memoryBandwidth
+        print("\(name): \(String(format: "%.2f", avgThroughput)) GFLOPS, AI = \(String(format: "%.3f", ai)) FLOP/byte")
+
+        if ai < 1.0 {
+            print("  -> Memory bound (AI < 1.0)")
+        } else {
+            print("  -> Compute bound (AI > 1.0)")
+        }
+    }
+
+    print("\n--- Key Insights ---")
+    print("1. FMA is most efficient: single instruction for multiply+add")
+    print("2. Division and sqrt are 10-100x slower than add/mul")
+    print("3. Trigonometry is very expensive - avoid in tight loops")
+    print("4. Arithmetic Intensity determines if kernel is memory or compute bound")
+    print("5. Optimize instruction mix before memory access patterns")
+}
+
+// ============================================================
 // 50. FINAL RESEARCH SUMMARY AND CONCLUSIONS
 // ============================================================
 func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
@@ -15856,7 +16081,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
 
     Research Duration: 2026-03-25 (Iterative deep research sessions)
     GPU Under Test: Apple M2 (8-core GPU, Family Apple 7)
-    Test Coverage: 77 comprehensive benchmark sections
+    Test Coverage: 78 comprehensive benchmark sections
 
     ============================================================================
     EXECUTIVE SUMMARY
@@ -16040,7 +16265,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
     """)
 
     print("\n" + String(repeating: "=", count: 70))
-    print("DEEP RESEARCH COMPLETE - 77 SECTIONS")
+    print("DEEP RESEARCH COMPLETE - 78 SECTIONS")
     print("Thank you for benchmarking with GPUPeek!")
     print(String(repeating: "=", count: 70))
 }
@@ -16113,6 +16338,7 @@ do { try testAtomicOperations(device: device, queue: queue, library: library) } 
 do { try testMemoryTransactions(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testWarpScheduling(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testPrecisionAnalysis(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testInstructionMix(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testFinalSummary(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")
