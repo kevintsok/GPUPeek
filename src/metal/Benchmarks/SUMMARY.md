@@ -2,11 +2,11 @@
 
 ## 概述
 
-本项目对Apple M2 GPU进行了深度研究，通过92个专题的基准测试分析其架构特性和性能特征。
+本项目对Apple M2 GPU进行了深度研究，通过27个模块化基准测试分析其架构特性和性能特征。
 
 **测试环境**: Apple M2 (MacBook Air), macOS Darwin 25.3.0, Swift 6.1.2, Metal Apple 7+
 
-## 专题目录 (17个模块化基准测试)
+## 专题目录 (27个模块化基准测试)
 
 ### Memory (内存)
 | 专题 | Benchmark | 关键发现 |
@@ -21,6 +21,7 @@
 |------|-----------|----------|
 | GEMM | [Link](Compute/GEMM/RESEARCH.md) | Tiled GEMM可达14.98 GFLOPS |
 | Vectorization | [Link](Compute/Vectorization/RESEARCH.md) | Float4向量化提供4x加速 |
+| Convolution | [Link](Compute/Convolution/RESEARCH.md) | 卷积是CNN核心操作 |
 | FP64 | [Link](Compute/FP64/RESEARCH.md) | Apple M2不支持双精度 |
 | InstructionMix | [Link](Compute/InstructionMix/RESEARCH.md) | FMA峰值12.33 GOPS |
 
@@ -38,6 +39,8 @@
 | FFT | [Link](Algorithms/FFT/RESEARCH.md) | FFT适合>16K元素的大数据集 |
 | Graph | [Link](Algorithms/Graph/RESEARCH.md) | BFS受限于随机内存访问 |
 | Scan | [Link](Algorithms/Scan/RESEARCH.md) | Kogge-Stone快于Hillis-Steele |
+| Histogram | [Link](Algorithms/Histogram/RESEARCH.md) | 并行直方图统计 |
+| Stencil | [Link](Algorithms/Stencil/RESEARCH.md) | 模板计算 stencil pattern |
 
 ### Analysis (分析)
 | 专题 | Benchmark | 关键发现 |
@@ -126,4 +129,4 @@
 
 *研究完成日期: 2026-03-26*
 *GPU: Apple M2 (Family Apple 7)*
-*测试专题: 92个综合基准测试*
+*测试专题: 27个模块化基准测试*
