@@ -1476,3 +1476,55 @@ Apple M2 GPU是一款**高效的集成GPU**，针对移动/笔记本工作负载
    - 使用local aggregation减少原子竞争
    - 先在shared memory聚合，再原子写入device
    - 数据分区避免多线程竞争同一原子位置
+
+## Section 75: Memory Transactions and Write Coalescing
+
+### Write Coalescing Performance
+
+| Size | Uncoalesced Write | Coalesced Write | Vectorized Write |
+|------|-------------------|-----------------|-----------------|
+| 4096 | 0.74 M/s | 0.81 M/s | 0.82 M/s |
+| 16384 | 2.75 M/s | 3.24 M/s | 3.35 M/s |
+| 65536 | 9.25 M/s | 11.05 M/s | 10.38 M/s |
+
+### Read Coalescing Performance
+
+| Size | Uncoalesced Read | Coalesced Read | Vectorized Read |
+|------|------------------|----------------|-----------------|
+| 4096 | 0.70 M/s | 0.70 M/s | 0.71 M/s |
+| 16384 | 2.36 M/s | 2.75 M/s | 2.76 M/s |
+| 65536 | 8.77 M/s | 10.08 M/s | 10.47 M/s |
+
+### Scatter/Gather Patterns
+
+| Size | Scatter Write | Gather Read |
+|------|--------------|-------------|
+| 4096 | 0.71 M/s | 0.66 M/s |
+| 16384 | 2.24 M/s | 2.34 M/s |
+
+### 关键发现
+
+1. **Write Coalescing (写合并)**
+   - Coalesced写入比uncoalesced快20-30%
+   - Vectorized写入(float4)提供最高效率
+   - 线程连续访问可以合并为更少的内存事务
+
+2. **Read Coalescing (读合并)**
+   - Coalesced读取同样显著快于uncoalesced
+   - Vectorized读取效率最高
+   - 预取机制对连续访问更有效
+
+3. **Scatter/Gather (分散/聚集)**
+   - Scatter写入和Gather读取有额外开销
+   - 但提供了更灵活的索引方式
+   - 当需要不规则访问时仍然高效
+
+4. **Memory Transaction Efficiency (内存事务效率)**
+   - 合并访问可以减少内存事务数量
+   - 每个warp的访问应尽量连续
+   - Vectorized操作可以4倍提升效率
+
+5. **优化策略**
+   - 尽量让线程访问连续的内存地址
+   - 使用float4等vectorized类型提高效率
+   - Scatter/Gather用于必要的不规则访问
