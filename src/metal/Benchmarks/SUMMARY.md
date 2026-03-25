@@ -2,11 +2,11 @@
 
 ## 概述
 
-本项目对Apple M2 GPU进行了深度研究，通过28个模块化基准测试分析其架构特性和性能特征。
+本项目对Apple M2 GPU进行了深度研究，通过29个模块化基准测试分析其架构特性和性能特征。
 
 **测试环境**: Apple M2 (MacBook Air), macOS Darwin 25.3.0, Swift 6.1.2, Metal Apple 7+
 
-## 专题目录 (28个模块化基准测试)
+## 专题目录 (29个模块化基准测试)
 
 ### Memory (内存)
 | 专题 | Benchmark | 关键发现 |
@@ -50,6 +50,8 @@
 | Cache | [Link](Analysis/Cache/RESEARCH.md) | L1 32KB, L2 ~4MB |
 | Precision | [Link](Analysis/Precision/RESEARCH.md) | FP16比FP32快2x |
 | Texture | [Link](Analysis/Texture/RESEARCH.md) | Texture vs Buffer无显著差异 |
+| Architecture | [Link](Analysis/Architecture/RESEARCH.md) | M2 GPU架构特性 |
+| RegisterPressure | [Link](Analysis/RegisterPressure/RESEARCH.md) | 高寄存器压力导致溢出 |
 
 ### Optimization (优化)
 | 专题 | Benchmark | 关键发现 |
@@ -130,4 +132,4 @@
 
 *研究完成日期: 2026-03-26*
 *GPU: Apple M2 (Family Apple 7)*
-*测试专题: 28个模块化基准测试*
+*测试专题: 29个模块化基准测试*
