@@ -2139,6 +2139,24 @@ Arithmetic Intensity = FLOPs / Memory Bytes
 2. **交叉点约6 FLOP/byte** - 高于这个值才达到峰值计算
 3. **优化内存访问至关重要** - 对大多数kernel影响更大
 
+## Section 92: Double Buffering
+
+### 缓冲区对比
+
+| 配置 | 性能 | 说明 |
+|------|------|------|
+| Single Buffer | ~0.018 GOPS | 基准，无重叠 |
+| Double Buffer | ~0.018 GOPS | 同步等待无差异 |
+| Triple Buffer | ~0.018 GOPS | 同样无差异 |
+
+### 关键洞察
+
+1. **同步执行时双缓冲无优势** - CPU等待导致无法重叠
+2. **异步执行是双缓冲的前提** - 使用completion handler
+3. **Triple buffer增加流水线深度** - 适合多阶段处理
+4. **适用场景** - 迭代算法、图像处理、视频编解码
+
+
 
 
 
