@@ -1762,3 +1762,65 @@ Arithmetic Intensity = FLOPs / Memory Bytes
    - 使用simd_broadcast分发共享数据
    - 避免在Warp内使用循环进行数据交换
    - Warp级操作比全局内存操作快1000x以上
+
+## Section 80: Shader Compilation and Kernel Launch Overhead
+
+### Library Compilation Overhead
+
+| Operation | Time | Notes |
+|-----------|------|-------|
+| makeLibrary (runtime compile) | 3760.302 ms | 非常昂贵！ |
+| makeComputePipelineState | 552.715 ms | 中等开销 |
+
+### Kernel Launch Overhead
+
+| Metric | Value |
+|--------|-------|
+| Average encode time | 45.035 μs |
+| Average execution time (65536 elements) | 6299.148 μs |
+| Throughput | 10.40 M elements/s |
+
+### Overhead Analysis
+
+| Component | Time | Percentage |
+|-----------|------|------------|
+| Encode overhead | 45.035 μs | 0.71% |
+| Actual kernel execution | 6299.148 μs | 99.29% |
+
+### Batch Dispatch Efficiency
+
+| Batch Size | Total Time | Per-Kernel | Speedup |
+|------------|------------|------------|---------|
+| 1 | 6451.375 μs | 6451.375 μs | 0.98x |
+| 4 | 7406.250 μs | 1851.562 μs | 3.40x |
+| 16 | 10664.917 μs | 666.557 μs | 9.45x |
+| 64 | 22010.417 μs | 343.913 μs | 18.32x |
+
+### 关键发现
+
+1. **运行时编译开销极大**
+   - makeLibrary: ~3.76秒
+   - 这是启动延迟的主要原因
+   - 应该预编译shader或缓存编译结果
+
+2. **Pipeline State Creation中等开销**
+   - ~553ms per pipeline state
+   - 每个kernel变体需要一次
+   - 重复使用同一kernel时只需一次
+
+3. **Dispatch编码开销很小**
+   - ~45μs per dispatch
+   - 仅占执行时间的0.71%
+   - 对于短kernel可能更显著
+
+4. **批量调度效果显著**
+   - 64个kernel批量调度比单独调度快18倍
+   - 减少命令缓冲区创建开销
+   - 适合同一kernel多次调用场景
+
+5. **性能优化建议**
+   - 预编译所有shader在启动时
+   - 复用Pipeline State对象
+   - 短kernel考虑批量调度
+   - 避免在循环中创建新command buffer
+   - 使用Metal Performance Shaders(MPS)框架

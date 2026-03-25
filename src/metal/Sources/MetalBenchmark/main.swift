@@ -16278,6 +16278,204 @@ func testSIMDGroupCommunication(device: MTLDevice, queue: MTLCommandQueue, libra
 }
 
 // ============================================================
+// 80. SHADER COMPILATION AND KERNEL LAUNCH OVERHEAD
+// Analysis of compilation time vs execution time, and dispatch overhead
+// ============================================================
+func testShaderAndLaunchOverhead(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("80. Shader Compilation and Kernel Launch Overhead")
+    print(String(repeating: "=", count: 70))
+
+    // Simple kernel for testing
+    let simpleKernel = """
+    #include <metal_stdlib>
+    using namespace metal;
+    kernel void simple_add(device float* out [[buffer(0)]],
+                          device const float* in [[buffer(1)]],
+                          uint id [[thread_position_in_grid]]) {
+        out[id] = in[id] + 1.0f;
+    }
+    """
+
+    let iterations = 100
+    let workSize = 65536
+
+    // Precompiled library (using existing library)
+    print("\n--- Library Compilation Overhead ---")
+
+    // Measure time to compile library from source
+    let compileStart = getTimeNanos()
+    guard let compiledLibrary = try? device.makeLibrary(source: simpleKernel, options: nil) else {
+        print("Failed to compile library")
+        return
+    }
+    let compileEnd = getTimeNanos()
+    let compileTime = getElapsedSeconds(start: compileStart, end: compileEnd)
+
+    print("Library compilation (makeLibrary): \(String(format: "%.3f", compileTime * 1000)) ms")
+
+    // Measure pipeline state creation
+    guard let function = compiledLibrary.makeFunction(name: "simple_add") else {
+        print("Failed to make function")
+        return
+    }
+
+    let pipelineStart = getTimeNanos()
+    guard let pipelineState = try? device.makeComputePipelineState(function: function) else {
+        print("Failed to create pipeline state")
+        return
+    }
+    let pipelineEnd = getTimeNanos()
+    let pipelineTime = getElapsedSeconds(start: pipelineStart, end: pipelineEnd)
+
+    print("Pipeline state creation (makeComputePipelineState): \(String(format: "%.3f", pipelineTime * 1000)) ms")
+
+    // Measure kernel launch overhead
+    print("\n--- Kernel Launch Overhead ---")
+
+    guard let inputBuffer = device.makeBuffer(length: MemoryLayout<Float>.size * workSize, options: .storageModeShared),
+          let outputBuffer = device.makeBuffer(length: MemoryLayout<Float>.size * workSize, options: .storageModeShared) else {
+        print("Failed to create buffers")
+        return
+    }
+
+    // Initialize input
+    let inputPtr = inputBuffer.contents().bindMemory(to: Float.self, capacity: workSize)
+    for i in 0..<workSize {
+        inputPtr[i] = Float(i)
+    }
+
+    // Warm-up run
+    if let cmdBuffer = queue.makeCommandBuffer(),
+       let encoder = cmdBuffer.makeComputeCommandEncoder() {
+        encoder.setComputePipelineState(pipelineState)
+        encoder.setBuffer(outputBuffer, offset: 0, index: 0)
+        encoder.setBuffer(inputBuffer, offset: 0, index: 1)
+        encoder.dispatchThreads(MTLSize(width: workSize, height: 1, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmdBuffer.commit()
+        cmdBuffer.waitUntilCompleted()
+    }
+
+    // Measure dispatch overhead (just the encode time)
+    var encodeTimes: [Double] = []
+    for _ in 0..<iterations {
+        guard let cmdBuffer = queue.makeCommandBuffer(),
+              let encoder = cmdBuffer.makeComputeCommandEncoder() else { continue }
+
+        let encodeStart = getTimeNanos()
+        encoder.setComputePipelineState(pipelineState)
+        encoder.setBuffer(outputBuffer, offset: 0, index: 0)
+        encoder.setBuffer(inputBuffer, offset: 0, index: 1)
+        encoder.dispatchThreads(MTLSize(width: workSize, height: 1, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        let encodeEnd = getTimeNanos()
+        encodeTimes.append(getElapsedSeconds(start: encodeStart, end: encodeEnd))
+        cmdBuffer.commit()
+        cmdBuffer.waitUntilCompleted()
+    }
+
+    let avgEncodeTime = encodeTimes.reduce(0, +) / Double(iterations)
+    print("Average encode time (dispatch): \(String(format: "%.3f", avgEncodeTime * 1e6)) μs")
+
+    // Measure full kernel execution time
+    var execTimes: [Double] = []
+    for _ in 0..<iterations {
+        guard let cmdBuffer = queue.makeCommandBuffer(),
+              let encoder = cmdBuffer.makeComputeCommandEncoder() else { continue }
+
+        encoder.setComputePipelineState(pipelineState)
+        encoder.setBuffer(outputBuffer, offset: 0, index: 0)
+        encoder.setBuffer(inputBuffer, offset: 0, index: 1)
+
+        let execStart = getTimeNanos()
+        encoder.dispatchThreads(MTLSize(width: workSize, height: 1, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmdBuffer.commit()
+        cmdBuffer.waitUntilCompleted()
+        let execEnd = getTimeNanos()
+        execTimes.append(getElapsedSeconds(start: execStart, end: execEnd))
+    }
+
+    let avgExecTime = execTimes.reduce(0, +) / Double(iterations)
+    print("Average execution time (workSize=\(workSize)): \(String(format: "%.3f", avgExecTime * 1e6)) μs")
+
+    // Compute throughput
+    let throughput = Double(workSize) / avgExecTime / 1e6
+    print("Throughput: \(String(format: "%.2f", throughput)) M elements/s")
+
+    // Analyze overhead ratio
+    print("\n--- Overhead Analysis ---")
+    print("| Component | Time | Percentage of Execution |")
+    print("|-----------|------|----------------------|")
+    let overhead = avgEncodeTime / avgExecTime * 100
+    print("| Encode overhead | \(String(format: "%.3f", avgEncodeTime * 1e6)) μs | \(String(format: "%.2f", overhead))% |")
+    print("| Actual kernel | \(String(format: "%.3f", avgExecTime * 1e6)) μs | \(String(format: "%.2f", 100 - overhead))% |")
+
+    // Batch dispatch analysis
+    print("\n--- Batch Dispatch Efficiency ---")
+    let batchSizes = [1, 4, 16, 64]
+    print("| Batch Size | Total Time | Per-Kernel | Speedup |")
+    print("|------------|------------|------------|---------|")
+
+    for batchSize in batchSizes {
+        guard let cmdBuffer = queue.makeCommandBuffer(),
+              let encoder = cmdBuffer.makeComputeCommandEncoder() else { continue }
+
+        let batchStart = getTimeNanos()
+        encoder.setComputePipelineState(pipelineState)
+        encoder.setBuffer(outputBuffer, offset: 0, index: 0)
+        encoder.setBuffer(inputBuffer, offset: 0, index: 1)
+        for _ in 0..<batchSize {
+            encoder.dispatchThreads(MTLSize(width: workSize, height: 1, depth: 1),
+                                  threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        }
+        encoder.endEncoding()
+        cmdBuffer.commit()
+        cmdBuffer.waitUntilCompleted()
+        let batchEnd = getTimeNanos()
+        let batchTime = getElapsedSeconds(start: batchStart, end: batchEnd)
+        let perKernel = batchTime / Double(batchSize)
+        let speedup = avgExecTime / perKernel
+        print("| \(batchSize) | \(String(format: "%.3f", batchTime * 1e6)) μs | \(String(format: "%.3f", perKernel * 1e6)) μs | \(String(format: "%.2fx", speedup)) |")
+    }
+
+    // Precompiled vs runtime compiled comparison
+    print("\n--- Precompiled vs Runtime Compile ---")
+    // Use the main library which was already compiled at app start
+    if let mainFunc = library.makeFunction(name: "simple_add"),
+       let mainPipeline = try? device.makeComputePipelineState(function: mainFunc) {
+        guard let mainCmdBuffer = queue.makeCommandBuffer(),
+              let mainEncoder = mainCmdBuffer.makeComputeCommandEncoder() else { return }
+
+        let preStart = getTimeNanos()
+        mainEncoder.setComputePipelineState(mainPipeline)
+        mainEncoder.setBuffer(outputBuffer, offset: 0, index: 0)
+        mainEncoder.setBuffer(inputBuffer, offset: 0, index: 1)
+        mainEncoder.dispatchThreads(MTLSize(width: workSize, height: 1, depth: 1),
+                                   threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        mainEncoder.endEncoding()
+        mainCmdBuffer.commit()
+        mainCmdBuffer.waitUntilCompleted()
+        let preEnd = getTimeNanos()
+        let preTime = getElapsedSeconds(start: preStart, end: preEnd)
+        print("Precompiled kernel time: \(String(format: "%.3f", preTime * 1e6)) μs")
+        print("Runtime compiled kernel time: \(String(format: "%.3f", avgExecTime * 1e6)) μs")
+    }
+
+    print("\n--- Key Insights ---")
+    print("1. Library compilation (makeLibrary) is expensive: \(String(format: "%.1f", compileTime * 1000)) ms")
+    print("2. Pipeline state creation is moderate: \(String(format: "%.1f", pipelineTime * 1000)) ms")
+    print("3. Encode/dispatch overhead is small but significant: \(String(format: "%.2f", overhead))%")
+    print("4. Batching kernels reduces per-kernel overhead substantially")
+    print("5. Precompiled shaders avoid runtime compilation cost")
+    print("6. For short-running kernels, overhead can dominate execution time")
+}
+
+// ============================================================
 // 50. FINAL RESEARCH SUMMARY AND CONCLUSIONS
 // ============================================================
 func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
@@ -16293,7 +16491,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
 
     Research Duration: 2026-03-25 (Iterative deep research sessions)
     GPU Under Test: Apple M2 (8-core GPU, Family Apple 7)
-    Test Coverage: 79 comprehensive benchmark sections
+    Test Coverage: 80 comprehensive benchmark sections
 
     ============================================================================
     EXECUTIVE SUMMARY
@@ -16477,7 +16675,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
     """)
 
     print("\n" + String(repeating: "=", count: 70))
-    print("DEEP RESEARCH COMPLETE - 79 SECTIONS")
+    print("DEEP RESEARCH COMPLETE - 80 SECTIONS")
     print("Thank you for benchmarking with GPUPeek!")
     print(String(repeating: "=", count: 70))
 }
@@ -16552,6 +16750,7 @@ do { try testWarpScheduling(device: device, queue: queue, library: library) } ca
 do { try testPrecisionAnalysis(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testInstructionMix(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testSIMDGroupCommunication(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testShaderAndLaunchOverhead(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testFinalSummary(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")
