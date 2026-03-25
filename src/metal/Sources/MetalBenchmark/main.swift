@@ -16491,7 +16491,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
 
     Research Duration: 2026-03-25 (Iterative deep research sessions)
     GPU Under Test: Apple M2 (8-core GPU, Family Apple 7)
-    Test Coverage: 80 comprehensive benchmark sections
+    Test Coverage: 81 comprehensive benchmark sections
 
     ============================================================================
     EXECUTIVE SUMMARY
@@ -16675,7 +16675,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
     """)
 
     print("\n" + String(repeating: "=", count: 70))
-    print("DEEP RESEARCH COMPLETE - 80 SECTIONS")
+    print("DEEP RESEARCH COMPLETE - 81 SECTIONS")
     print("Thank you for benchmarking with GPUPeek!")
     print(String(repeating: "=", count: 70))
 }
@@ -16751,6 +16751,7 @@ do { try testPrecisionAnalysis(device: device, queue: queue, library: library) }
 do { try testInstructionMix(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testSIMDGroupCommunication(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testShaderAndLaunchOverhead(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try TextureSamplerBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try testFinalSummary(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")

@@ -1824,3 +1824,35 @@ Arithmetic Intensity = FLOPs / Memory Bytes
    - 短kernel考虑批量调度
    - 避免在循环中创建新command buffer
    - 使用Metal Performance Shaders(MPS)框架
+
+## Section 81: Texture Sampler Performance Analysis
+
+### Texture vs Buffer Read Performance
+
+| Access Method | Time(μs) | Bandwidth |
+|--------------|----------|-----------|
+| Texture Direct Read | 17353.28 | 0.97 GB/s |
+| Buffer Read | 10236.04 | 0.41 GB/s |
+
+### 关键发现
+
+1. **纹理读取通过采样器硬件**
+   - Texture读取经过专用采样器单元
+   - 即使直接读取(no filtering)也走采样器路径
+   - 缓存机制不同于buffer
+
+2. **Buffer访问更直接**
+   - 直接访问内存，无插值开销
+   - 适合随机访问模式
+   - 小数据量时延迟更低
+
+3. **纹理优势**
+   - 2D/3D空间数据的硬件支持
+   - 硬件加速的采样和滤波
+   - 自动 LOD (Level of Detail)支持
+   - 缓存优化（tiling）
+
+4. **选择建议**
+   - 图像处理、空间插值: 使用Texture
+   - 通用计算、随机访问: 使用Buffer
+   - 大量数据顺序访问: Buffer可能更快
