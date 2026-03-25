@@ -2114,5 +2114,31 @@ Arithmetic Intensity = FLOPs / Memory Bytes
 3. **采样器增加灵活性** - 硬件支持滤波和坐标变换
 4. **Buffer向量化更快** - Float4读取比Texture快约4倍
 
+## Section 91: Roofline Model Analysis
+
+### Apple M2 参数
+
+| 参数 | 值 |
+|------|-----|
+| 理论内存带宽 | 100 GB/s |
+| 实测带宽 | ~2 GB/s |
+| 峰值计算 | ~12 GFLOPS |
+| **交叉点** | **~6 FLOP/byte** |
+
+### 算术强度 vs 性能
+
+| Kernel类型 | 算术强度 | 受限类型 |
+|-----------|----------|----------|
+| Memory Bound | 1 FLOP/byte | 内存 |
+| Stencil | 5 FLOP/byte | 内存 |
+| GEMM | ~30 FLOP/byte | 计算 |
+
+### 关键洞察
+
+1. **Apple M2大多处于内存受限** - 统一内存架构
+2. **交叉点约6 FLOP/byte** - 高于这个值才达到峰值计算
+3. **优化内存访问至关重要** - 对大多数kernel影响更大
+
+
 
 
