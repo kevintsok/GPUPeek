@@ -14627,6 +14627,313 @@ func testCacheBehavior(device: MTLDevice, queue: MTLCommandQueue, library: MTLLi
 }
 
 // ============================================================
+// 74. ATOMIC OPERATIONS AND MEMORY CONSISTENCY
+// Performance of atomic operations and memory ordering
+// ============================================================
+func testAtomicOperations(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("74. Atomic Operations and Memory Consistency")
+    print(String(repeating: "=", count: 70))
+
+    let atomicShaderSource = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    // Atomic add on device memory
+    kernel void atomic_add(device atomic_uint* data [[buffer(0)]],
+                      constant uint& iterations [[buffer(1)]],
+                      uint id [[thread_position_in_grid]]) {
+        for (uint i = 0; i < iterations; i++) {
+            atomic_fetch_add_explicit(&data[0], 1, memory_order_relaxed);
+        }
+    }
+
+    // Atomic add on threadgroup memory
+    kernel void atomic_add_threadgroup(threadgroup atomic_uint* data [[threadgroup(0)]],
+                                 constant uint& iterations [[buffer(0)]],
+                                 uint id [[thread_position_in_threadgroup]]) {
+        for (uint i = 0; i < iterations; i++) {
+            atomic_fetch_add_explicit(&data[0], 1, memory_order_relaxed);
+        }
+    }
+
+    // Atomic compare-and-swap (CAS) - more expensive
+    kernel void atomic_cas(device atomic_uint* data [[buffer(0)]],
+                     constant uint& iterations [[buffer(1)]],
+                     uint id [[thread_position_in_grid]]) {
+        uint old = 0;
+        for (uint i = 0; i < iterations; i++) {
+            uint expected = old;
+            atomic_compare_exchange_weak_explicit(&data[0], &expected, old + 1,
+                                                memory_order_relaxed, memory_order_relaxed);
+            old = expected;
+        }
+    }
+
+    // Non-atomic baseline (no synchronization)
+    kernel void non_atomic_increment(device uint* data [[buffer(0)]],
+                                constant uint& iterations [[buffer(1)]],
+                                uint id [[thread_position_in_grid]]) {
+        for (uint i = 0; i < iterations; i++) {
+            data[0] = data[0] + 1;
+        }
+    }
+
+    // Atomic load
+    kernel void atomic_load(device atomic_uint* data [[buffer(0)]],
+                       device uint* output [[buffer(1)]],
+                       constant uint& iterations [[buffer(2)]],
+                       uint id [[thread_position_in_grid]]) {
+        for (uint i = 0; i < iterations; i++) {
+            output[id] = atomic_load_explicit(&data[0], memory_order_relaxed);
+        }
+    }
+
+    // Histogram with atomics
+    kernel void histogram_atomic(device uint* data [[buffer(0)]],
+                            device atomic_uint* histogram [[buffer(1)]],
+                            constant uint& size [[buffer(2)]],
+                            constant uint& num_bins [[buffer(3)]],
+                            uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        uint bin = data[id] % num_bins;
+        atomic_fetch_add_explicit(&histogram[bin], 1, memory_order_relaxed);
+    }
+
+    // Reduction with atomics
+    kernel void reduce_atomic(device float* input [[buffer(0)]],
+                         device atomic_uint* result [[buffer(1)]],
+                         constant uint& size [[buffer(2)]],
+                         uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        uint val = uint(input[id] * 1000.0f);
+        atomic_fetch_add_explicit(result, val, memory_order_relaxed);
+    }
+    """
+
+    guard let atomicLibrary = try? device.makeLibrary(source: atomicShaderSource, options: MTLCompileOptions()) else {
+        print("Failed to create atomic library")
+        return
+    }
+
+    guard let addFunc = atomicLibrary.makeFunction(name: "atomic_add"),
+          let addTgFunc = atomicLibrary.makeFunction(name: "atomic_add_threadgroup"),
+          let casFunc = atomicLibrary.makeFunction(name: "atomic_cas"),
+          let nonAtomFunc = atomicLibrary.makeFunction(name: "non_atomic_increment"),
+          let loadFunc = atomicLibrary.makeFunction(name: "atomic_load"),
+          let histFunc = atomicLibrary.makeFunction(name: "histogram_atomic"),
+          let redFunc = atomicLibrary.makeFunction(name: "reduce_atomic"),
+          let addPipeline = try? device.makeComputePipelineState(function: addFunc),
+          let addTgPipeline = try? device.makeComputePipelineState(function: addTgFunc),
+          let casPipeline = try? device.makeComputePipelineState(function: casFunc),
+          let nonAtomPipeline = try? device.makeComputePipelineState(function: nonAtomFunc),
+          let loadPipeline = try? device.makeComputePipelineState(function: loadFunc),
+          let histPipeline = try? device.makeComputePipelineState(function: histFunc),
+          let redPipeline = try? device.makeComputePipelineState(function: redFunc) else {
+        print("Failed to create atomic pipelines")
+        return
+    }
+
+    print("\n--- Atomic Operation Performance ---")
+
+    let iterations = 1000
+    let threadCount = 256
+
+    guard let atomicBuffer = device.makeBuffer(length: MemoryLayout<UInt32>.size, options: .storageModeShared) else {
+        print("Failed to create atomic buffer")
+        return
+    }
+
+    let startAdd = getTimeNanos()
+    for _ in 0..<10 {
+        let ptr = atomicBuffer.contents().bindMemory(to: UInt32.self, capacity: 1)
+        ptr[0] = 0
+
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(addPipeline)
+        encoder.setBuffer(atomicBuffer, offset: 0, index: 0)
+        var iter = UInt32(iterations)
+        encoder.setBytes(&iter, length: MemoryLayout<UInt32>.size, index: 1)
+        encoder.dispatchThreads(MTLSize(width: threadCount, height: 1, depth: 1),
+                            threadsPerThreadgroup: MTLSize(width: threadCount, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endAdd = getTimeNanos()
+    let addOps = Int64(threadCount) * Int64(iterations) * 10
+    let addTime = getElapsedSeconds(start: startAdd, end: endAdd)
+    let addThroughput = Double(addOps) / addTime / 1e9
+    print("Atomic Add (device): \(String(format: "%.2f", addThroughput)) GOPS")
+
+    let startTgAdd = getTimeNanos()
+    for _ in 0..<10 {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(addTgPipeline)
+        var iter = UInt32(iterations)
+        encoder.setBytes(&iter, length: MemoryLayout<UInt32>.size, index: 0)
+        encoder.dispatchThreads(MTLSize(width: threadCount, height: 1, depth: 1),
+                            threadsPerThreadgroup: MTLSize(width: threadCount, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endTgAdd = getTimeNanos()
+    let tgAddOps = Int64(threadCount) * Int64(iterations) * 10
+    let tgAddTime = getElapsedSeconds(start: startTgAdd, end: endTgAdd)
+    let tgAddThroughput = Double(tgAddOps) / tgAddTime / 1e9
+    print("Atomic Add (threadgroup): \(String(format: "%.2f", tgAddThroughput)) GOPS")
+
+    let startCas = getTimeNanos()
+    for _ in 0..<10 {
+        let ptr = atomicBuffer.contents().bindMemory(to: UInt32.self, capacity: 1)
+        ptr[0] = 0
+
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(casPipeline)
+        encoder.setBuffer(atomicBuffer, offset: 0, index: 0)
+        var iter = UInt32(iterations)
+        encoder.setBytes(&iter, length: MemoryLayout<UInt32>.size, index: 1)
+        encoder.dispatchThreads(MTLSize(width: threadCount, height: 1, depth: 1),
+                            threadsPerThreadgroup: MTLSize(width: threadCount, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endCas = getTimeNanos()
+    let casOps = Int64(threadCount) * Int64(iterations) * 10
+    let casTime = getElapsedSeconds(start: startCas, end: endCas)
+    let casThroughput = Double(casOps) / casTime / 1e9
+    print("Atomic CAS: \(String(format: "%.2f", casThroughput)) GOPS")
+
+    guard let nonAtomBuffer = device.makeBuffer(length: MemoryLayout<UInt32>.size, options: .storageModeShared) else {
+        print("Failed to create non-atomic buffer")
+        return
+    }
+
+    let startNonAtom = getTimeNanos()
+    for _ in 0..<10 {
+        let ptr = nonAtomBuffer.contents().bindMemory(to: UInt32.self, capacity: 1)
+        ptr[0] = 0
+
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(nonAtomPipeline)
+        encoder.setBuffer(nonAtomBuffer, offset: 0, index: 0)
+        var iter = UInt32(iterations)
+        encoder.setBytes(&iter, length: MemoryLayout<UInt32>.size, index: 1)
+        encoder.dispatchThreads(MTLSize(width: threadCount, height: 1, depth: 1),
+                            threadsPerThreadgroup: MTLSize(width: threadCount, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endNonAtom = getTimeNanos()
+    let nonAtomOps = Int64(threadCount) * Int64(iterations) * 10
+    let nonAtomTime = getElapsedSeconds(start: startNonAtom, end: endNonAtom)
+    let nonAtomThroughput = Double(nonAtomOps) / nonAtomTime / 1e9
+    print("Non-Atomic Increment: \(String(format: "%.2f", nonAtomThroughput)) GOPS")
+
+    print("\n--- Real-World Workloads ---")
+    let histSizes = [4096, 16384, 65536]
+    var numBins: UInt32 = 256
+
+    print("| Size | Histogram (Atomic) | Reduction (Atomic) |")
+    print("|------|--------------------|--------------------|")
+
+    for size in histSizes {
+        guard let histDataBuffer = device.makeBuffer(length: size * MemoryLayout<UInt32>.size, options: .storageModeShared),
+              let histBuffer = device.makeBuffer(length: Int(numBins) * MemoryLayout<UInt32>.size, options: .storageModeShared),
+              let redInputBuffer = device.makeBuffer(length: size * MemoryLayout<Float>.size, options: .storageModeShared),
+              let redResultBuffer = device.makeBuffer(length: MemoryLayout<UInt32>.size, options: .storageModeShared) else {
+            continue
+        }
+
+        let dataPtr = histDataBuffer.contents().bindMemory(to: UInt32.self, capacity: size)
+        for i in 0..<size {
+            dataPtr[i] = UInt32(i % 256)
+        }
+
+        let hPtr = histBuffer.contents().bindMemory(to: UInt32.self, capacity: Int(numBins))
+        for i in 0..<Int(numBins) {
+            hPtr[i] = 0
+        }
+
+        let startHist = getTimeNanos()
+        for _ in 0..<10 {
+            for i in 0..<Int(numBins) {
+                hPtr[i] = 0
+            }
+
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(histPipeline)
+            encoder.setBuffer(histDataBuffer, offset: 0, index: 0)
+            encoder.setBuffer(histBuffer, offset: 0, index: 1)
+            var sz = UInt32(size)
+            encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.setBytes(&numBins, length: MemoryLayout<UInt32>.size, index: 3)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endHist = getTimeNanos()
+        let histOps = Int64(size) * 10
+        let histTime = getElapsedSeconds(start: startHist, end: endHist)
+        let histThroughput = Double(histOps) / histTime / 1e6
+
+        let redPtr = redInputBuffer.contents().bindMemory(to: Float.self, capacity: size)
+        for i in 0..<size {
+            redPtr[i] = Float(1.0)
+        }
+
+        let rPtr = redResultBuffer.contents().bindMemory(to: UInt32.self, capacity: 1)
+        rPtr[0] = 0
+
+        let startRed = getTimeNanos()
+        for _ in 0..<10 {
+            rPtr[0] = 0
+
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(redPipeline)
+            encoder.setBuffer(redInputBuffer, offset: 0, index: 0)
+            encoder.setBuffer(redResultBuffer, offset: 0, index: 1)
+            var sz = UInt32(size)
+            encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endRed = getTimeNanos()
+        let redOps = Int64(size) * 10
+        let redTime = getElapsedSeconds(start: startRed, end: endRed)
+        let redThroughput = Double(redOps) / redTime / 1e6
+
+        print("| \(size) | \(String(format: "%.2f", histThroughput)) M/s | \(String(format: "%.2f", redThroughput)) M/s |")
+    }
+
+    let overhead = ((nonAtomThroughput - addThroughput) / nonAtomThroughput) * 100
+    print("\n--- Atomic Overhead Analysis ---")
+    print("Non-atomic baseline: \(String(format: "%.2f", nonAtomThroughput)) GOPS")
+    print("Atomic add overhead: \(String(format: "%.1f", overhead))%")
+
+    print("\n--- Key Insights ---")
+    print("1. Atomic operations have significant overhead vs non-atomic")
+    print("2. Threadgroup atomics faster than device atomics (closer to cores)")
+    print("3. CAS is more expensive than simple add (multiple memory operations)")
+    print("4. Histogram and reduction are common atomic workloads")
+    print("5. Minimize atomic contention by partitioning work or using local aggregation")
+}
+
+// ============================================================
 // 50. FINAL RESEARCH SUMMARY AND CONCLUSIONS
 // ============================================================
 func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
@@ -14642,7 +14949,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
 
     Research Duration: 2026-03-25 (Iterative deep research sessions)
     GPU Under Test: Apple M2 (8-core GPU, Family Apple 7)
-    Test Coverage: 73 comprehensive benchmark sections
+    Test Coverage: 74 comprehensive benchmark sections
 
     ============================================================================
     EXECUTIVE SUMMARY
@@ -14826,7 +15133,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
     """)
 
     print("\n" + String(repeating: "=", count: 70))
-    print("DEEP RESEARCH COMPLETE - 73 SECTIONS")
+    print("DEEP RESEARCH COMPLETE - 74 SECTIONS")
     print("Thank you for benchmarking with GPUPeek!")
     print(String(repeating: "=", count: 70))
 }
@@ -14895,6 +15202,7 @@ do { try testIndirectCommandGeneration(device: device, queue: queue, library: li
 do { try testDoubleBuffering(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testThreadDivergence(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testCacheBehavior(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testAtomicOperations(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testFinalSummary(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")

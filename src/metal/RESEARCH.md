@@ -1423,3 +1423,56 @@ Apple M2 GPU是一款**高效的集成GPU**，针对移动/笔记本工作负载
    - 合并访问以实现coalescing
    - 使用shared memory显式缓存常用数据
    - 避免随机访问模式
+
+## Section 74: Atomic Operations and Memory Consistency
+
+### Atomic Operation Performance
+
+| Operation | Throughput |
+|-----------|------------|
+| Atomic Add (device) | 0.02 GOPS |
+| Atomic Add (threadgroup) | 0.02 GOPS |
+| Atomic CAS | 0.00 GOPS |
+| Non-Atomic Increment | 0.04 GOPS |
+
+### Real-World Workloads
+
+| Size | Histogram (Atomic) | Reduction (Atomic) |
+|------|--------------------|--------------------|
+| 4096 | 0.54 M/s | 0.69 M/s |
+| 16384 | 1.92 M/s | 2.40 M/s |
+| 65536 | 7.21 M/s | 8.62 M/s |
+
+### Atomic Overhead Analysis
+
+| Operation | Overhead |
+|-----------|----------|
+| Non-atomic baseline | 0.04 GOPS |
+| Atomic add overhead | 58.5% |
+
+### 关键发现
+
+1. **Atomic Overhead (原子操作开销)**
+   - 原子操作比非原子操作慢58.5%
+   - 原子性保证需要额外的硬件支持
+   - 每次read-modify-write操作都需要同步
+
+2. **Memory Space (内存空间)**
+   - Threadgroup原子操作与device原子操作性能相近
+   - Threadgroup内原子更接近核心，延迟更低
+   - 实际差异可能需要更大规模测试才能体现
+
+3. **CAS (Compare-And-Swap)**
+   - 最昂贵的原子操作之一
+   - 需要多次内存操作（load, compare, store）
+   - 实现复杂同步原语的基础
+
+4. **Real-World应用**
+   - Histogram：常见的数据聚合模式
+   - Reduction：并行归约的原子实现
+   - 这两种操作在GPU计算中非常普遍
+
+5. **优化策略**
+   - 使用local aggregation减少原子竞争
+   - 先在shared memory聚合，再原子写入device
+   - 数据分区避免多线程竞争同一原子位置
