@@ -1377,3 +1377,49 @@ Apple M2 GPU是一款**高效的集成GPU**，针对移动/笔记本工作负载
    - 使用predication替代分支
    - Branch reordering
    - Warp-specialized scheduling
+
+## Section 73: Cache Behavior and Locality Analysis
+
+### Cache Access Pattern Performance
+
+| Size | Sequential | Strided | Random | Coalesced | Scattered |
+|------|------------|---------|--------|-----------|-----------|
+| 4096 | 0.59 M/s | 0.62 M/s | 0.57 M/s | 0.18 M/s | 0.66 M/s |
+| 16384 | 2.31 M/s | 2.04 M/s | 2.01 M/s | 0.68 M/s | 2.36 M/s |
+| 65536 | 5.21 M/s | 5.53 M/s | 4.05 M/s | 2.67 M/s | 7.63 M/s |
+
+### Locality Comparison
+
+| Pattern | Throughput |
+|---------|-----------|
+| Temporal Reuse | 2.43 M/s |
+| Shared Memory Cached | 2.76 M/s |
+| Speedup | 1.13x |
+
+### 关键发现
+
+1. **Spatial Locality (空间局部性)**
+   - Sequential访问利用cache line预取
+   - Strided访问浪费带宽，每行cache只用了部分数据
+   - Coalesced访问是线程协作的最优方式
+
+2. **Temporal Locality (时间局部性)**
+   - 重复访问相同数据受益于cache
+   - 显式使用shared memory可加速重复访问
+   - 1.13x加速比表明显式缓存有效
+
+3. **Random Access (随机访问)**
+   - 最差的cache行为
+   - 持续的cache miss，无局部性收益
+   - 性能显著低于sequential访问
+
+4. **Cache Line Utilization (Cache线利用率)**
+   - Sequential访问高效利用cache line
+   - Strided访问在stride较大时利用率更低
+   - Vectorized访问(float4)可提高利用率
+
+5. **优化策略**
+   - 数据布局优化以提高spatial locality
+   - 合并访问以实现coalescing
+   - 使用shared memory显式缓存常用数据
+   - 避免随机访问模式

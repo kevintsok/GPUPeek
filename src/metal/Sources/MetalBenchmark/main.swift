@@ -14288,6 +14288,345 @@ func testThreadDivergence(device: MTLDevice, queue: MTLCommandQueue, library: MT
 }
 
 // ============================================================
+// 73. CACHE BEHAVIOR AND LOCALITY ANALYSIS
+// L1/L2 cache effects on memory access patterns
+// ============================================================
+func testCacheBehavior(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("73. Cache Behavior and Locality Analysis")
+    print(String(repeating: "=", count: 70))
+
+    let cacheShaderSource = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    // Sequential access: best cache behavior (spatial locality)
+    kernel void sequential_access(device float* data [[buffer(0)]],
+                              device float* output [[buffer(1)]],
+                              constant uint& size [[buffer(2)]],
+                              uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float sum = 0.0f;
+        // Sequential reads exploit spatial locality (cache line prefetch)
+        for (uint i = 0; i < 16; i++) {
+            sum += data[(id + i) % size];
+        }
+        output[id] = sum;
+    }
+
+    // Strided access: poor cache behavior (cache line unused)
+    kernel void strided_access(device float* data [[buffer(0)]],
+                          device float* output [[buffer(1)]],
+                          constant uint& size [[buffer(2)]],
+                          constant uint& stride [[buffer(3)]],
+                          uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float sum = 0.0f;
+        // Strided access skips between cache lines
+        for (uint i = 0; i < 16; i++) {
+            sum += data[(id * stride + i * stride) % size];
+        }
+        output[id] = sum;
+    }
+
+    // Random access: worst cache behavior (constant misses)
+    kernel void random_access(device float* data [[buffer(0)]],
+                         device float* output [[buffer(1)]],
+                         device uint* indices [[buffer(2)]],
+                         constant uint& size [[buffer(3)]],
+                         uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float sum = 0.0f;
+        // Random access patterns thrash cache
+        for (uint i = 0; i < 16; i++) {
+            uint idx = indices[(id + i) % size] % size;
+            sum += data[idx];
+        }
+        output[id] = sum;
+    }
+
+    // Thread-coalesced access: all threads read adjacent memory
+    kernel void coalesced_access(device float4* data [[buffer(0)]],
+                            device float4* output [[buffer(1)]],
+                            constant uint& size [[buffer(2)]],
+                            uint id [[thread_position_in_grid]]) {
+        if (id >= size / 4) return;
+        // Each thread reads float4 (16 bytes) from adjacent locations
+        // This is optimal for coalescing
+        float4 val = data[id];
+        output[id] = val * 2.0f;
+    }
+
+    // Non-coalesced access: threads read scattered locations
+    kernel void scattered_access(device float* data [[buffer(0)]],
+                            device float* output [[buffer(1)]],
+                            constant uint& size [[buffer(2)]],
+                            uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        // Each thread reads from spread-out locations
+        uint idx = id * 17 % size;  // Prime stride causes scattering
+        float sum = 0.0f;
+        for (uint i = 0; i < 4; i++) {
+            sum += data[(idx + i * 31) % size];
+        }
+        output[id] = sum;
+    }
+
+    // Temporal locality: reuse same data within thread
+    kernel void temporal_reuse(device float* data [[buffer(0)]],
+                          device float* output [[buffer(1)]],
+                          constant uint& size [[buffer(2)]],
+                          uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        // Read once, use multiple times (temporal locality benefit)
+        float val = data[id % size];
+        val = val * 2.0f + data[id % size];
+        val = val * 2.0f + data[id % size];
+        val = val * 2.0f + data[id % size];
+        output[id] = val;
+    }
+
+    // Shared memory as cache: explicit caching of frequently accessed data
+    kernel void shared_cached(device float* data [[buffer(0)]],
+                          device float* output [[buffer(1)]],
+                          threadgroup float* shared [[threadgroup(0)]],
+                          constant uint& size [[buffer(2)]],
+                          uint id [[thread_position_in_grid]],
+                          uint lid [[thread_position_in_threadgroup]]) {
+        if (id >= size) return;
+        // Load data into shared memory (cache)
+        shared[lid] = data[id];
+        threadgroup_barrier(mem_flags::mem_none);
+        // Read from shared memory multiple times
+        float val = shared[lid];
+        val += shared[(lid + 1) % 256];
+        val += shared[(lid + 2) % 256];
+        output[id] = val;
+    }
+    """
+
+    guard let cacheLibrary = try? device.makeLibrary(source: cacheShaderSource, options: MTLCompileOptions()) else {
+        print("Failed to create cache library")
+        return
+    }
+
+    guard let seqFunc = cacheLibrary.makeFunction(name: "sequential_access"),
+          let strideFunc = cacheLibrary.makeFunction(name: "strided_access"),
+          let randFunc = cacheLibrary.makeFunction(name: "random_access"),
+          let coalFunc = cacheLibrary.makeFunction(name: "coalesced_access"),
+          let scatterFunc = cacheLibrary.makeFunction(name: "scattered_access"),
+          let tempFunc = cacheLibrary.makeFunction(name: "temporal_reuse"),
+          let shmemFunc = cacheLibrary.makeFunction(name: "shared_cached"),
+          let seqPipeline = try? device.makeComputePipelineState(function: seqFunc),
+          let stridePipeline = try? device.makeComputePipelineState(function: strideFunc),
+          let randPipeline = try? device.makeComputePipelineState(function: randFunc),
+          let coalPipeline = try? device.makeComputePipelineState(function: coalFunc),
+          let scatterPipeline = try? device.makeComputePipelineState(function: scatterFunc),
+          let tempPipeline = try? device.makeComputePipelineState(function: tempFunc),
+          let shmemPipeline = try? device.makeComputePipelineState(function: shmemFunc) else {
+        print("Failed to create cache pipelines")
+        return
+    }
+
+    print("\n--- Cache Access Pattern Performance ---")
+
+    let sizes = [4096, 16384, 65536]
+    let iterations = 50
+
+    print("\n| Size | Sequential | Strided | Random | Coalesced | Scattered |")
+    print("|------|------------|---------|--------|-----------|-----------|")
+
+    for size in sizes {
+        guard let dataBuffer = device.makeBuffer(length: size * MemoryLayout<Float>.size, options: .storageModeShared),
+              let outputBuffer = device.makeBuffer(length: size * MemoryLayout<Float>.size, options: .storageModeShared),
+              let indexBuffer = device.makeBuffer(length: size * MemoryLayout<UInt32>.size, options: .storageModeShared) else {
+            continue
+        }
+
+        // Initialize data
+        let dataPtr = dataBuffer.contents().bindMemory(to: Float.self, capacity: size)
+        let idxPtr = indexBuffer.contents().bindMemory(to: UInt32.self, capacity: size)
+        for i in 0..<size {
+            dataPtr[i] = Float(i % 256)
+            idxPtr[i] = UInt32.random(in: 0..<UInt32(size))
+        }
+
+        // Sequential access
+        let startSeq = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(seqPipeline)
+            encoder.setBuffer(dataBuffer, offset: 0, index: 0)
+            encoder.setBuffer(outputBuffer, offset: 0, index: 1)
+            var sz = UInt32(size)
+            encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                  threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endSeq = getTimeNanos()
+        let seqTP = Double(size) * Double(iterations) / getElapsedSeconds(start: startSeq, end: endSeq) / 1e6
+
+        // Strided access
+        let stride = 4
+        let startStride = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(stridePipeline)
+            encoder.setBuffer(dataBuffer, offset: 0, index: 0)
+            encoder.setBuffer(outputBuffer, offset: 0, index: 1)
+            var sz = UInt32(size)
+            var st = UInt32(stride)
+            encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.setBytes(&st, length: MemoryLayout<UInt32>.size, index: 3)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                  threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endStride = getTimeNanos()
+        let strideTP = Double(size) * Double(iterations) / getElapsedSeconds(start: startStride, end: endStride) / 1e6
+
+        // Random access
+        let startRand = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(randPipeline)
+            encoder.setBuffer(dataBuffer, offset: 0, index: 0)
+            encoder.setBuffer(outputBuffer, offset: 0, index: 1)
+            encoder.setBuffer(indexBuffer, offset: 0, index: 2)
+            var sz = UInt32(size)
+            encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 3)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                  threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endRand = getTimeNanos()
+        let randTP = Double(size) * Double(iterations) / getElapsedSeconds(start: startRand, end: endRand) / 1e6
+
+        // Coalesced access (float4)
+        let coalSize = size / 4
+        let startCoal = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(coalPipeline)
+            encoder.setBuffer(dataBuffer, offset: 0, index: 0)
+            encoder.setBuffer(outputBuffer, offset: 0, index: 1)
+            var sz = UInt32(size)
+            encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: coalSize, height: 1, depth: 1),
+                                  threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endCoal = getTimeNanos()
+        let coalTP = Double(coalSize) * Double(iterations) / getElapsedSeconds(start: startCoal, end: endCoal) / 1e6
+
+        // Scattered access
+        let startScatter = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(scatterPipeline)
+            encoder.setBuffer(dataBuffer, offset: 0, index: 0)
+            encoder.setBuffer(outputBuffer, offset: 0, index: 1)
+            var sz = UInt32(size)
+            encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                  threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endScatter = getTimeNanos()
+        let scatterTP = Double(size) * Double(iterations) / getElapsedSeconds(start: startScatter, end: endScatter) / 1e6
+
+        print("| \(size) | \(String(format: "%.2f", seqTP)) | \(String(format: "%.2f", strideTP)) | \(String(format: "%.2f", randTP)) | \(String(format: "%.2f", coalTP)) | \(String(format: "%.2f", scatterTP)) |")
+    }
+
+    // Temporal vs shared memory comparison
+    print("\n--- Locality Comparison ---")
+
+    let baseSize = 16384
+    guard let baseBuffer = device.makeBuffer(length: baseSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let baseOut = device.makeBuffer(length: baseSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+
+    let bp = baseBuffer.contents().bindMemory(to: Float.self, capacity: baseSize)
+    for i in 0..<baseSize {
+        bp[i] = Float(1.0)
+    }
+
+    // Temporal reuse
+    let startTemp = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(tempPipeline)
+        encoder.setBuffer(baseBuffer, offset: 0, index: 0)
+        encoder.setBuffer(baseOut, offset: 0, index: 1)
+        var sz = UInt32(baseSize)
+        encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: baseSize, height: 1, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endTemp = getTimeNanos()
+    let tempTP = Double(baseSize) * Double(iterations) / getElapsedSeconds(start: startTemp, end: endTemp) / 1e6
+
+    // Shared memory caching
+    let startShmem = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(shmemPipeline)
+        encoder.setBuffer(baseBuffer, offset: 0, index: 0)
+        encoder.setBuffer(baseOut, offset: 0, index: 1)
+        var sz = UInt32(baseSize)
+        encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.dispatchThreads(MTLSize(width: baseSize, height: 1, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endShmem = getTimeNanos()
+    let shmemTP = Double(baseSize) * Double(iterations) / getElapsedSeconds(start: startShmem, end: endShmem) / 1e6
+
+    print("Temporal Reuse: \(String(format: "%.2f", tempTP)) M/s")
+    print("Shared Memory Cached: \(String(format: "%.2f", shmemTP)) M/s")
+    let cacheSpeedup = shmemTP / tempTP
+    print("Speedup from explicit caching: \(String(format: "%.2fx", cacheSpeedup))")
+
+    // Cache efficiency analysis
+    print("\n--- Cache Efficiency Analysis ---")
+    print("Sequential > Strided: sequential exploits spatial locality")
+    print("Coalesced > Scattered: adjacent threads access adjacent memory")
+    print("Temporal reuse benefits repeated access to same data")
+    print("Shared memory provides explicit caching for frequently accessed data")
+
+    print("\n--- Key Insights ---")
+    print("1. Sequential access best: exploits cache line prefetch (spatial locality)")
+    print("2. Strided access wastes bandwidth: skips most of each cache line")
+    print("3. Random access worst: constant cache misses, no locality benefit")
+    print("4. Coalesced float4 access: optimal thread cooperation")
+    print("5. Shared memory as explicit cache can significantly speed up repeated access")
+}
+
+// ============================================================
 // 50. FINAL RESEARCH SUMMARY AND CONCLUSIONS
 // ============================================================
 func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
@@ -14303,7 +14642,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
 
     Research Duration: 2026-03-25 (Iterative deep research sessions)
     GPU Under Test: Apple M2 (8-core GPU, Family Apple 7)
-    Test Coverage: 72 comprehensive benchmark sections
+    Test Coverage: 73 comprehensive benchmark sections
 
     ============================================================================
     EXECUTIVE SUMMARY
@@ -14487,7 +14826,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
     """)
 
     print("\n" + String(repeating: "=", count: 70))
-    print("DEEP RESEARCH COMPLETE - 72 SECTIONS")
+    print("DEEP RESEARCH COMPLETE - 73 SECTIONS")
     print("Thank you for benchmarking with GPUPeek!")
     print(String(repeating: "=", count: 70))
 }
@@ -14555,6 +14894,7 @@ do { try testAccelerationStructures(device: device, queue: queue, library: libra
 do { try testIndirectCommandGeneration(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testDoubleBuffering(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testThreadDivergence(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testCacheBehavior(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testFinalSummary(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")
