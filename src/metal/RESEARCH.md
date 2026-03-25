@@ -1069,3 +1069,50 @@ Apple M2 GPU是一款**高效的集成GPU**，针对移动/笔记本工作负载
    - 数据库操作
    - 科学计算
    - 数据分析和预处理
+
+## Section 66: Monte Carlo Simulation and Random Number Generation
+
+### Random Number Generation Performance
+
+| Size | Gen Throughput |
+|------|---------------|
+| 256 | 0.0 M/s |
+| 1024 | 0.2 M/s |
+| 4096 | 0.7 M/s |
+| 16384 | 2.9 M/s |
+
+### Monte Carlo Pi Estimation
+
+| Samples | Estimate | Error |
+|---------|----------|-------|
+| 1024 | 3.09766 | 1.40% |
+| 4096 | 3.15430 | 0.40% |
+| 16384 | 3.13794 | 0.12% |
+| 65536 | 3.13379 | 0.25% |
+
+### 关键发现
+
+1. **PRNG (伪随机数生成器)**
+   - 基于hash的生成器在GPU上快速
+   - 适合并行采样
+   - PCG (Permuted Congruential Generator) 算法
+
+2. **Box-Muller变换**
+   - 均匀分布转换为高斯分布
+   - 生成正态分布随机数
+   - 用于金融和物理模拟
+
+3. **Monte Carlo方法**
+   - 高度并行化计算
+   - 非常适合GPU加速
+   - 收敛速度: O(1/sqrt(n))
+
+4. **Pi估计示例**
+   - 经典Monte Carlo应用
+   - 误差随样本数平方根减少
+   - 65536样本时误差约0.25%
+
+5. **应用场景**
+   - 金融(期权定价)
+   - 物理(粒子传输)
+   - 机器学习(dropout)

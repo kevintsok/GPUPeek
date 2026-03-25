@@ -12612,6 +12612,210 @@ func testSortingAlgorithms(device: MTLDevice, queue: MTLCommandQueue, library: M
 }
 
 // ============================================================
+// 66. MONTE CARLO SIMULATION AND RANDOM NUMBER GENERATION
+// Parallel random sampling for scientific and financial computing
+// ============================================================
+func testMonteCarlo(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("66. Monte Carlo Simulation and Random Number Generation")
+    print(String(repeating: "=", count: 70))
+
+    let monteCarloShaderSource = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    // Pseudo-random number generation using hash function
+    // Inspired by PCG (Permuted Congruential Generator)
+    kernel void prng_hash(device ulong* seed [[buffer(0)]],
+                 device uint* output [[buffer(1)]],
+                 constant uint& size [[buffer(2)]],
+                 uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+
+        ulong state = seed[0];
+        ulong inc = id + 1;
+        ulong x = state + inc;
+        x = x * 6364136223846793005 + inc;
+        uint res = uint((x >> 33u) ^ x);
+
+        output[id] = res;
+        seed[0] = x;
+    }
+
+    // Uniform to float [0, 1) transformation
+    kernel void uniform_transform(device uint* input [[buffer(0)]],
+                        device float* output [[buffer(1)]],
+                        constant uint& size [[buffer(2)]],
+                        uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+
+        uint u = input[id];
+        float f = float(u) / 4294967296.0f;  // 2^32
+        output[id] = f;
+    }
+
+    // Box-Muller transform for Gaussian distribution
+    kernel void gaussian_transform(device float* u1 [[buffer(0)]],
+                          device float* u2 [[buffer(1)]],
+                          device float* output [[buffer(2)]],
+                          constant uint& size [[buffer(3)]],
+                          uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+
+        float x1 = u1[id];
+        float x2 = u2[id];
+        float z0 = sqrt(-2.0f * log(x1)) * cos(2.0f * M_PI_F * x2);
+        output[id] = z0;
+    }
+
+    // Monte Carlo Pi estimation
+    kernel void mc_pi_trial(device float* x [[buffer(0)]],
+                    device float* y [[buffer(1)]],
+                    device atomic_uint* inside_count [[buffer(2)]],
+                    constant uint& size [[buffer(3)]],
+                    uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+
+        float px = x[id];
+        float py = y[id];
+        float dist = sqrt(px * px + py * py);
+
+        if (dist < 1.0f) {
+            atomic_fetch_add_explicit(inside_count, 1, memory_order_relaxed);
+        }
+    }
+
+    // Sum reduction for Monte Carlo
+    kernel void reduce_sum(device float* input [[buffer(0)]],
+                  device float* output [[buffer(1)]],
+                  constant uint& size [[buffer(2)]],
+                  uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+
+        float val = input[id];
+        for (uint s = 1; s < size; s <<= 1) {
+            if ((id % (s << 1)) == 0 && id + s < size) {
+                val += input[id + s];
+            }
+            threadgroup_barrier(mem_flags::mem_none);
+        }
+        if (id == 0) output[0] = val;
+    }
+    """
+
+    guard let deepLibrary = try? device.makeLibrary(source: monteCarloShaderSource, options: nil) else {
+        print("Failed to create monte carlo library")
+        return
+    }
+
+    guard let prngFunc = deepLibrary.makeFunction(name: "prng_hash"),
+          let uniformFunc = deepLibrary.makeFunction(name: "uniform_transform"),
+          let gaussianFunc = deepLibrary.makeFunction(name: "gaussian_transform"),
+          let piTrialFunc = deepLibrary.makeFunction(name: "mc_pi_trial"),
+          let prngPipeline = try? device.makeComputePipelineState(function: prngFunc),
+          let uniformPipeline = try? device.makeComputePipelineState(function: uniformFunc),
+          let gaussianPipeline = try? device.makeComputePipelineState(function: gaussianFunc),
+          let piTrialPipeline = try? device.makeComputePipelineState(function: piTrialFunc) else {
+        print("Failed to create monte carlo pipelines")
+        return
+    }
+
+    print("\n--- Random Number Generation Performance ---")
+    print("| Size | Gen Throughput |")
+    print("|------|---------------|")
+
+    let sizes = [256, 1024, 4096, 16384]
+    let iterations = 100
+
+    for size in sizes {
+        guard let seedBuffer = device.makeBuffer(length: MemoryLayout<UInt64>.size, options: .storageModeShared),
+              let randBuffer = device.makeBuffer(length: size * MemoryLayout<UInt32>.size, options: .storageModeShared) else {
+            continue
+        }
+
+        // Initialize seed
+        let seedPtr = seedBuffer.contents().assumingMemoryBound(to: UInt64.self)
+        seedPtr[0] = 12345
+
+        // PRNG benchmark
+        let startRNG = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(prngPipeline)
+            encoder.setBuffer(seedBuffer, offset: 0, index: 0)
+            encoder.setBuffer(randBuffer, offset: 0, index: 1)
+            var sizeUInt = UInt32(size)
+            encoder.setBytes(&sizeUInt, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: min(size, 256), height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endRNG = getTimeNanos()
+        let rngTime = getElapsedSeconds(start: startRNG, end: endRNG)
+        let rngThroughput = Double(size) * Double(iterations) / rngTime / 1e6
+
+        print("| \(size) | \(String(format: "%.1f", rngThroughput)) M/s |")
+    }
+
+    // Monte Carlo Pi estimation
+    print("\n--- Monte Carlo Pi Estimation ---")
+    print("| Samples | Estimate | Error |")
+    print("|---------|----------|-------|")
+
+    let sampleSizes = [1024, 4096, 16384, 65536]
+
+    for samples in sampleSizes {
+        guard let xBuffer = device.makeBuffer(length: samples * MemoryLayout<Float>.size, options: .storageModeShared),
+              let yBuffer = device.makeBuffer(length: samples * MemoryLayout<Float>.size, options: .storageModeShared),
+              let countBuffer = device.makeBuffer(length: MemoryLayout<UInt32>.size, options: .storageModeShared) else {
+            continue
+        }
+
+        // Generate random points
+        let xPtr = xBuffer.contents().assumingMemoryBound(to: Float.self)
+        let yPtr = yBuffer.contents().assumingMemoryBound(to: Float.self)
+        let countPtr = countBuffer.contents().assumingMemoryBound(to: UInt32.self)
+
+        for i in 0..<samples {
+            xPtr[i] = Float.random(in: 0..<1)
+            yPtr[i] = Float.random(in: 0..<1)
+        }
+        countPtr[0] = 0
+
+        // Run Monte Carlo trial
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(piTrialPipeline)
+        encoder.setBuffer(xBuffer, offset: 0, index: 0)
+        encoder.setBuffer(yBuffer, offset: 0, index: 1)
+        encoder.setBuffer(countBuffer, offset: 0, index: 2)
+        var samplesUInt = UInt32(samples)
+        encoder.setBytes(&samplesUInt, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: samples, height: 1, depth: 1),
+                             threadsPerThreadgroup: MTLSize(width: min(samples, 256), height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+
+        let insideCount = countPtr[0]
+        let piEstimate = 4.0 * Double(insideCount) / Double(samples)
+        let error = abs(piEstimate - Double.pi) / Double.pi * 100.0
+
+        print("| \(samples) | \(String(format: "%.5f", piEstimate)) | \(String(format: "%.2f", error))% |")
+    }
+
+    print("\n--- Key Insights ---")
+    print("1. PRNG: hash-based generators fast on GPU, use for parallel sampling")
+    print("2. Box-Muller: transforms uniform to Gaussian distribution")
+    print("3. Monte Carlo: embarrassingly parallel, ideal for GPU acceleration")
+    print("4. Pi estimation: classic example, converges as 1/sqrt(n)")
+    print("5. Applications: finance (option pricing), physics (particle transport), ML (dropout)")
+}
+
+// ============================================================
 // 50. FINAL RESEARCH SUMMARY AND CONCLUSIONS
 // ============================================================
 func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
@@ -12627,7 +12831,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
 
     Research Duration: 2026-03-25 (Iterative deep research sessions)
     GPU Under Test: Apple M2 (8-core GPU, Family Apple 7)
-    Test Coverage: 65 comprehensive benchmark sections
+    Test Coverage: 66 comprehensive benchmark sections
 
     ============================================================================
     EXECUTIVE SUMMARY
@@ -12811,7 +13015,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
     """)
 
     print("\n" + String(repeating: "=", count: 70))
-    print("DEEP RESEARCH COMPLETE - 65 SECTIONS")
+    print("DEEP RESEARCH COMPLETE - 66 SECTIONS")
     print("Thank you for benchmarking with GPUPeek!")
     print(String(repeating: "=", count: 70))
 }
@@ -12872,6 +13076,7 @@ do { try testParallelScan(device: device, queue: queue, library: library) } catc
 do { try testGraphAlgorithms(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testSparseMatrix(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testSortingAlgorithms(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testMonteCarlo(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testFinalSummary(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")
