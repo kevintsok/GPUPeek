@@ -20,6 +20,52 @@
 
 ---
 
+## 专题目录
+
+本项目包含84个研究专题，分为以下类别：
+
+### Memory (内存)
+- [Memory Bandwidth](Benchmarks/Memory/Bandwidth/RESEARCH.md) - 内存带宽测试
+- [Memory Coalescing](Benchmarks/Memory/Coalescing/RESEARCH.md) - 内存合并访问
+- [Bank Conflict](Benchmarks/Memory/BankConflict/RESEARCH.md) - 共享内存bank冲突
+- [Latency Hiding](Benchmarks/Memory/LatencyHiding/RESEARCH.md) - 内存延迟隐藏
+
+### Compute (计算)
+- [GEMM](Benchmarks/Compute/GEMM/RESEARCH.md) - 矩阵乘法优化
+- [Convolution](Benchmarks/Compute/Convolution/RESEARCH.md) - 卷积运算
+- [Vectorization](Benchmarks/Compute/Vectorization/RESEARCH.md) - 向量化技术
+- [FP64](Benchmarks/Compute/FP64/RESEARCH.md) - 双精度性能
+- [Instruction Mix](Benchmarks/Compute/InstructionMix/RESEARCH.md) - 指令吞吐量
+
+### Synchronization (同步)
+- [Atomics](Benchmarks/Synchronization/Atomics/RESEARCH.md) - 原子操作
+- [Barriers](Benchmarks/Synchronization/Barriers/RESEARCH.md) - 同步屏障
+- [Warp Primitives](Benchmarks/Synchronization/WarpPrimitives/RESEARCH.md) - SIMD组操作
+
+### Algorithms (算法)
+- [Sorting](Benchmarks/Algorithms/Sorting/RESEARCH.md) - 排序算法
+- [FFT](Benchmarks/Algorithms/FFT/RESEARCH.md) - 快速傅里叶变换
+- [Graph](Benchmarks/Algorithms/Graph/RESEARCH.md) - 图算法
+- [Scan](Benchmarks/Algorithms/Scan/RESEARCH.md) - 并行扫描
+
+### Analysis (分析)
+- [Occupancy](Benchmarks/Analysis/Occupancy/RESEARCH.md) - 占用率分析
+- [Cache](Benchmarks/Analysis/Cache/RESEARCH.md) - 缓存行为
+- [Precision](Benchmarks/Analysis/Precision/RESEARCH.md) - 数值精度
+- [Texture](Benchmarks/Analysis/Texture/RESEARCH.md) - 纹理性能
+
+### Optimization (优化)
+- [Kernel Fusion](Benchmarks/Optimization/KernelFusion/RESEARCH.md) - 内核融合
+- [Command Buffer](Benchmarks/Optimization/CommandBuffer/RESEARCH.md) - 命令缓冲批处理
+- [Double Buffer](Benchmarks/Optimization/DoubleBuffer/RESEARCH.md) - 双缓冲
+- [Roofline](Benchmarks/Optimization/Roofline/RESEARCH.md) - Roofline模型
+
+每个专题目录包含：
+- `Benchmark.swift` - 可编译运行的基准测试代码
+- `RESEARCH.md` - 该专题的详细研究报告
+
+---
+
 ## 关键发现汇总
 
 ### 1. 内存架构
