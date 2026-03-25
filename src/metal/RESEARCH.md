@@ -2039,3 +2039,20 @@ Arithmetic Intensity = FLOPs / Memory Bytes
 3. **Shuffle实现高效数据交换** - 无需共享内存
 4. **XOR shuffle是reduction最优** - 蝶形模式减少通信
 5. **Broadcast用于热点数据共享** - 一个线程读，所有线程用
+
+## Section 87: Occupancy Analysis
+
+### Occupancy 级别对比
+
+| Occupancy级别 | 线程数 | 共享内存 | 性能 |
+|--------------|--------|----------|------|
+| Low | 32 | 1KB | ~0.06 GOPS |
+| Medium | 128 | 256B | ~0.06 GOPS |
+| High | 512 | 64B | ~0.06 GOPS |
+
+### 关键发现
+
+1. **Apple M2上Occupancy影响较小** - 各occupancy级别性能相近
+2. **32KB共享内存限制** - 超过后必须减少线程数
+3. **Memory-bound受益于高occupancy** - 更多线程隐藏内存延迟
+4. **Compute-bound对occupancy不敏感** - 计算单元是瓶颈
