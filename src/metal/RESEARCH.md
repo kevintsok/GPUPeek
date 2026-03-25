@@ -1918,3 +1918,39 @@ Arithmetic Intensity = FLOPs / Memory Bytes
    - M2上单队列+异步提交更高效
    - 多队列用于需要同时执行不同类型工作时
    - 考虑使用MTLSharedEvent进行队列间同步
+
+## Section 84: Shared Event Synchronization
+
+### GPU Signal and CPU Wait Performance
+
+| Operation | Time | Result |
+|-----------|------|--------|
+| CPU waited for GPU signal | 0.39 ms | signaled: true |
+
+### 关键发现
+
+1. **MTLSharedEvent机制**
+   - GPU通过`encodeSignalEvent`在命令缓冲区完成时发送信号
+   - CPU通过`wait(untilSignaledValue:timeoutMS:)`等待信号
+   - 同步延迟仅0.39ms，非常高效
+
+2. **API使用**
+   ```swift
+   // GPU端 - 命令缓冲区编码信号
+   cmd.encodeSignalEvent(sharedEvent, value: 1)
+   cmd.commit()
+
+   // CPU端 - 等待GPU信号
+   let signaled = sharedEvent.wait(untilSignaledValue: 1, timeoutMS: 10_000)
+   ```
+
+3. **适用场景**
+   - 批量处理完成通知
+   - 跨命令队列同步
+   - 流水线阶段协调
+   - GPU-CPU协调工作
+
+4. **与Barrier对比**
+   - Barrier用于GPU端线程同步
+   - SharedEvent用于GPU-CPU同步
+   - Event用于跨队列/跨设备同步
