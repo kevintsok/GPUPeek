@@ -1149,3 +1149,50 @@ Apple M2 GPU是一款**高效的集成GPU**，针对移动/笔记本工作负载
    - 图像处理(模糊、锐化、边缘检测)
    - 信号处理
    - CNN (卷积神经网络)
+
+## Section 68: Database Operations and Parallel Aggregation
+
+### Filter Performance (WHERE clause)
+
+| Size | Throughput |
+|------|------------|
+| 256 | 0.04 M/s |
+| 1024 | 0.16 M/s |
+| 4096 | 0.63 M/s |
+| 16384 | 2.41 M/s |
+
+### Aggregation Performance (GROUP BY)
+
+| Size | Groups | Throughput |
+|------|--------|------------|
+| 256 | 64 | 0.04 M/s |
+| 1024 | 64 | 0.18 M/s |
+| 4096 | 64 | 0.72 M/s |
+| 16384 | 64 | 2.59 M/s |
+
+### 关键发现
+
+1. **Parallel Filter (并行过滤)**
+   - WHERE clause映射到基于谓词的过滤
+   - atomic_fetch_add_explicit用于计数
+   - 性能随数据规模线性提升
+
+2. **Aggregation (聚合)**
+   - GROUP BY使用原子操作进行并行归约
+   - Histogram-based counting
+   - 64 groups时性能表现稳定
+
+3. **Ranking (排名)**
+   - O(n²)算法在GPU上仍然并行化
+   - 每元素独立计算rank
+   - 大规模数据时开销较大
+
+4. **Top-K Selection**
+   - 简化的实现：假设数据已排序
+   - 实际应使用specialized algorithms (如GPU selection)
+
+5. **应用场景**
+   - 数据分析
+   - ML特征工程
+   - ETL pipelines
+   - OLAP数据库操作
