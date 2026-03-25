@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "tensor_mem_research_benchmarks.cu"
+
 #define CHECK_CUDA(call) \
     do { \
         cudaError_t err = call; \

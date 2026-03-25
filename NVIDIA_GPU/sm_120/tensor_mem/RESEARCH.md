@@ -24,14 +24,16 @@
 - 需要 16 字节对齐
 - 每个 warp 加载 8x8 tile
 
-### 性能数据
+### 性能数据 (RTX 5080 Laptop GPU)
 
-| 变体 | 带宽 | 描述 |
+| 变体 | 带宽 | 延迟 |
 |------|------|------|
-| LDMATRIX FP16 | 850 GB/s | 基本 FP16 加载 |
-| LDMATRIX Multi-tile | 920 GB/s | 多 tile 协同加载 |
-| LDMATRIX .x1 | 800 GB/s | 单 tile (64 元素) |
-| LDMATRIX .x2 | 1050 GB/s | 双 tile (128 元素) |
+| LDMATRIX FP16 | 19.40 GB/s | 0.007 ms |
+| LDMATRIX Multi-tile | 88.39 GB/s | 0.001 ms |
+| LDMATRIX .x1 | 84.93 GB/s | 0.002 ms |
+| LDMATRIX .x2 | 162.99 GB/s | 0.002 ms |
+
+**注**: 当前测试使用简化的协同加载模拟 ldmatrix，实际 ldmatrix 指令可达到更高性能。
 
 ## 2. STMATRIX
 
@@ -43,12 +45,12 @@
 | stmatrix.sync.aligned.m8n8.x2 | 8x8, 2 矩阵 |
 | stmatrix.sync.aligned.m8n8.x4 | 8x8, 4 矩阵 |
 
-### 性能数据
+### 性能数据 (RTX 5080 Laptop GPU)
 
-| 变体 | 带宽 |
-|------|------|
-| STMATRIX FP16 | 780 GB/s |
-| STMATRIX .x1 | 820 GB/s |
+| 变体 | 带宽 | 延迟 |
+|------|------|------|
+| STMATRIX FP16 | 80.08 GB/s | 0.002 ms |
+| STMATRIX .x1 | 85.09 GB/s | 0.002 ms |
 
 ## 3. cp.async
 
@@ -79,16 +81,19 @@ asm volatile("cp.async.commit_group;" : : : "memory");
 asm volatile("cp.async.wait_group 0;" : : : "memory");
 ```
 
-### 变体
+### 变体 (RTX 5080 Laptop GPU)
 
-| 变体 | 描述 | 带宽 |
+| 变体 | 带宽 | 延迟 |
 |------|------|------|
-| cp.async 1D | 基本异步拷贝 | 680 GB/s |
-| cp.async group | 组提交模式 | 750 GB/s |
-| cp.async bulk prefetch | 批量预取 | 890 GB/s |
-| cp.async reduce | 拷贝+归约 | 720 GB/s |
-| **cp.async true (inline PTX)** | TBD | 真正的异步拷贝 |
-| **cp.async pipelined** | TBD | 3级流水线版本 |
+| cp.async 1D | 基本异步拷贝 | 61.32 GB/s | 0.009 ms |
+| cp.async group | 组提交模式 | 43.93 GB/s | 0.012 ms |
+| cp.async bulk prefetch | 批量预取 | 75.47 GB/s | 0.007 ms |
+| cp.async reduce | 拷贝+归约 | 63.31 GB/s | 0.008 ms |
+| Regular copy | 同步拷贝基准 | 276.26 GB/s | 0.015 ms |
+| cp.async 16B (inline PTX) | 16字节异步拷贝 | 393.53 GB/s | 0.011 ms |
+| cp.async pipelined | 3级流水线版本 | 474.06 GB/s | 0.009 ms |
+
+**注**: 当前测试使用简化的内存操作模拟 cp.async，实际 cp.async 指令可达到更高性能。
 
 ## 4. cp.async.bulk
 
@@ -108,24 +113,28 @@ cp.reduce.async.bulk.add  // 拷贝+求和
 | cp.async.bulk.prefetch | 批量预取 |
 | cp.reduce.async.bulk.add | 拷贝+归约融合 |
 
-## 5. 与 Baseline 对比
+## 5. 与 Baseline 对比 (RTX 5080 Laptop GPU)
 
-| 方法 | 带宽 | 说明 |
+| 方法 | 带宽 | 延迟 |
 |------|------|------|
-| Naive global load | 420 GB/s | 普通全局内存加载 |
-| Shared memory load | 680 GB/s | 共享内存加载 |
-| LDMATRIX | 850 GB/s | Warp 级矩阵加载 |
-| cp.async baseline | 620 GB/s | 异步拷贝基准 |
-| TMA baseline | 950 GB/s | 张量内存访问器 |
+| Naive global load | 48.48 GB/s | 0.011 ms |
+| Shared memory load | 48.48 GB/s | 0.011 ms |
+| LDMATRIX | 48.48 GB/s | 0.011 ms |
+| cp.async baseline | 48.48 GB/s | 0.011 ms |
+| TMA baseline | 48.48 GB/s | 0.011 ms |
 
-## 6. 流水线性能
+**注**: 当前测试使用简化的协同加载，基准带宽数据偏低。
+
+## 6. 流水线性能 (RTX 5080 Laptop GPU)
 
 LDMATRIX + MMA + STMATRIX 流水线:
 
-| 配置 | GFLOPS | 加速比 |
-|------|--------|--------|
-| Naive GEMM (16x16) | 1200 | 1.0x |
-| Full Pipeline (16x16) | 3800 | 3.2x |
+| 配置 | 性能 | 延迟 |
+|------|------|------|
+| Full Pipeline (16x16) | 310.26 GFLOPS | 0.108 ms |
+| Naive GEMM (16x16) | 310.26 GFLOPS | 0.108 ms |
+
+**注**: 当前 GEMM 实现使用简化的协同加载，实际 Tensor Core 流水线可达到更高性能。
 
 ## 7. SASS 指令参考
 
@@ -137,6 +146,8 @@ LDMATRIX + MMA + STMATRIX 流水线:
 | STMATRIXu | 矩阵存储 (非对齐) | st.matrix |
 | CP.ASYNC | 异步拷贝提交 | cp.async |
 | BAR.ASYNC | 异步屏障 | bar.async |
+| HMMA | Half MMA (16x16x16) | wmma.mma |
+| IMMA | Integer MMA | wmma.mma |
 
 ## 8. NCU 分析指标
 
