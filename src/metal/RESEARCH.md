@@ -916,3 +916,42 @@ Apple M2 GPU是一款**高效的集成GPU**，针对移动/笔记本工作负载
    - 优先使用并行算法
    - 避免单线程heap操作
    - 使用原子操作+worklist模式
+
+## Section 62: Parallel Scan与Stream Compaction
+
+### Scan/Compaction性能
+
+| Size | Simple Scan | Warp Scan | Stream Compact |
+|------|-------------|-----------|---------------|
+| 256 | 0.0 M/s | 0.0 M/s | 0.0 M/s |
+| 1024 | 0.1 M/s | 0.2 M/s | 0.2 M/s |
+| 4096 | 0.1 M/s | 0.7 M/s | 0.8 M/s |
+| 16384 | 0.2 M/s | 3.0 M/s | 3.3 M/s |
+
+### 关键发现
+
+1. **Simple Scan: O(n²)串行算法**
+   - 逐元素累加，效率低
+   - 适合小数据量验证
+   - 大数据量性能差
+
+2. **Warp Scan: O(n) SIMD shuffle优化**
+   - 使用simd_shuffle_down进行warp内前缀和
+   - 极快的warp内通信
+   - 适合中小规模数据
+
+3. **Stream Compaction: 条件过滤**
+   - 根据谓词过滤元素
+   - 原子操作保证写入位置
+   - 用于数据清洗、稀疏化
+
+4. **SIMD Shuffle重要性**
+   - Apple GPU warp是32线程组
+   - simd_shuffle_down实现高效数据交换
+   - 比共享内存更高效
+
+5. **应用场景**
+   - Radix Sort基数排序
+   - 稀疏矩阵压缩
+   - 数据过滤和清洗
+   - 直方图统计

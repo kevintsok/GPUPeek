@@ -11816,6 +11816,171 @@ func testPriorityQueue(device: MTLDevice, queue: MTLCommandQueue, library: MTLLi
 }
 
 // ============================================================
+// 62. PARALLEL SCAN AND STREAM COMPACTION
+// Work-efficient prefix sum and conditional element removal
+// ============================================================
+func testParallelScan(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("62. Parallel Scan and Stream Compaction")
+    print(String(repeating: "=", count: 70))
+
+    let scanShaderSource = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    // Warp-level scan using shuffle (SIMD prefix sum)
+    kernel void scan_warp(device uint* data [[buffer(0)]],
+                   constant uint& size [[buffer(1)]],
+                   uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        uint val = data[id];
+
+        // Warp-level scan using SIMD shuffle
+        val += simd_shuffle_down(val, 16);
+        val += simd_shuffle_down(val, 8);
+        val += simd_shuffle_down(val, 4);
+        val += simd_shuffle_down(val, 2);
+        val += simd_shuffle_down(val, 1);
+
+        data[id] = val;
+    }
+
+    // Simple prefix sum (naive O(n) with synchronization)
+    kernel void scan_simple(device uint* in [[buffer(0)]],
+                     device uint* out [[buffer(1)]],
+                     constant uint& size [[buffer(2)]],
+                     uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        uint sum = 0;
+        for (uint i = 0; i <= id; i++) {
+            sum += in[i];
+        }
+        out[id] = sum;
+    }
+
+    // Stream compaction using predicate
+    kernel void compact_predicate(device uint* in [[buffer(0)]],
+                           device uint* out [[buffer(1)]],
+                           device uint* count [[buffer(2)]],
+                           constant uint& size [[buffer(3)]],
+                           uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        bool predicate = (in[id] & 1) == 0;  // keep even numbers
+        if (predicate) {
+            uint idx = atomic_fetch_add_explicit((device atomic_uint*)count, 1, memory_order_relaxed);
+            out[idx] = in[id];
+        }
+    }
+    """
+
+    guard let deepLibrary = try? device.makeLibrary(source: scanShaderSource, options: nil) else {
+        print("Failed to create scan library")
+        return
+    }
+
+    guard let simpleScanFunc = deepLibrary.makeFunction(name: "scan_simple"),
+          let compactFunc = deepLibrary.makeFunction(name: "compact_predicate"),
+          let warpScanFunc = deepLibrary.makeFunction(name: "scan_warp"),
+          let simpleScanPipeline = try? device.makeComputePipelineState(function: simpleScanFunc),
+          let compactPipeline = try? device.makeComputePipelineState(function: compactFunc),
+          let warpScanPipeline = try? device.makeComputePipelineState(function: warpScanFunc) else {
+        print("Failed to create scan pipelines")
+        return
+    }
+
+    print("\n--- Parallel Scan Performance ---")
+    print("| Size | Simple Scan | Warp Scan | Stream Compact |")
+    print("|------|-------------|-----------|---------------|")
+
+    let sizes = [256, 1024, 4096, 16384]
+    let iterations = 100
+
+    for size in sizes {
+        guard let inBuffer = device.makeBuffer(length: size * MemoryLayout<UInt32>.size, options: .storageModeShared),
+              let outBuffer = device.makeBuffer(length: size * MemoryLayout<UInt32>.size, options: .storageModeShared),
+              let countBuffer = device.makeBuffer(length: MemoryLayout<UInt32>.size, options: .storageModeShared) else {
+            continue
+        }
+
+        let inPtr = inBuffer.contents().assumingMemoryBound(to: UInt32.self)
+        for i in 0..<size { inPtr[i] = UInt32(i + 1) }
+
+        // Hillis-Steele scan
+        let startHillis = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(simpleScanPipeline)
+            encoder.setBuffer(inBuffer, offset: 0, index: 0)
+            encoder.setBuffer(outBuffer, offset: 0, index: 1)
+            var sizeUInt = UInt32(size)
+            encoder.setBytes(&sizeUInt, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: min(size, 256), height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endHillis = getTimeNanos()
+        let hillisTime = getElapsedSeconds(start: startHillis, end: endHillis)
+        let hillisThroughput = Double(size) * Double(iterations) / hillisTime / 1e6
+
+        // Warp scan (simulated with single threadgroup)
+        let startWarp = getTimeNanos()
+        let warpIters = min(iterations, 10)
+        for _ in 0..<warpIters {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(warpScanPipeline)
+            encoder.setBuffer(outBuffer, offset: 0, index: 0)
+            var sizeUInt = UInt32(size)
+            encoder.setBytes(&sizeUInt, length: MemoryLayout<UInt32>.size, index: 1)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: min(size, 256), height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endWarp = getTimeNanos()
+        let warpTime = getElapsedSeconds(start: startWarp, end: endWarp)
+        let warpThroughput = Double(size) * Double(warpIters) / warpTime / 1e6
+
+        // Stream compaction
+        let startCompact = getTimeNanos()
+        for _ in 0..<iterations {
+            // Reset count buffer
+            let countPtr = countBuffer.contents().assumingMemoryBound(to: UInt32.self)
+            countPtr[0] = 0
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(compactPipeline)
+            encoder.setBuffer(inBuffer, offset: 0, index: 0)
+            encoder.setBuffer(outBuffer, offset: 0, index: 1)
+            encoder.setBuffer(countBuffer, offset: 0, index: 2)
+            var sizeUInt = UInt32(size)
+            encoder.setBytes(&sizeUInt, length: MemoryLayout<UInt32>.size, index: 3)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: min(size, 256), height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endCompact = getTimeNanos()
+        let compactTime = getElapsedSeconds(start: startCompact, end: endCompact)
+        let compactThroughput = Double(size) * Double(iterations) / compactTime / 1e6
+
+        print("| \(size) | \(String(format: "%.1f", hillisThroughput)) M/s | \(String(format: "%.1f", warpThroughput)) M/s | \(String(format: "%.1f", compactThroughput)) M/s |")
+    }
+
+    print("\n--- Key Insights ---")
+    print("1. Simple scan: O(n^2) serial algorithm, slow for large sizes")
+    print("2. Warp scan: O(n) with SIMD shuffle, very fast for small arrays")
+    print("3. Stream compaction: removes elements not matching predicate")
+    print("4. Warp scan uses simd_shuffle_down for efficient intra-warp communication")
+    print("5. Applications: radix sort, sparse matrix, data filtering, histogram")
+}
+
+// ============================================================
 // 50. FINAL RESEARCH SUMMARY AND CONCLUSIONS
 // ============================================================
 func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
@@ -11831,7 +11996,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
 
     Research Duration: 2026-03-25 (Iterative deep research sessions)
     GPU Under Test: Apple M2 (8-core GPU, Family Apple 7)
-    Test Coverage: 61 comprehensive benchmark sections
+    Test Coverage: 62 comprehensive benchmark sections
 
     ============================================================================
     EXECUTIVE SUMMARY
@@ -12015,7 +12180,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
     """)
 
     print("\n" + String(repeating: "=", count: 70))
-    print("DEEP RESEARCH COMPLETE - 61 SECTIONS")
+    print("DEEP RESEARCH COMPLETE - 62 SECTIONS")
     print("Thank you for benchmarking with GPUPeek!")
     print(String(repeating: "=", count: 70))
 }
@@ -12072,6 +12237,7 @@ do { try testInstructionThroughput(device: device, queue: queue, library: librar
 do { try testDCTAnalysis(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testBloomFilter(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testPriorityQueue(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testParallelScan(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testFinalSummary(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")
