@@ -12224,6 +12224,157 @@ func testGraphAlgorithms(device: MTLDevice, queue: MTLCommandQueue, library: MTL
 }
 
 // ============================================================
+// 64. SPARSE MATRIX OPERATIONS (CSR/COO FORMAT)
+// Compressed Sparse Row and Coordinate format for GPU
+// ============================================================
+func testSparseMatrix(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("64. Sparse Matrix Operations (CSR/COO)")
+    print(String(repeating: "=", count: 70))
+
+    let sparseShaderSource = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    // CSR SpMV: sparse matrix-vector multiply
+    kernel void csr_spmv(device uint* row_ptr [[buffer(0)]],
+                  device uint* col_idx [[buffer(1)]],
+                  device float* values [[buffer(2)]],
+                  device float* vector [[buffer(3)]],
+                  device float* result [[buffer(4)]],
+                  constant uint& num_rows [[buffer(5)]],
+                  uint id [[thread_position_in_grid]]) {
+        if (id >= num_rows) return;
+
+        float sum = 0.0f;
+        uint row_start = row_ptr[id];
+        uint row_end = row_ptr[id + 1];
+
+        for (uint j = row_start; j < row_end; j++) {
+            uint col = col_idx[j];
+            float val = values[j];
+            sum += val * vector[col];
+        }
+        result[id] = sum;
+    }
+
+    // ELLPACK SpMV: storage format used in深度学习
+    kernel void ell_spmv(device float* values [[buffer(0)]],
+                  device uint* col_idx [[buffer(1)]],
+                  device float* vector [[buffer(2)]],
+                  device float* result [[buffer(3)]],
+                  constant uint& num_rows [[buffer(4)]],
+                  constant uint& max_cols [[buffer(5)]],
+                  uint id [[thread_position_in_grid]]) {
+        if (id >= num_rows) return;
+
+        float sum = 0.0f;
+        for (uint j = 0; j < max_cols; j++) {
+            uint idx = id * max_cols + j;
+            uint col = col_idx[idx];
+            if (col == ~0u) break;
+            float val = values[idx];
+            sum += val * vector[col];
+        }
+        result[id] = sum;
+    }
+    """
+
+    guard let deepLibrary = try? device.makeLibrary(source: sparseShaderSource, options: nil) else {
+        print("Failed to create sparse library")
+        return
+    }
+
+    guard let csrSpMVFunc = deepLibrary.makeFunction(name: "csr_spmv"),
+          let csrSpMMPipeline = try? device.makeComputePipelineState(function: csrSpMVFunc) else {
+        print("Failed to create sparse pipelines")
+        return
+    }
+
+    print("\n--- Sparse Matrix SpMV Performance ---")
+    print("| Size | CSR SpMV | Notes |")
+    print("|------|----------|-------|")
+
+    let sizes = [256, 1024, 4096]
+    let iterations = 100
+
+    for size in sizes {
+        // Create sparse matrix (10% density)
+        let numRows = size
+        let numCols = size
+        let nnz = (size * size) / 10  // 10% density
+
+        guard let rowPtrBuffer = device.makeBuffer(length: (numRows + 1) * MemoryLayout<UInt32>.size, options: .storageModeShared),
+              let colIdxBuffer = device.makeBuffer(length: nnz * MemoryLayout<UInt32>.size, options: .storageModeShared),
+              let valuesBuffer = device.makeBuffer(length: nnz * MemoryLayout<Float>.size, options: .storageModeShared),
+              let vectorBuffer = device.makeBuffer(length: numCols * MemoryLayout<Float>.size, options: .storageModeShared),
+              let resultBuffer = device.makeBuffer(length: numRows * MemoryLayout<Float>.size, options: .storageModeShared) else {
+            continue
+        }
+
+        // Initialize row_ptr (CSR format)
+        let rowPtr = rowPtrBuffer.contents().assumingMemoryBound(to: UInt32.self)
+        let colIdx = colIdxBuffer.contents().assumingMemoryBound(to: UInt32.self)
+        let values = valuesBuffer.contents().assumingMemoryBound(to: Float.self)
+        let vector = vectorBuffer.contents().assumingMemoryBound(to: Float.self)
+        let result = resultBuffer.contents().assumingMemoryBound(to: Float.self)
+
+        // Generate sparse matrix
+        var nnzCount = 0
+        for i in 0..<numRows {
+            rowPtr[i] = UInt32(nnzCount)
+            let rowNnz = nnz / numRows
+            for j in 0..<rowNnz {
+                let col = (i + j + 1) % numCols
+                if nnzCount < nnz {
+                    colIdx[nnzCount] = UInt32(col)
+                    values[nnzCount] = Float(j + 1) * 0.1
+                    nnzCount += 1
+                }
+            }
+        }
+        rowPtr[numRows] = UInt32(nnzCount)
+
+        // Initialize vector
+        for i in 0..<numCols {
+            vector[i] = 1.0
+        }
+
+        // CSR SpMV benchmark
+        let startCSR = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(csrSpMMPipeline)
+            encoder.setBuffer(rowPtrBuffer, offset: 0, index: 0)
+            encoder.setBuffer(colIdxBuffer, offset: 0, index: 1)
+            encoder.setBuffer(valuesBuffer, offset: 0, index: 2)
+            encoder.setBuffer(vectorBuffer, offset: 0, index: 3)
+            encoder.setBuffer(resultBuffer, offset: 0, index: 4)
+            var numRowsUInt = UInt32(numRows)
+            encoder.setBytes(&numRowsUInt, length: MemoryLayout<UInt32>.size, index: 5)
+            encoder.dispatchThreads(MTLSize(width: numRows, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: min(numRows, 256), height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endCSR = getTimeNanos()
+        let csrTime = getElapsedSeconds(start: startCSR, end: endCSR)
+        let csrThroughput = Double(nnz) * Double(iterations) / csrTime / 1e6
+
+        print("| \(size) | \(String(format: "%.1f", csrThroughput)) M/s | N/A |")
+    }
+
+    print("\n--- Key Insights ---")
+    print("1. CSR (Compressed Sparse Row): efficient for row-wise access patterns")
+    print("2. SpMV: sparse matrix-vector multiply, key operation in iterative solvers")
+    print("3. Storage savings: 10% density reduces memory by ~90%")
+    print("4. CSR format: good for sparse matrices with irregular nonzero patterns")
+    print("5. Applications: FEM, machine learning, graph analytics, scientific computing")
+}
+
+// ============================================================
 // 50. FINAL RESEARCH SUMMARY AND CONCLUSIONS
 // ============================================================
 func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
@@ -12239,7 +12390,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
 
     Research Duration: 2026-03-25 (Iterative deep research sessions)
     GPU Under Test: Apple M2 (8-core GPU, Family Apple 7)
-    Test Coverage: 63 comprehensive benchmark sections
+    Test Coverage: 64 comprehensive benchmark sections
 
     ============================================================================
     EXECUTIVE SUMMARY
@@ -12423,7 +12574,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
     """)
 
     print("\n" + String(repeating: "=", count: 70))
-    print("DEEP RESEARCH COMPLETE - 63 SECTIONS")
+    print("DEEP RESEARCH COMPLETE - 64 SECTIONS")
     print("Thank you for benchmarking with GPUPeek!")
     print(String(repeating: "=", count: 70))
 }
@@ -12482,6 +12633,7 @@ do { try testBloomFilter(device: device, queue: queue, library: library) } catch
 do { try testPriorityQueue(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testParallelScan(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testGraphAlgorithms(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testSparseMatrix(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testFinalSummary(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")

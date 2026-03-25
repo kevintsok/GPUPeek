@@ -996,3 +996,31 @@ Apple M2 GPU是一款**高效的集成GPU**，针对移动/笔记本工作负载
    - 推荐系统
    - 路网导航
    - 知识图谱
+
+## Section 64: Sparse Matrix Operations (CSR Format)
+
+### Sparse Matrix SpMV性能
+
+| Size | CSR SpMV | Notes |
+|------|----------|-------|
+| 256 | 1.0 M/s | 10% density |
+| 1024 | 11.7 M/s | 10% density |
+| 4096 | 52.8 M/s | 10% density |
+
+### 关键发现
+
+1. **CSR (Compressed Sparse Row)格式**
+   - 高效的稀疏矩阵存储格式
+   - 行方向访问模式效率高
+   - 压缩存储节省内存约90%
+
+2. **SpMV (Sparse Matrix-Vector Multiply)**
+   - 迭代求解器的核心操作
+   - 稀疏矩阵-向量乘法
+   - 在科学计算和ML中广泛使用
+
+3. **稀疏矩阵应用场景**
+   - 有限元分析(FEM)
+   - 机器学习(神经网络权重)
+   - 图分析(邻接矩阵)
+   - 科学计算(偏微分方程)
