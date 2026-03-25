@@ -1233,3 +1233,48 @@ Apple M2 GPU是一款**高效的集成GPU**，针对移动/笔记本工作负载
    - 光线追踪渲染
    - 碰撞检测
    - 可见性查询
+
+## Section 70: Indirect Command Generation and Argument Buffers
+
+### GPU-Driven Dispatch Arguments Performance
+
+| Objects | Throughput |
+|---------|------------|
+| 4096 | 0.72 M/s |
+
+### Batch Processing Performance
+
+| Batches | Throughput |
+|---------|------------|
+| 256 | 0.04 M/s |
+
+### Predicate Filtering Performance
+
+| Size | Throughput |
+|------|------------|
+| 256 | 0.05 M/s |
+| 1024 | 0.20 M/s |
+| 4096 | 0.77 M/s |
+
+### 关键发现
+
+1. **间接命令生成**
+   - 允许GPU驱动dispatch决策
+   - 减少CPU-GPU同步开销
+   - 用于动态场景管理
+
+2. **Argument Buffer模式**
+   - 批量处理可变大小的数据
+   - 通过偏移量和大小数组实现
+   - 高效的参数传递机制
+
+3. **Predicate过滤**
+   - 基于GPU生成的flags进行选择
+   - 实现条件执行和数据筛选
+   - 原子操作用于计数
+
+4. **应用场景**
+   - 可见性剔除(Visibility Culling)
+   - 遮挡查询(Occlusion Queries)
+   - 动态场景渲染
+   - GPU驱动的渲染管线
