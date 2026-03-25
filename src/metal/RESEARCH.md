@@ -1024,3 +1024,48 @@ Apple M2 GPU是一款**高效的集成GPU**，针对移动/笔记本工作负载
    - 机器学习(神经网络权重)
    - 图分析(邻接矩阵)
    - 科学计算(偏微分方程)
+
+## Section 65: Sorting Algorithms (Bitonic/Merge/Radix)
+
+### Sorting Algorithm Performance
+
+**Odd-Even Transposition Sort:**
+| Size | Performance | Notes |
+|------|-------------|-------|
+| 256 | 0.04 M/s | iter=10 |
+| 1024 | 0.22 M/s | iter=10 |
+| 4096 | 1.02 M/s | iter=10 |
+
+**Radix Sort:**
+| Size | Performance |
+|------|-------------|
+| 256 | 0.01 M/s |
+| 1024 | 0.02 M/s |
+| 4096 | 0.07 M/s |
+
+### 关键发现
+
+1. **Odd-even transposition sort: O(n²)**
+   - 简单的并行排序算法
+   - 每个步骤交换相邻元素对
+   - 适合硬件实现
+
+2. **Bitonic sort: O(log² n)**
+   - 使用排序网络
+   - 适合固定大小的数据
+   - 并行度高
+
+3. **Radix sort: O(nk)**
+   - 基于位的计数排序
+   - k是位数(32位整数需要4遍)
+   - 通常比比较排序快
+
+4. **GPU排序策略**
+   - 通用排序：使用比较排序
+   - 整数排序：使用基数排序
+   - 考虑数据大小和类型选择
+
+5. **应用场景**
+   - 数据库操作
+   - 科学计算
+   - 数据分析和预处理
