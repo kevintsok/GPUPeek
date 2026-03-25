@@ -1856,3 +1856,34 @@ Arithmetic Intensity = FLOPs / Memory Bytes
    - 图像处理、空间插值: 使用Texture
    - 通用计算、随机访问: 使用Buffer
    - 大量数据顺序访问: Buffer可能更快
+
+## Section 82: Asynchronous Operations and Command Buffer Overlap
+
+### Synchronous vs Asynchronous Execution
+
+| Execution Mode | Total Time | Per-Kernel | Overlap Ratio |
+|--------------|------------|------------|---------------|
+| Synchronous | 119.96 ms | 12.00 ms | 1.0x (baseline) |
+| Asynchronous | 69.12 ms | 6.91 ms | 1.74x |
+
+### 关键发现
+
+1. **异步提交的优势**
+   - 批量提交command buffer减少等待时间
+   - GPU可以流水线式执行多个操作
+   - CPU不阻塞等待每个kernel完成
+
+2. **性能提升**
+   - 异步执行比同步快1.74倍
+   - 多个kernel可以重叠执行
+   - 减少总体GPU利用率时间
+
+3. **使用建议**
+   - 批量处理时使用异步提交
+   - 使用completion handler获取完成通知
+   - 可以在多个队列上调度实现并行
+
+4. **优化策略**
+   - 预分配command buffer减少分配开销
+   - 使用多个GPU队列实现真正并行
+   - 结合批量调度和异步执行最大化效率

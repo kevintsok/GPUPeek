@@ -16476,6 +16476,112 @@ func testShaderAndLaunchOverhead(device: MTLDevice, queue: MTLCommandQueue, libr
 }
 
 // ============================================================
+// 82. ASYNCHRONOUS OPERATIONS AND COMMAND BUFFER OVERLAP
+// Analysis of async GPU operations and CPU/GPU work overlap
+// ============================================================
+func testAsynchronousOverlap(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("82. Asynchronous Operations and Command Buffer Overlap")
+    print(String(repeating: "=", count: 70))
+
+    // Simple kernel for testing
+    let asyncKernel = """
+    #include <metal_stdlib>
+    using namespace metal;
+    kernel void async_add(device float* out [[buffer(0)]],
+                         device const float* in [[buffer(1)]],
+                         uint id [[thread_position_in_grid]]) {
+        out[id] = in[id] + 1.0f;
+    }
+    """
+
+    guard let asyncLibrary = try? device.makeLibrary(source: asyncKernel, options: nil),
+          let asyncFunc = asyncLibrary.makeFunction(name: "async_add"),
+          let asyncPipeline = try? device.makeComputePipelineState(function: asyncFunc) else {
+        print("Failed to create async pipeline")
+        return
+    }
+
+    let workSize = 1024 * 1024
+    let iterations = 10
+
+    guard let bufferA = device.makeBuffer(length: workSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let bufferB = device.makeBuffer(length: workSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+
+    // Initialize buffer
+    let ptr = bufferA.contents().bindMemory(to: Float.self, capacity: workSize)
+    for i in 0..<workSize {
+        ptr[i] = Float(i)
+    }
+
+    print("\n--- Synchronous Execution (Baseline) ---")
+    let syncStart = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(asyncPipeline)
+        encoder.setBuffer(bufferB, offset: 0, index: 0)
+        encoder.setBuffer(bufferA, offset: 0, index: 1)
+        encoder.dispatchThreads(MTLSize(width: workSize, height: 1, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let syncEnd = getTimeNanos()
+    let syncTime = getElapsedSeconds(start: syncStart, end: syncEnd)
+    print("Synchronous total time: \(String(format: "%.2f", syncTime * 1000)) ms")
+    print("Per-kernel time: \(String(format: "%.2f", syncTime / Double(iterations) * 1000)) ms")
+
+    print("\n--- Asynchronous Execution (Non-blocking) ---")
+    let asyncStart = getTimeNanos()
+    var cmdBuffers: [MTLCommandBuffer] = []
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(asyncPipeline)
+        encoder.setBuffer(bufferB, offset: 0, index: 0)
+        encoder.setBuffer(bufferA, offset: 0, index: 1)
+        encoder.dispatchThreads(MTLSize(width: workSize, height: 1, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmdBuffers.append(cmd)
+    }
+
+    // Commit all at once
+    for cmd in cmdBuffers {
+        cmd.commit()
+    }
+
+    // Wait for all
+    for cmd in cmdBuffers {
+        cmd.waitUntilCompleted()
+    }
+    let asyncEnd = getTimeNanos()
+    let asyncTime = getElapsedSeconds(start: asyncStart, end: asyncEnd)
+    print("Asynchronous total time: \(String(format: "%.2f", asyncTime * 1000)) ms")
+    print("Per-kernel time (committed together): \(String(format: "%.2f", asyncTime / Double(iterations) * 1000)) ms")
+
+    print("\n--- Overlap Analysis ---")
+    print("| Metric | Value |")
+    print("|--------|-------|")
+    print("| Synchronous total | \(String(format: "%.2f", syncTime * 1000)) ms |")
+    print("| Asynchronous total | \(String(format: "%.2f", asyncTime * 1000)) ms |")
+    let overlapRatio = syncTime / asyncTime
+    print("| Overlap ratio | \(String(format: "%.2fx", overlapRatio)) |")
+
+    print("\n--- Key Insights ---")
+    print("1. Asynchronous commit allows multiple kernels to be queued")
+    print("2. GPU can pipeline multiple operations efficiently")
+    print("3. CPU doesn't block waiting for each kernel to complete")
+    print("4. For batch operations, async can provide significant speedup")
+    print("5. Use MTLCommandBuffer completion handlers for notification")
+    print("6. Command buffer can be scheduled on multiple queues for parallelism")
+}
+
+// ============================================================
 // 50. FINAL RESEARCH SUMMARY AND CONCLUSIONS
 // ============================================================
 func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
@@ -16491,7 +16597,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
 
     Research Duration: 2026-03-25 (Iterative deep research sessions)
     GPU Under Test: Apple M2 (8-core GPU, Family Apple 7)
-    Test Coverage: 81 comprehensive benchmark sections
+    Test Coverage: 82 comprehensive benchmark sections
 
     ============================================================================
     EXECUTIVE SUMMARY
@@ -16675,7 +16781,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
     """)
 
     print("\n" + String(repeating: "=", count: 70))
-    print("DEEP RESEARCH COMPLETE - 81 SECTIONS")
+    print("DEEP RESEARCH COMPLETE - 82 SECTIONS")
     print("Thank you for benchmarking with GPUPeek!")
     print(String(repeating: "=", count: 70))
 }
@@ -16752,6 +16858,7 @@ do { try testInstructionMix(device: device, queue: queue, library: library) } ca
 do { try testSIMDGroupCommunication(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testShaderAndLaunchOverhead(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try TextureSamplerBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try testAsynchronousOverlap(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testFinalSummary(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")
