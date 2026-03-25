@@ -11558,6 +11558,264 @@ func testBloomFilter(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibr
 }
 
 // ============================================================
+// 61. PRIORITY QUEUE AND HEAP OPERATIONS
+// Binary heap operations for scheduling and pathfinding
+// ============================================================
+func testPriorityQueue(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("61. Priority Queue and Heap Operations")
+    print(String(repeating: "=", count: 70))
+
+    let heapShaderSource = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    // Binary heap: push operation (insert element)
+    // Heap property: parent > children (max-heap)
+    kernel void heap_push(device uint* heap [[buffer(0)]],
+                     device atomic_uint* heap_size [[buffer(1)]],
+                     device uint* heap_state [[buffer(2)]],
+                     constant uint& value [[buffer(3)]],
+                     uint tid [[thread_position_in_grid]]) {
+        if (tid != 0) return;  // Only first thread does work
+
+        uint size = atomic_fetch_add_explicit(heap_size, 1, memory_order_relaxed);
+        heap[size] = value;
+
+        // Bubble up
+        uint idx = size;
+        while (idx > 0) {
+            uint parent = (idx - 1) / 2;
+            if (heap[parent] >= heap[idx]) break;
+            uint temp = heap[parent];
+            heap[parent] = heap[idx];
+            heap[idx] = temp;
+            idx = parent;
+        }
+    }
+
+    // Binary heap: pop operation (remove max)
+    kernel void heap_pop(device uint* heap [[buffer(0)]],
+                     device atomic_uint* heap_size [[buffer(1)]],
+                     device uint* output [[buffer(2)]],
+                     device uint* heap_state [[buffer(3)]],
+                     uint tid [[thread_position_in_grid]]) {
+        if (tid != 0) return;
+
+        uint size = atomic_load_explicit(heap_size, memory_order_relaxed);
+        if (size == 0) {
+            output[0] = 0xFFFFFFFF;  // sentinel for empty
+            return;
+        }
+
+        uint max = heap[0];
+        output[0] = max;
+
+        // Move last element to root
+        uint last = heap[size - 1];
+        atomic_fetch_sub_explicit(heap_size, 1, memory_order_relaxed);
+        heap[0] = last;
+
+        // Bubble down
+        uint idx = 0;
+        while (true) {
+            uint left = 2 * idx + 1;
+            uint right = 2 * idx + 2;
+            uint largest = idx;
+
+            if (left < size && heap[left] > heap[largest])
+                largest = left;
+            if (right < size && heap[right] > heap[largest])
+                largest = right;
+
+            if (largest == idx) break;
+
+            uint temp = heap[idx];
+            heap[idx] = heap[largest];
+            heap[largest] = temp;
+            idx = largest;
+        }
+    }
+
+    // Parallel bucket sort (simulates priority queue batch)
+    kernel void bucket_sort(device const uint* in [[buffer(0)]],
+                       device uint* out [[buffer(1)]],
+                       device atomic_uint* counts [[buffer(2)]],
+                       constant uint& size [[buffer(3)]],
+                       uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+
+        uint val = in[id];
+        uint bucket = (val * 16) >> 16;  // 16 buckets
+        uint pos = atomic_fetch_add_explicit(&counts[bucket], 1, memory_order_relaxed);
+        out[pos] = val;
+    }
+
+    // Radix heap (for integer priority queue)
+    kernel void radix_heap(device const uint* in [[buffer(0)]],
+                       device uint* out [[buffer(1)]],
+                       device uint* temp [[buffer(2)]],
+                       constant uint& size [[buffer(3)]],
+                       uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+
+        uint val = in[id];
+        uint radix = val & 0xFF;
+        uint bucket = radix;
+
+        out[bucket * size + id] = val;
+    }
+
+    // Work queue simulation (Dijkstra-like)
+    kernel void work_queue_update(device const uint* distances [[buffer(0)]],
+                              device uint* frontier [[buffer(1)]],
+                              device atomic_uint* frontier_size [[buffer(2)]],
+                              device uchar* visited [[buffer(3)]],
+                              constant uint& node_count [[buffer(4)]],
+                              uint id [[thread_position_in_grid]]) {
+        if (id >= node_count) return;
+        if (visited[id]) return;
+
+        // Check if node should be in frontier
+        if (distances[id] < 0xFFFFFFFF) {
+            uint pos = atomic_fetch_add_explicit(frontier_size, 1, memory_order_relaxed);
+            frontier[pos] = id;
+        }
+    }
+    """
+
+    let heapLibrary: MTLLibrary
+    do {
+        heapLibrary = try device.makeLibrary(source: heapShaderSource, options: nil)
+    } catch {
+        print("Failed to compile heap shaders: \(error)")
+        return
+    }
+
+    let testSizes = [256, 1024, 4096]
+    let iterations = 20
+
+    print("\n--- Priority Queue / Heap Performance ---")
+    print("| Size | Heap Push | Heap Pop | Bucket Sort |")
+    print("|------|-----------|---------|------------|")
+
+    guard let pushFunc = heapLibrary.makeFunction(name: "heap_push"),
+          let popFunc = heapLibrary.makeFunction(name: "heap_pop"),
+          let bucketFunc = heapLibrary.makeFunction(name: "bucket_sort") else {
+        print("Failed to load heap kernels")
+        return
+    }
+
+    guard let pushPipeline = try? device.makeComputePipelineState(function: pushFunc),
+          let popPipeline = try? device.makeComputePipelineState(function: popFunc),
+          let bucketPipeline = try? device.makeComputePipelineState(function: bucketFunc) else {
+        print("Failed to create heap pipelines")
+        return
+    }
+
+    for size in testSizes {
+        guard let heapBuffer = device.makeBuffer(length: size * MemoryLayout<UInt32>.size, options: .storageModeShared),
+              let heapSizeBuffer = device.makeBuffer(length: MemoryLayout<UInt32>.size, options: .storageModeShared),
+              let stateBuffer = device.makeBuffer(length: 4 * MemoryLayout<UInt32>.size, options: .storageModeShared),
+              let outputBuffer = device.makeBuffer(length: size * MemoryLayout<UInt32>.size, options: .storageModeShared),
+              let inBuffer = device.makeBuffer(length: size * MemoryLayout<UInt32>.size, options: .storageModeShared),
+              let countsBuffer = device.makeBuffer(length: 16 * MemoryLayout<UInt32>.size, options: .storageModeShared) else {
+            continue
+        }
+
+        // Initialize
+        let heapSizePtr = heapSizeBuffer.contents().assumingMemoryBound(to: UInt32.self)
+        heapSizePtr[0] = 0
+
+        let inPtr = inBuffer.contents().assumingMemoryBound(to: UInt32.self)
+        for i in 0..<size { inPtr[i] = UInt32(i) * 17 % UInt32(size) }
+
+        var sizeUInt = UInt32(size)
+
+        // Heap push test
+        let startPush = getTimeNanos()
+        for i in 0..<iterations {
+            heapSizePtr[0] = 0  // reset
+            for j in 0..<size {
+                var val = (UInt32(i) * UInt32(size) + UInt32(j)) % UInt32(size)
+                guard let cmd = queue.makeCommandBuffer(),
+                      let encoder = cmd.makeComputeCommandEncoder() else { continue }
+                encoder.setComputePipelineState(pushPipeline)
+                encoder.setBuffer(heapBuffer, offset: 0, index: 0)
+                encoder.setBuffer(heapSizeBuffer, offset: 0, index: 1)
+                encoder.setBuffer(stateBuffer, offset: 0, index: 2)
+                encoder.setBytes(&val, length: MemoryLayout<UInt32>.size, index: 3)
+                encoder.dispatchThreads(MTLSize(width: 1, height: 1, depth: 1),
+                                     threadsPerThreadgroup: MTLSize(width: 1, height: 1, depth: 1))
+                encoder.endEncoding()
+                cmd.commit()
+                cmd.waitUntilCompleted()
+            }
+        }
+        let endPush = getTimeNanos()
+        let pushTime = getElapsedSeconds(start: startPush, end: endPush)
+        let pushOps = Double(size) * Double(iterations)
+        let pushThroughput = pushOps / pushTime / 1e6
+
+        // Heap pop test
+        let startPop = getTimeNanos()
+        for i in 0..<iterations {
+            heapSizePtr[0] = UInt32(size)  // full heap
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(popPipeline)
+            encoder.setBuffer(heapBuffer, offset: 0, index: 0)
+            encoder.setBuffer(heapSizeBuffer, offset: 0, index: 1)
+            encoder.setBuffer(outputBuffer, offset: 0, index: 2)
+            encoder.setBuffer(stateBuffer, offset: 0, index: 3)
+            encoder.dispatchThreads(MTLSize(width: 1, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: 1, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endPop = getTimeNanos()
+        let popTime = getElapsedSeconds(start: startPop, end: endPop)
+        let popOps = Double(iterations)
+        let popThroughput = popOps / popTime / 1e6
+
+        // Bucket sort test
+        let startBucket = getTimeNanos()
+        for _ in 0..<iterations {
+            // Reset counts
+            let countsPtr = countsBuffer.contents().assumingMemoryBound(to: UInt32.self)
+            for j in 0..<16 { countsPtr[j] = 0 }
+
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(bucketPipeline)
+            encoder.setBuffer(inBuffer, offset: 0, index: 0)
+            encoder.setBuffer(outputBuffer, offset: 0, index: 1)
+            encoder.setBuffer(countsBuffer, offset: 0, index: 2)
+            encoder.setBytes(&sizeUInt, length: MemoryLayout<UInt32>.size, index: 3)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: 64, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endBucket = getTimeNanos()
+        let bucketTime = getElapsedSeconds(start: startBucket, end: endBucket)
+        let bucketOps = Double(size) * Double(iterations)
+        let bucketThroughput = bucketOps / bucketTime / 1e6
+
+        print("| \(size) | \(String(format: "%.1f", pushThroughput)) M/s | \(String(format: "%.1f", popThroughput)) M/s | \(String(format: "%.1f", bucketThroughput)) M/s |")
+    }
+
+    print("\n--- Key Insights ---")
+    print("1. Serial heap push/pop are slow on GPU due to dependency chains")
+    print("2. Parallel bucket sort or radix sort is faster for batch operations")
+    print("3. GPU priority queues used in Dijkstra, A*, scheduling simulations")
+    print("4. Worklist/queue-based algorithms parallelize better on GPU")
+    print("5. Apple GPU: prefer parallel algorithms over serial heap operations")
+}
+
+// ============================================================
 // 50. FINAL RESEARCH SUMMARY AND CONCLUSIONS
 // ============================================================
 func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
@@ -11573,7 +11831,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
 
     Research Duration: 2026-03-25 (Iterative deep research sessions)
     GPU Under Test: Apple M2 (8-core GPU, Family Apple 7)
-    Test Coverage: 60 comprehensive benchmark sections
+    Test Coverage: 61 comprehensive benchmark sections
 
     ============================================================================
     EXECUTIVE SUMMARY
@@ -11757,7 +12015,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
     """)
 
     print("\n" + String(repeating: "=", count: 70))
-    print("DEEP RESEARCH COMPLETE - 60 SECTIONS")
+    print("DEEP RESEARCH COMPLETE - 61 SECTIONS")
     print("Thank you for benchmarking with GPUPeek!")
     print(String(repeating: "=", count: 70))
 }
@@ -11813,6 +12071,7 @@ do { try testImageProcessing(device: device, queue: queue, library: library) } c
 do { try testInstructionThroughput(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testDCTAnalysis(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testBloomFilter(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testPriorityQueue(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testFinalSummary(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")

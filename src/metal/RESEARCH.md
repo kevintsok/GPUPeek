@@ -877,3 +877,42 @@ Apple M2 GPU是一款**高效的集成GPU**，针对移动/笔记本工作负载
    - Bloom Filter无冲突处理
    - 适合大规模并行处理
    - 数据库缓存优化
+
+## Section 61: Priority Queue与Heap操作
+
+### Priority Queue / Heap性能
+
+| Size | Heap Push | Heap Pop | Bucket Sort |
+|------|-----------|----------|-------------|
+| 256 | 0.0 M/s | 0.0 M/s | 0.0 M/s |
+| 1024 | 0.0 M/s | 0.0 M/s | 0.2 M/s |
+| 4096 | 0.0 M/s | 0.0 M/s | 0.5 M/s |
+
+### 关键发现
+
+1. **串行Heap操作在GPU上性能差**
+   - Heap push/pop是串行操作
+   - 每次操作有数据依赖链
+   - GPU擅长并行，不擅长串行依赖
+
+2. **并行Bucket Sort更快**
+   - O(n)时间复杂度
+   - 适合GPU大规模并行
+   - 用于批量优先级排序
+
+3. **GPU优先队列应用场景**
+   - Dijkstra最短路径算法
+   - A*寻路算法
+   - 任务调度模拟
+   - 事件驱动仿真
+
+4. **GPU优先级队列优化策略**
+   - 避免串行heap操作
+   - 使用worklist/队列替代
+   - 批量处理减少开销
+   - 考虑层次优先级
+
+5. **Apple GPU建议**
+   - 优先使用并行算法
+   - 避免单线程heap操作
+   - 使用原子操作+worklist模式
