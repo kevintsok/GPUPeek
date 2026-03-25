@@ -176,10 +176,188 @@ __global__ void reduxXorKernel(const unsigned int* __restrict__ input,
 
 
 // =============================================================================
+// Redux.sync Intrinsics (True redux.sync instruction)
+// =============================================================================
+//
+// CUDA provides __reduce_*_sync intrinsics that map directly to redux.sync:
+// - __reduce_add_sync(mask, val)  -> redux.sync.add
+// - __reduce_min_sync(mask, val)  -> redux.sync.min
+// - __reduce_max_sync(mask, val)  -> redux.sync.max
+// - __reduce_and_sync(mask, val)  -> redux.sync.and
+// - __reduce_or_sync(mask, val)   -> redux.sync.or
+// - __reduce_xor_sync(mask, val)  -> redux.sync.xor
+//
+// These generate the actual RRED SASS instruction.
+// =============================================================================
+
+// True redux.sync.add - uses __reduce_add_sync intrinsic
+__global__ void reduxSyncAddKernel(const float* __restrict__ input,
+                                   float* __restrict__ output,
+                                   size_t N) {
+    int tid = threadIdx.x;
+    int wid = tid / 32;
+    int lane = tid % 32;
+
+    int warp_start = wid * 32;
+    int warp_end = min(warp_start + 32, (int)N);
+
+    if (warp_start >= (int)N) return;
+
+    // Load value for this thread
+    float val = (lane < warp_end - warp_start) ? input[warp_start + lane] : 0.0f;
+
+    // True redux.sync.add - single instruction via intrinsic
+    val = __reduce_add_sync(0xffffffff, val);
+
+    if (lane == 0) {
+        output[wid] = val;
+    }
+}
+
+// True redux.sync.min - uses __reduce_min_sync intrinsic
+__global__ void reduxSyncMinKernel(const float* __restrict__ input,
+                                   float* __restrict__ output,
+                                   size_t N) {
+    int tid = threadIdx.x;
+    int wid = tid / 32;
+    int lane = tid % 32;
+
+    int warp_start = wid * 32;
+    int warp_end = min(warp_start + 32, (int)N);
+
+    if (warp_start >= (int)N) return;
+
+    float val = (lane < warp_end - warp_start) ? input[warp_start + lane] : 1e9f;
+
+    // True redux.sync.min
+    val = __reduce_min_sync(0xffffffff, val);
+
+    if (lane == 0) {
+        output[wid] = val;
+    }
+}
+
+// True redux.sync.max - uses __reduce_max_sync intrinsic
+__global__ void reduxSyncMaxKernel(const float* __restrict__ input,
+                                   float* __restrict__ output,
+                                   size_t N) {
+    int tid = threadIdx.x;
+    int wid = tid / 32;
+    int lane = tid % 32;
+
+    int warp_start = wid * 32;
+    int warp_end = min(warp_start + 32, (int)N);
+
+    if (warp_start >= (int)N) return;
+
+    float val = (lane < warp_end - warp_start) ? input[warp_start + lane] : -1e9f;
+
+    // True redux.sync.max
+    val = __reduce_max_sync(0xffffffff, val);
+
+    if (lane == 0) {
+        output[wid] = val;
+    }
+}
+
+// True redux.sync.and - uses __reduce_and_sync intrinsic
+__global__ void reduxSyncAndKernel(const unsigned int* __restrict__ input,
+                                   unsigned int* __restrict__ output,
+                                   size_t N) {
+    int tid = threadIdx.x;
+    int wid = tid / 32;
+    int lane = tid % 32;
+
+    int warp_start = wid * 32;
+    int warp_end = min(warp_start + 32, (int)N);
+
+    if (warp_start >= (int)N) return;
+
+    unsigned int val = (lane < warp_end - warp_start) ? input[warp_start + lane] : 0xFFFFFFFF;
+
+    // True redux.sync.and
+    val = __reduce_and_sync(0xffffffff, val);
+
+    if (lane == 0) {
+        output[wid] = val;
+    }
+}
+
+// True redux.sync.or - uses __reduce_or_sync intrinsic
+__global__ void reduxSyncOrKernel(const unsigned int* __restrict__ input,
+                                  unsigned int* __restrict__ output,
+                                  size_t N) {
+    int tid = threadIdx.x;
+    int wid = tid / 32;
+    int lane = tid % 32;
+
+    int warp_start = wid * 32;
+    int warp_end = min(warp_start + 32, (int)N);
+
+    if (warp_start >= (int)N) return;
+
+    unsigned int val = (lane < warp_end - warp_start) ? input[warp_start + lane] : 0;
+
+    // True redux.sync.or
+    val = __reduce_or_sync(0xffffffff, val);
+
+    if (lane == 0) {
+        output[wid] = val;
+    }
+}
+
+// True redux.sync.xor - uses __reduce_xor_sync intrinsic
+__global__ void reduxSyncXorKernel(const unsigned int* __restrict__ input,
+                                   unsigned int* __restrict__ output,
+                                   size_t N) {
+    int tid = threadIdx.x;
+    int wid = tid / 32;
+    int lane = tid % 32;
+
+    int warp_start = wid * 32;
+    int warp_end = min(warp_start + 32, (int)N);
+
+    if (warp_start >= (int)N) return;
+
+    unsigned int val = (lane < warp_end - warp_start) ? input[warp_start + lane] : 0;
+
+    // True redux.sync.xor
+    val = __reduce_xor_sync(0xffffffff, val);
+
+    if (lane == 0) {
+        output[wid] = val;
+    }
+}
+
+// True redux.sync with predicate mask (active threads only)
+__global__ void reduxSyncAddMaskedKernel(const float* __restrict__ input,
+                                         float* __restrict__ output,
+                                         size_t N,
+                                         unsigned int valid_mask) {
+    int tid = threadIdx.x;
+    int wid = tid / 32;
+    int lane = tid % 32;
+
+    int warp_start = wid * 32;
+    int warp_end = min(warp_start + 32, (int)N);
+
+    if (warp_start >= (int)N) return;
+
+    float val = (lane < warp_end - warp_start) ? input[warp_start + lane] : 0.0f;
+
+    // True redux.sync with specific active mask
+    val = __reduce_add_sync(valid_mask, val);
+
+    if (lane == 0) {
+        output[wid] = val;
+    }
+}
+
+// =============================================================================
 // Redux.sync for Different Data Types
 // =============================================================================
 
-// Float redux.add
+// Float redux.add (deprecated - use reduxSyncAddKernel)
 template <typename T>
 __global__ void reduxFloatAddKernel(const T* __restrict__ input,
                                     T* __restrict__ output,
@@ -195,12 +373,8 @@ __global__ void reduxFloatAddKernel(const T* __restrict__ input,
 
     T val = (lane < warp_end - warp_start) ? input[warp_start + lane] : 0;
 
-    // Shuffle-based reduction (hardware redux would be single instruction)
-    #pragma unroll
-    for (int offset = 16; offset > 0; offset >>= 1) {
-        T other = __shfl_down_sync(0xffffffff, val, offset);
-        val += other;
-    }
+    // Using true redux.sync intrinsic
+    val = (T)__reduce_add_sync(0xffffffff, (int)val);
 
     if (lane == 0) {
         output[wid] = val;

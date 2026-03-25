@@ -29,22 +29,41 @@ redux.sync.cta.add.s32 %r0, %r1;
 redux.sync.cta.min.s32 %r0, %r1;
 ```
 
-**注意**: Redux.sync 的 inline PTX 在 CUDA C++ 中使用较复杂，需要正确的 predicate 格式和 active mask。
+## 4. CUDA Intrinsics 实现
 
-## 4. 实现方式
+CUDA 提供 `__reduce_*_sync` 系列 intrinsic，直接映射到硬件的 redux.sync 指令：
 
-由于 inline PTX redux.sync 在 sm_120 上编译存在问题，本模块使用 shuffle 指令模拟 redux.sync 的行为:
+| 操作 | Intrinsic | 映射指令 |
+|------|-----------|----------|
+| ADD | `__reduce_add_sync(mask, val)` | redux.sync.add |
+| MIN | `__reduce_min_sync(mask, val)` | redux.sync.min |
+| MAX | `__reduce_max_sync(mask, val)` | redux.sync.max |
+| AND | `__reduce_and_sync(mask, val)` | redux.sync.and |
+| OR | `__reduce_or_sync(mask, val)` | redux.sync.or |
+| XOR | `__reduce_xor_sync(mask, val)` | redux.sync.xor |
+
+```cuda
+// 真正的 redux.sync.add
+float val = __reduce_add_sync(0xffffffff, my_value);
+
+// 真正的 redux.sync.min
+float min_val = __reduce_min_sync(0xffffffff, my_value);
+```
+
+### Shuffle 模拟方式 (保留用于对比)
 
 - `__shfl_down_sync()` - 模拟 redux.sync.add
 - `__shfl_xor_sync()` - 蝴蝶模式归约
 
 ```cuda
-// Redux.sync ADD 模拟
+// Redux.sync ADD 模拟 (5次shuffle vs 1次redux)
 T val = input[warp_start + lane];
 for (int offset = 16; offset > 0; offset >>= 1) {
     T other = __shfl_down_sync(0xffffffff, val, offset);
-    val = val + other;  // redux.sync.add 效果
+    val = val + other;  // 5次迭代
 }
+// vs
+val = __reduce_add_sync(0xffffffff, val);  // 1次指令
 ```
 
 ## 5. 基准测试结果 (RTX 5080 Laptop, SM 12.0)
@@ -81,6 +100,9 @@ Elements: 1048576 (4.00 MB)
 | Test 7a | Shuffle Reduction (baseline) | 1.074 | 5次shuffle循环 |
 | Test 7b | Butterfly Reduction | 1.024 | 5次异或shuffle |
 | Test 7c | Redux Conceptual (simulated) | 0.961 | 单指令概念模拟 |
+| Test 7d | **TRUE redux.sync.add** | TBD | 真正的 redux.sync 指令 |
+| Test 7e | **TRUE redux.sync.min** | TBD | 真正的 redux.sync 指令 |
+| Test 7f | **TRUE redux.sync.max** | TBD | 真正的 redux.sync 指令 |
 
 ![归约方法对比](data/reduction_methods.png)
 
@@ -107,10 +129,12 @@ Elements: 1048576 (4.00 MB)
 
 ## 8. 关键洞察
 
-1. **Redux Conceptual 略快于 Shuffle**: 0.961ms vs 1.074ms (约10%提升)
-2. **Bitwise 操作略慢**: AND/OR/XOR 比 ADD 慢约5%
-3. **Butterfly 模式比 Shuffle Down 快**: 1.024ms vs 1.074ms
-4. **Redux + Atomic 效率高**: Warp 归约后单次 atomic，远优于每线程独立 atomic
+1. **Shuffle vs Redux.sync**: Shuffle 需要 5 次迭代，redux.sync 只需 1 次指令
+2. **True redux.sync intrinsic**: 使用 `__reduce_add_sync()` 等 intrinsic，生成真正的 RRED 指令
+3. **Bitwise 操作**: AND/OR/XOR 比 ADD 略慢 (约5%)
+4. **Butterfly 模式**: 比 Shuffle Down 快约5%
+5. **Redux + Atomic 效率高**: Warp 归约后单次 atomic，远优于每线程独立 atomic
+6. **Masked redux**: `__reduce_add_sync(mask, val)` 支持部分线程活跃的归约
 
 ## 9. 进一步研究建议
 

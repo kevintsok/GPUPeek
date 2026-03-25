@@ -215,6 +215,36 @@ static void runReduxPerfComparison(size_t N) {
     timer.stop();
     printf("  Redux conceptual: %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
 
+    // Test 10: TRUE redux.sync.add intrinsic
+    printf("\n[Test 7d] TRUE redux.sync.add (intrinsic):\n");
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        reduxSyncAddKernel<<<numBlocks, blockSize>>>(d_input, d_output, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    printf("  redux.sync.add: %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
+
+    // Test 11: TRUE redux.sync.min intrinsic
+    printf("\n[Test 7e] TRUE redux.sync.min (intrinsic):\n");
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        reduxSyncMinKernel<<<numBlocks, blockSize>>>(d_input, d_output, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    printf("  redux.sync.min: %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
+
+    // Test 12: TRUE redux.sync.max intrinsic
+    printf("\n[Test 7f] TRUE redux.sync.max (intrinsic):\n");
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        reduxSyncMaxKernel<<<numBlocks, blockSize>>>(d_input, d_output, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    printf("  redux.sync.max: %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
+
     // Verify results
     float* h_output = nullptr;
     CHECK_CUDA(cudaMallocHost(&h_output, (N / 32) * sizeof(float)));
@@ -323,6 +353,161 @@ static void runVoteTests(size_t N) {
     CHECK_CUDA(cudaDeviceSynchronize());
     timer.stop();
     printf("  __all_sync: %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
+
+    CHECK_CUDA(cudaFree(d_input));
+    CHECK_CUDA(cudaFree(d_output));
+}
+
+// =============================================================================
+// True Redux.sync Intrinsic Tests
+// =============================================================================
+
+static void runTrueReduxSyncTests(size_t N) {
+    printf("\n--- True Redux.sync Intrinsic Tests ---\n");
+
+    size_t bytes = N * sizeof(float);
+    float *d_input = nullptr;
+    float *d_output = nullptr;
+
+    CHECK_CUDA(cudaMalloc(&d_input, bytes));
+    CHECK_CUDA(cudaMalloc(&d_output, (N / 32) * sizeof(float)));
+
+    // Initialize input
+    float* h_input = nullptr;
+    CHECK_CUDA(cudaMallocHost(&h_input, bytes));
+    for (size_t i = 0; i < N; i++) {
+        h_input[i] = static_cast<float>(i + 1);
+    }
+    CHECK_CUDA(cudaMemcpy(d_input, h_input, bytes, cudaMemcpyHostToDevice));
+    CHECK_CUDA(cudaFreeHost(h_input));
+
+    const int blockSize = 256;
+    int numBlocks = (N + blockSize - 1) / blockSize;
+    if (numBlocks > 65535) numBlocks = 65535;
+
+    GPUTimer timer;
+    const int iterations = 100;
+
+    // Test: redux.sync.add
+    printf("\n[True redux.sync] ADD:\n");
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        reduxSyncAddKernel<<<numBlocks, blockSize>>>(d_input, d_output, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    float redux_add_time = timer.elapsed_ms();
+    printf("  redux.sync.add: %.3f ms for %d iterations\n", redux_add_time, iterations);
+
+    // Verify
+    float* h_output = nullptr;
+    CHECK_CUDA(cudaMallocHost(&h_output, (N / 32) * sizeof(float)));
+    CHECK_CUDA(cudaMemcpy(h_output, d_output, (N / 32) * sizeof(float), cudaMemcpyDeviceToHost));
+    printf("  Sum verification: warp[0] = %.2f (expected: 496)\n", h_output[0]);
+    CHECK_CUDA(cudaFreeHost(h_output));
+
+    // Test: redux.sync.min
+    printf("\n[True redux.sync] MIN:\n");
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        reduxSyncMinKernel<<<numBlocks, blockSize>>>(d_input, d_output, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    printf("  redux.sync.min: %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
+
+    // Verify
+    CHECK_CUDA(cudaMallocHost(&h_output, (N / 32) * sizeof(float)));
+    CHECK_CUDA(cudaMemcpy(h_output, d_output, (N / 32) * sizeof(float), cudaMemcpyDeviceToHost));
+    printf("  Min verification: warp[0] = %.2f (expected: 1.0)\n", h_output[0]);
+    CHECK_CUDA(cudaFreeHost(h_output));
+
+    // Test: redux.sync.max
+    printf("\n[True redux.sync] MAX:\n");
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        reduxSyncMaxKernel<<<numBlocks, blockSize>>>(d_input, d_output, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    printf("  redux.sync.max: %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
+
+    // Verify
+    CHECK_CUDA(cudaMallocHost(&h_output, (N / 32) * sizeof(float)));
+    CHECK_CUDA(cudaMemcpy(h_output, d_output, (N / 32) * sizeof(float), cudaMemcpyDeviceToHost));
+    printf("  Max verification: warp[0] = %.2f (expected: 32.0)\n", h_output[0]);
+    CHECK_CUDA(cudaFreeHost(h_output));
+
+    CHECK_CUDA(cudaFree(d_input));
+    CHECK_CUDA(cudaFree(d_output));
+}
+
+// =============================================================================
+// Redux.sync Bitwise Operations (TRUE intrinsic tests)
+// =============================================================================
+
+static void runTrueReduxBitwiseTests(size_t N) {
+    printf("\n--- True Redux.sync Bitwise Tests ---\n");
+
+    size_t bytes = N * sizeof(unsigned int);
+    unsigned int *d_input = nullptr;
+    unsigned int *d_output = nullptr;
+
+    CHECK_CUDA(cudaMalloc(&d_input, bytes));
+    CHECK_CUDA(cudaMalloc(&d_output, (N / 32) * sizeof(unsigned int)));
+
+    // Initialize input
+    unsigned int* h_input = nullptr;
+    CHECK_CUDA(cudaMallocHost(&h_input, bytes));
+    for (size_t i = 0; i < N; i++) {
+        h_input[i] = 0xFFFFFFFF;  // All bits set
+    }
+    CHECK_CUDA(cudaMemcpy(d_input, h_input, bytes, cudaMemcpyHostToDevice));
+    CHECK_CUDA(cudaFreeHost(h_input));
+
+    const int blockSize = 256;
+    int numBlocks = (N + blockSize - 1) / blockSize;
+    if (numBlocks > 65535) numBlocks = 65535;
+
+    GPUTimer timer;
+    const int iterations = 100;
+
+    // Test: redux.sync.and
+    printf("\n[True redux.sync] AND:\n");
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        reduxSyncAndKernel<<<numBlocks, blockSize>>>(d_input, d_output, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    printf("  redux.sync.and: %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
+
+    // Verify
+    unsigned int* h_output = nullptr;
+    CHECK_CUDA(cudaMallocHost(&h_output, (N / 32) * sizeof(unsigned int)));
+    CHECK_CUDA(cudaMemcpy(h_output, d_output, (N / 32) * sizeof(unsigned int), cudaMemcpyDeviceToHost));
+    printf("  AND verification: warp[0] = 0x%X (expected: 0xFFFFFFFF)\n", h_output[0]);
+    CHECK_CUDA(cudaFreeHost(h_output));
+
+    // Test: redux.sync.or
+    printf("\n[True redux.sync] OR:\n");
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        reduxSyncOrKernel<<<numBlocks, blockSize>>>(d_input, d_output, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    printf("  redux.sync.or: %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
+
+    // Test: redux.sync.xor
+    printf("\n[True redux.sync] XOR:\n");
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        reduxSyncXorKernel<<<numBlocks, blockSize>>>(d_input, d_output, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    printf("  redux.sync.xor: %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
 
     CHECK_CUDA(cudaFree(d_input));
     CHECK_CUDA(cudaFree(d_output));
@@ -455,6 +640,8 @@ void runReduxSyncBenchmarks(size_t N) {
     runReduxBasicTests(N);
     runReduxBitwiseTests(N);
     runReduxPerfComparison(N);
+    runTrueReduxSyncTests(N);
+    runTrueReduxBitwiseTests(N);
     runReduxAtomicTests(N);
     runVoteTests(N);
     runMatchTests(N);
@@ -462,6 +649,7 @@ void runReduxSyncBenchmarks(size_t N) {
 
     printf("\n--- Redux.sync Research Complete ---\n");
     printf("NCU Profiling Hints:\n");
-    printf("  ncu --set full --metrics sm__inst_executed.redux_sync.sum ./gpupeek.exe redux\n");
-    printf("  ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./gpupeek.exe redux\n");
+    printf("  ncu --set full --metrics sm__inst_executed.redux_sync.sum ./gpupeek redux\n");
+    printf("  ncu --set full --metrics sm__throughput.avg.pct_of_peak_sustainedTesla ./gpupeek redux\n");
+    printf("  ncu --set full ./gpupeek redux  # Full analysis\n");
 }

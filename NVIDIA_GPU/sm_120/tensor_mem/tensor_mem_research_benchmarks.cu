@@ -269,6 +269,71 @@ void runCPAsyncTests() {
 }
 
 // =============================================================================
+// Section 3.5: True cp.async with Inline PTX
+// =============================================================================
+
+static void runTrueCpAsyncTests(size_t N) {
+    printf("\n");
+    printf("================================================================================\n");
+    printf("3.5 True cp.async with Inline PTX\n");
+    printf("================================================================================\n");
+
+    const size_t bytes = N * sizeof(float);
+    const int iterations = 100;
+
+    float *d_src, *d_dst;
+    CHECK_CUDA(cudaMalloc(&d_src, bytes));
+    CHECK_CUDA(cudaMalloc(&d_dst, bytes));
+
+    CHECK_CUDA(cudaMemset(d_src, 1, bytes));
+
+    GPUTimer timer;
+
+    dim3 gridDim(256);
+    dim3 blockDim(256);
+    size_t shared_size = 256 * 32 * sizeof(float);
+
+    // Test: Regular copy (baseline)
+    printf("\n--- Regular Copy (baseline) ---\n");
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        regular_copy_kernel<<<gridDim, blockDim, shared_size>>>(d_src, d_dst, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    printf("Regular copy:         %.2f GB/s (%.3f ms)\n",
+           bytes * iterations / (timer.elapsed_ms() * 1e6),
+           timer.elapsed_ms() / iterations);
+
+    // Test: True cp.async 16-byte
+    printf("\n--- True cp.async (16-byte) ---\n");
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        cp_async_true_kernel<<<gridDim, blockDim, shared_size>>>(d_src, d_dst, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    printf("cp.async 16B:         %.2f GB/s (%.3f ms)\n",
+           bytes * iterations / (timer.elapsed_ms() * 1e6),
+           timer.elapsed_ms() / iterations);
+
+    // Test: cp.async pipelined (3-stage)
+    printf("\n--- cp.async Pipelined (3-stage) ---\n");
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        cp_async_pipelined_kernel<<<gridDim, blockDim, shared_size>>>(d_src, d_dst, N, 3);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    printf("cp.async pipelined:   %.2f GB/s (%.3f ms)\n",
+           bytes * iterations / (timer.elapsed_ms() * 1e6),
+           timer.elapsed_ms() / iterations);
+
+    CHECK_CUDA(cudaFree(d_src));
+    CHECK_CUDA(cudaFree(d_dst));
+}
+
+// =============================================================================
 // Section 4: Baseline Comparison Tests
 // =============================================================================
 
@@ -545,6 +610,7 @@ void runTensorMemResearchBenchmarks(size_t N) {
     runLDMatrixTests();
     runSTMatrixTests();
     runCPAsyncTests();
+    runTrueCpAsyncTests(N);
     runBaselineComparisonTests();
     runPipelineTests();
     runNCUProfilingReference();

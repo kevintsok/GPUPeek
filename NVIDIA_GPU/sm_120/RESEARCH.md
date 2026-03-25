@@ -511,6 +511,21 @@ Redux.sync performs warp-level reduction in a **single instruction**.
 
 **Supported Operations**: ADD, MIN, MAX, AND, OR, XOR
 
+#### True Redux.sync Intrinsics (CUDA)
+
+CUDA provides `__reduce_*_sync` intrinsics that map to hardware redux.sync:
+
+```cuda
+float sum = __reduce_add_sync(0xffffffff, value);   // redux.sync.add
+float min = __reduce_min_sync(0xffffffff, value);    // redux.sync.min
+float max = __reduce_max_sync(0xffffffff, value);    // redux.sync.max
+unsigned int and = __reduce_and_sync(0xffffffff, val); // redux.sync.and
+unsigned int or = __reduce_or_sync(0xffffffff, val);   // redux.sync.or
+unsigned int xor = __reduce_xor_sync(0xffffffff, val); // redux.sync.xor
+```
+
+These intrinsics generate the actual RRED SASS instruction.
+
 ---
 
 ## 6. Memory Operations
@@ -523,6 +538,23 @@ Redux.sync performs warp-level reduction in a **single instruction**.
 | L2 Streaming | 316.46 GB/s | Cache streaming |
 | Register Bandwidth | 298.96 GB/s | Register-level |
 | Software Prefetch | 251.10 GB/s | Lower but predictable |
+
+#### True cp.async with Inline PTX
+
+Real cp.async uses inline PTX for asynchronous memory copy:
+
+```cuda
+// 16-byte async copy
+asm volatile(
+    "cp.async.ca.shared.global [%0], [%1], 16;"
+    : "=r"(dst_shm), "=l"(src_addr)
+    : "r"(dst_shm), "l"(src_addr)
+    : "memory");
+
+// Commit and wait
+asm volatile("cp.async.commit_group;" : : : "memory");
+asm volatile("cp.async.wait_group 0;" : : : "memory");
+```
 
 ### 6.2 LDMATRIX/STMATRIX
 

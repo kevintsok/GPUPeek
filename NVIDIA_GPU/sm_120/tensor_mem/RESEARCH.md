@@ -55,9 +55,28 @@
 异步拷贝指令，允许计算和内存操作重叠。
 
 ```ptx
-cp.async.ca    // cache-atomic
-cp.async.commit_group  // 提交异步组
-cp.async.wait_group n  // 等待 n 个组
+cp.async.ca.shared.global [dst], [src], size;  // 16/8/4 字节
+cp.async.commit_group;  // 提交异步组
+cp.async.wait_group n;  // 等待 n 个组
+```
+
+### Inline PTX 实现
+
+真正的 cp.async 使用 inline PTX：
+
+```cuda
+// 16字节异步拷贝
+asm volatile(
+    "cp.async.ca.shared.global [%0], [%1], 16;"
+    : "=r"(dst_shm), "=l"(src_addr)
+    : "r"(dst_shm), "l"(src_addr)
+    : "memory");
+
+// 提交组
+asm volatile("cp.async.commit_group;" : : : "memory");
+
+// 等待完成
+asm volatile("cp.async.wait_group 0;" : : : "memory");
 ```
 
 ### 变体
@@ -68,6 +87,8 @@ cp.async.wait_group n  // 等待 n 个组
 | cp.async group | 组提交模式 | 750 GB/s |
 | cp.async bulk prefetch | 批量预取 | 890 GB/s |
 | cp.async reduce | 拷贝+归约 | 720 GB/s |
+| **cp.async true (inline PTX)** | TBD | 真正的异步拷贝 |
+| **cp.async pipelined** | TBD | 3级流水线版本 |
 
 ## 4. cp.async.bulk
 
