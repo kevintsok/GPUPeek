@@ -1887,3 +1887,34 @@ Arithmetic Intensity = FLOPs / Memory Bytes
    - 预分配command buffer减少分配开销
    - 使用多个GPU队列实现真正并行
    - 结合批量调度和异步执行最大化效率
+
+## Section 83: Multi-Queue GPU Parallelism
+
+### Single vs Dual Queue Performance
+
+| Configuration | Time | Speedup |
+|--------------|------|---------|
+| Single Queue | 55.03 ms | 1.00x |
+| Dual Queue | 68.94 ms | 0.80x |
+
+### 关键发现
+
+1. **多队列开销**
+   - M2 GPU上双队列反而更慢(0.80x)
+   - 队列管理开销大于并行收益
+   - M2是集成GPU，并行能力有限
+
+2. **适用场景**
+   - 大型独立工作负载可能受益
+   - 需要真正独立的任务才能并行
+   - 高端GPU(RTX系列)多队列效果更明显
+
+3. **M2限制**
+   - 统一内存架构
+   - 8核GPU(7核可用)并行度有限
+   - 小kernel开销可能抵消并行收益
+
+4. **建议**
+   - M2上单队列+异步提交更高效
+   - 多队列用于需要同时执行不同类型工作时
+   - 考虑使用MTLSharedEvent进行队列间同步
