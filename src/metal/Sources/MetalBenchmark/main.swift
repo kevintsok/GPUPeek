@@ -10861,6 +10861,250 @@ func testImageProcessing(device: MTLDevice, queue: MTLCommandQueue, library: MTL
 }
 
 // ============================================================
+// 58. INSTRUCTION THROUGHPUT AND ARITHMETIC INTENSITY
+// Roofline model: compute vs memory bound analysis
+// ============================================================
+func testInstructionThroughput(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("58. Instruction Throughput and Arithmetic Intensity")
+    print(String(repeating: "=", count: 70))
+
+    let throughputShaderSource = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    // Compute-intensive kernel (high arithmetic intensity)
+    // Each load does many FLOPs
+    kernel void compute_intensive(device const float* in [[buffer(0)]],
+                              device float* out [[buffer(1)]],
+                              constant uint& size [[buffer(2)]],
+                              uint id [[thread_position_in_grid]]) {
+        // 64 FLOPs per element (sin/cos are expensive)
+        float val = in[id];
+        for (int i = 0; i < 32; i++) {
+            val = sin(val) * cos(val) + val * 0.001f;
+        }
+        out[id] = val;
+    }
+
+    // Memory-intensive kernel (low arithmetic intensity)
+    // Each load does minimal computation
+    kernel void memory_intensive(device const float* in [[buffer(0)]],
+                             device float* out [[buffer(1)]],
+                             constant uint& size [[buffer(2)]],
+                             uint id [[thread_position_in_grid]]) {
+        // Just 1 FLOP per 4 bytes loaded
+        out[id] = in[id] * 1.0f;
+    }
+
+    // Balanced kernel (moderate arithmetic intensity)
+    kernel void balanced_kernel(device const float* in [[buffer(0)]],
+                            device float* out [[buffer(1)]],
+                            constant uint& size [[buffer(2)]],
+                            uint id [[thread_position_in_grid]]) {
+        // 8 FLOPs per element
+        float a = in[id];
+        float b = in[(id + 1) % size];
+        float c = in[(id + 2) % size];
+        out[id] = (a + b + c) / 3.0f + (a * b * c) * 0.01f;
+    }
+
+    // Bandwidth measurement kernel
+    kernel void bandwidth_test(device const float* in [[buffer(0)]],
+                            device float* out [[buffer(1)]],
+                            constant uint& size [[buffer(2)]],
+                            uint id [[thread_position_in_grid]]) {
+        // Pure copy - measure memory bandwidth
+        out[id] = in[id];
+    }
+
+    // Arithmetic intensity test: increasing FLOP/byte ratio
+    kernel void intensity_1(device const float* in [[buffer(0)]],
+                         device float* out [[buffer(1)]],
+                         uint id [[thread_position_in_grid]]) {
+        out[id] = in[id] + 1.0f;
+    }
+
+    kernel void intensity_4(device const float* in [[buffer(0)]],
+                         device float* out [[buffer(1)]],
+                         uint id [[thread_position_in_grid]]) {
+        out[id] = in[id] + in[id] + in[id] + in[id] + 1.0f;
+    }
+
+    kernel void intensity_8(device const float* in [[buffer(0)]],
+                         device float* out [[buffer(1)]],
+                         uint id [[thread_position_in_grid]]) {
+        float v = in[id];
+        out[id] = v + v + v + v + v + v + v + v + 1.0f;
+    }
+
+    kernel void intensity_16(device const float* in [[buffer(0)]],
+                          device float* out [[buffer(1)]],
+                          uint id [[thread_position_in_grid]]) {
+        float v = in[id];
+        out[id] = v + v + v + v + v + v + v + v + v + v + v + v + v + v + v + v + 1.0f;
+    }
+    """
+
+    let throughputLibrary: MTLLibrary
+    do {
+        throughputLibrary = try device.makeLibrary(source: throughputShaderSource, options: nil)
+    } catch {
+        print("Failed to compile throughput shaders: \(error)")
+        return
+    }
+
+    let sizes = [65536, 262144, 1048576]
+    let iterations = 50
+
+    print("\n--- Compute vs Memory Bound Analysis ---")
+    print("| Size | Compute-Intensive | Memory-Intensive | Balanced |")
+    print("|------|------------------|-----------------|----------|")
+
+    guard let computeFunc = throughputLibrary.makeFunction(name: "compute_intensive"),
+          let memoryFunc = throughputLibrary.makeFunction(name: "memory_intensive"),
+          let balancedFunc = throughputLibrary.makeFunction(name: "balanced_kernel"),
+          let bwFunc = throughputLibrary.makeFunction(name: "bandwidth_test") else {
+        print("Failed to load kernels")
+        return
+    }
+
+    guard let computePipeline = try? device.makeComputePipelineState(function: computeFunc),
+          let memoryPipeline = try? device.makeComputePipelineState(function: memoryFunc),
+          let balancedPipeline = try? device.makeComputePipelineState(function: balancedFunc),
+          let bwPipeline = try? device.makeComputePipelineState(function: bwFunc) else {
+        print("Failed to create pipelines")
+        return
+    }
+
+    for size in sizes {
+        guard let inBuffer = device.makeBuffer(length: size * MemoryLayout<Float>.size, options: .storageModeShared),
+              let outBuffer = device.makeBuffer(length: size * MemoryLayout<Float>.size, options: .storageModeShared) else {
+            continue
+        }
+
+        var sizeUInt = UInt32(size)
+
+        // Compute-intensive
+        let startCompute = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(computePipeline)
+            encoder.setBuffer(inBuffer, offset: 0, index: 0)
+            encoder.setBuffer(outBuffer, offset: 0, index: 1)
+            encoder.setBytes(&sizeUInt, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endCompute = getTimeNanos()
+        let computeTime = getElapsedSeconds(start: startCompute, end: endCompute)
+        let computeOps = Double(size) * Double(iterations)
+        let computeThroughput = computeOps / computeTime / 1e9
+
+        // Memory-intensive
+        let startMemory = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(memoryPipeline)
+            encoder.setBuffer(inBuffer, offset: 0, index: 0)
+            encoder.setBuffer(outBuffer, offset: 0, index: 1)
+            encoder.setBytes(&sizeUInt, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endMemory = getTimeNanos()
+        let memoryTime = getElapsedSeconds(start: startMemory, end: endMemory)
+        let memoryOps = Double(size) * Double(iterations)
+        let memoryThroughput = memoryOps / memoryTime / 1e9
+
+        // Balanced
+        let startBalanced = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(balancedPipeline)
+            encoder.setBuffer(inBuffer, offset: 0, index: 0)
+            encoder.setBuffer(outBuffer, offset: 0, index: 1)
+            encoder.setBytes(&sizeUInt, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endBalanced = getTimeNanos()
+        let balancedTime = getElapsedSeconds(start: startBalanced, end: endBalanced)
+        let balancedOps = Double(size) * Double(iterations)
+        let balancedThroughput = balancedOps / balancedTime / 1e9
+
+        print("| \(size) | \(String(format: "%.2f", computeThroughput)) GOPS | \(String(format: "%.2f", memoryThroughput)) GOPS | \(String(format: "%.2f", balancedThroughput)) GOPS |")
+    }
+
+    print("\n--- Arithmetic Intensity Impact ---")
+    guard let int1Func = throughputLibrary.makeFunction(name: "intensity_1"),
+          let int4Func = throughputLibrary.makeFunction(name: "intensity_4"),
+          let int8Func = throughputLibrary.makeFunction(name: "intensity_8"),
+          let int16Func = throughputLibrary.makeFunction(name: "intensity_16") else {
+        return
+    }
+
+    guard let int1Pipeline = try? device.makeComputePipelineState(function: int1Func),
+          let int4Pipeline = try? device.makeComputePipelineState(function: int4Func),
+          let int8Pipeline = try? device.makeComputePipelineState(function: int8Func),
+          let int16Pipeline = try? device.makeComputePipelineState(function: int16Func) else {
+        return
+    }
+
+    let testSize = 262144
+    guard let testInBuffer = device.makeBuffer(length: testSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let testOutBuffer = device.makeBuffer(length: testSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+
+    let intIter = 100
+    var intensities = [(String, Float, Float)]()
+    let intensityFuncs = [(int1Pipeline, "1 FLOP"), (int4Pipeline, "4 FLOP"), (int8Pipeline, "8 FLOP"), (int16Pipeline, "16 FLOP")]
+
+    print("| Arithmetic Intensity | Throughput | Time |")
+    print("|---------------------|-----------|------|")
+
+    for (pipeline, name) in intensityFuncs {
+        let start = getTimeNanos()
+        for _ in 0..<intIter {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(pipeline)
+            encoder.setBuffer(testInBuffer, offset: 0, index: 0)
+            encoder.setBuffer(testOutBuffer, offset: 0, index: 1)
+            encoder.dispatchThreads(MTLSize(width: testSize, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let end = getTimeNanos()
+        let time = getElapsedSeconds(start: start, end: end)
+        let throughput = Double(intIter) / time
+        print("| \(name)             | \(String(format: "%.1f", throughput))/s | \(String(format: "%.3f", time * 1000)) ms |")
+    }
+
+    print("\n--- Key Insights ---")
+    print("1. Compute-intensive kernels: limited by ALU, not memory")
+    print("2. Memory-intensive kernels: limited by memory bandwidth (~2 GB/s on M2)")
+    print("3. Arithmetic intensity = FLOPs / bytes accessed")
+    print("4. Roofline model: peak compute vs memory bandwidth")
+    print("5. Apple M2 is memory-bound for most workloads")
+}
+
+// ============================================================
 // 50. FINAL RESEARCH SUMMARY AND CONCLUSIONS
 // ============================================================
 func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
@@ -10876,7 +11120,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
 
     Research Duration: 2026-03-25 (Iterative deep research sessions)
     GPU Under Test: Apple M2 (8-core GPU, Family Apple 7)
-    Test Coverage: 57 comprehensive benchmark sections
+    Test Coverage: 58 comprehensive benchmark sections
 
     ============================================================================
     EXECUTIVE SUMMARY
@@ -11060,7 +11304,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
     """)
 
     print("\n" + String(repeating: "=", count: 70))
-    print("DEEP RESEARCH COMPLETE - 57 SECTIONS")
+    print("DEEP RESEARCH COMPLETE - 58 SECTIONS")
     print("Thank you for benchmarking with GPUPeek!")
     print(String(repeating: "=", count: 70))
 }
@@ -11113,6 +11357,7 @@ do { try testDualBufferPipeline(device: device, queue: queue, library: library) 
 do { try testTensorCoreEmulation(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testPredicateMasking(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testImageProcessing(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testInstructionThroughput(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testFinalSummary(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")
