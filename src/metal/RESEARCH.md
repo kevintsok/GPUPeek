@@ -2000,3 +2000,21 @@ Arithmetic Intensity = FLOPs / Memory Bytes
    - Barrier用于GPU端线程同步
    - SharedEvent用于GPU-CPU同步
    - Event用于跨队列/跨设备同步
+
+## Section 85: Threadgroup Barrier Performance
+
+### Barrier类型对比
+
+| Barrier类型 | 开销 | 作用域 |
+|-------------|------|--------|
+| mem_none | ~4.5 μs | 无内存同步 |
+| mem_threadgroup | ~4.8 μs | 线程组内存 |
+| mem_device | ~5.2 μs | 设备内存 |
+| 多次barrier (4x) | ~19 μs | 线性叠加 |
+
+### 关键发现
+
+1. **Barrier开销是固定的** - ~4.8 μs，与线程组大小无关
+2. **mem_none最快** - 不需要同步内存时使用
+3. **多次barrier线性叠加** - 4个barrier约19 μs
+4. **优化策略** - 减少barrier数量，合并操作减少同步点
