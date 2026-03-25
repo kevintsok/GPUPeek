@@ -23,17 +23,25 @@ void runSizeSweepBenchmark() {
     printf("Size Sweep Benchmark - Memory Copy Bandwidth\n");
     printf("================================================================================\n\n");
 
-    // Size sweep: 1KB to 256MB
+    // Size sweep: 1KB to 256MB (more data points, sorted)
     size_t sizes[] = {
         1 << 10,       // 1KB
         1 << 12,       // 4KB
+        1 << 13,       // 8KB
         1 << 14,       // 16KB
+        1 << 15,       // 32KB
         1 << 16,       // 64KB
+        1 << 17,       // 128KB
         1 << 18,       // 256KB
+        1 << 19,       // 512KB
         1 << 20,       // 1MB
+        1 << 21,       // 2MB
         1 << 22,       // 4MB
+        1 << 23,       // 8MB
         1 << 24,       // 16MB
+        1 << 25,       // 32MB
         1 << 26,       // 64MB
+        1 << 27,       // 128MB
         1 << 28,       // 256MB
     };
     int num_sizes = sizeof(sizes) / sizeof(sizes[0]);
@@ -104,17 +112,16 @@ void runSizeSweepBenchmark() {
         CHECK_CUDA(cudaFree(d_dst));
 
         // Print size label
-        const char* size_label;
-        if (N <= 1024) size_label = "1KB";
-        else if (N <= 4*1024) size_label = "4KB";
-        else if (N <= 16*1024) size_label = "16KB";
-        else if (N <= 64*1024) size_label = "64KB";
-        else if (N <= 256*1024) size_label = "256KB";
-        else if (N <= 1024*1024) size_label = "1MB";
-        else if (N <= 4*1024*1024) size_label = "4MB";
-        else if (N <= 16*1024*1024) size_label = "16MB";
-        else if (N <= 64*1024*1024) size_label = "64MB";
-        else size_label = "256MB";
+        char size_label[16];
+        if (N < 1024) {
+            snprintf(size_label, sizeof(size_label), "%zuB", N);
+        } else if (N < 1024*1024) {
+            snprintf(size_label, sizeof(size_label), "%zuKB", N/1024);
+        } else if (N < 1024*1024*1024) {
+            snprintf(size_label, sizeof(size_label), "%zuMB", N/(1024*1024));
+        } else {
+            snprintf(size_label, sizeof(size_label), "%zuGB", N/(1024*1024*1024));
+        }
 
         printf("%-12s %-12.2f %-12.2f %-12.2f %-12.2f\n",
                size_label, naive_bw, shared_bw, regular_bw, cp_async_bw);
