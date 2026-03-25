@@ -97,12 +97,12 @@ Elements: 1048576 (4.00 MB)
 
 | Test | Method | Time (ms) | Notes |
 |------|--------|-----------|-------|
-| Test 7a | Shuffle Reduction (baseline) | 1.074 | 5次shuffle循环 |
-| Test 7b | Butterfly Reduction | 1.024 | 5次异或shuffle |
-| Test 7c | Redux Conceptual (simulated) | 0.961 | 单指令概念模拟 |
-| Test 7d | **TRUE redux.sync.add** | TBD | 真正的 redux.sync 指令 |
-| Test 7e | **TRUE redux.sync.min** | TBD | 真正的 redux.sync 指令 |
-| Test 7f | **TRUE redux.sync.max** | TBD | 真正的 redux.sync 指令 |
+| Test 7a | Shuffle Reduction (baseline) | 1.056 | 5次shuffle循环 |
+| Test 7b | Butterfly Reduction | 0.943 | 5次异或shuffle |
+| Test 7c | Redux Conceptual (simulated) | 1.040 | 单指令概念模拟 |
+| Test 7d | **TRUE redux.sync.add (int)** | 0.945 | 真正的 RRED 指令 |
+| Test 7e | **TRUE redux.sync.min (int)** | 0.991 | 真正的 RRED 指令 |
+| Test 7f | **TRUE redux.sync.max (int)** | 0.899 | 真正的 RRED 指令 |
 
 ![归约方法对比](data/reduction_methods.png)
 
