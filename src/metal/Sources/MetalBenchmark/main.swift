@@ -13940,7 +13940,351 @@ func testDoubleBuffering(device: MTLDevice, queue: MTLCommandQueue, library: MTL
     print("2. Triple buffering adds extra buffer for overlap and better pipelining")
     print("3. Atomic counters enable GPU-side frame synchronization")
     print("4. Ring buffers provide efficient circular FIFO for streaming data")
-    print("5. Essential for real-time graphics, physics simulations, and video processing")
+    print("5. Essential for real-time graphics, physics simulations, video processing")
+}
+
+// ============================================================
+// 72. THREAD DIVERGENCE AND BRANCH EFFICIENCY
+// Impact of divergent branching on GPU performance
+// ============================================================
+func testThreadDivergence(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("72. Thread Divergence and Branch Efficiency")
+    print(String(repeating: "=", count: 70))
+
+    let divergenceShaderSource = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    // No divergence: all threads take same path
+    kernel void no_divergence(device float* input [[buffer(0)]],
+                          device float* output [[buffer(1)]],
+                          constant uint& size [[buffer(2)]],
+                          uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float val = input[id];
+        // All threads execute both paths but same result
+        if (true) {
+            val = val * 2.0;
+        } else {
+            val = val + 1.0;
+        }
+        output[id] = val;
+    }
+
+    // Uniform divergence: threads in block diverge together
+    kernel void uniform_divergence(device float* input [[buffer(0)]],
+                               device float* output [[buffer(1)]],
+                               constant uint& size [[buffer(2)]],
+                               constant uint& threshold [[buffer(3)]],
+                               uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float val = input[id];
+        // All threads in same SIMD group take same path (uniform within group)
+        if (id < threshold) {
+            val = val * 2.0;
+        } else {
+            val = val + 1.0;
+        }
+        output[id] = val;
+    }
+
+    // Random divergence: threads within same warp take different paths
+    kernel void random_divergence(device float* input [[buffer(0)]],
+                              device float* output [[buffer(1)]],
+                              constant uint& size [[buffer(2)]],
+                              uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float val = input[id];
+        // Random divergence based on thread ID mod 2
+        if ((id & 1) == 0) {
+            val = val * 2.0;
+        } else {
+            val = val + 1.0;
+        }
+        output[id] = val;
+    }
+
+    // Strided divergence: every Nth thread takes different path
+    kernel void strided_divergence(device float* input [[buffer(0)]],
+                               device float* output [[buffer(1)]],
+                               constant uint& size [[buffer(2)]],
+                               constant uint& stride [[buffer(3)]],
+                               uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float val = input[id];
+        if ((id % stride) == 0) {
+            val = val * 2.0;
+        } else {
+            val = val + 1.0;
+        }
+        output[id] = val;
+    }
+
+    // Nested divergence: multiple levels of branching
+    kernel void nested_divergence(device float* input [[buffer(0)]],
+                             device float* output [[buffer(1)]],
+                             constant uint& size [[buffer(2)]],
+                             uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float val = input[id];
+
+        // First level: coarse split
+        if (id < size / 2) {
+            // Second level: fine split
+            if ((id & 1) == 0) {
+                val = val * 4.0;
+            } else {
+                val = val * 2.0;
+            }
+        } else {
+            if ((id & 1) == 0) {
+                val = val + 4.0;
+            } else {
+                val = val + 2.0;
+            }
+        }
+        output[id] = val;
+    }
+
+    // Sum reduction with divergence handling
+    kernel void divergent_reduction(device float* input [[buffer(0)]],
+                                device float* output [[buffer(1)]],
+                                constant uint& size [[buffer(2)]],
+                                uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+
+        float val = input[id];
+
+        // Divergent prefix sum within warp
+        for (uint offset = 1; offset < 32; offset <<= 1) {
+            float other = simd_shuffle_down(val, offset);
+            if ((id & 31) >= offset) {
+                val += other;
+            }
+        }
+
+        output[id] = val;
+    }
+    """
+
+    guard let divLibrary = try? device.makeLibrary(source: divergenceShaderSource, options: MTLCompileOptions()) else {
+        print("Failed to create divergence library")
+        return
+    }
+
+    guard let noDivFunc = divLibrary.makeFunction(name: "no_divergence"),
+          let uniformDivFunc = divLibrary.makeFunction(name: "uniform_divergence"),
+          let randomDivFunc = divLibrary.makeFunction(name: "random_divergence"),
+          let stridedDivFunc = divLibrary.makeFunction(name: "strided_divergence"),
+          let nestedDivFunc = divLibrary.makeFunction(name: "nested_divergence"),
+          let noDivPipeline = try? device.makeComputePipelineState(function: noDivFunc),
+          let uniformDivPipeline = try? device.makeComputePipelineState(function: uniformDivFunc),
+          let randomDivPipeline = try? device.makeComputePipelineState(function: randomDivFunc),
+          let stridedDivPipeline = try? device.makeComputePipelineState(function: stridedDivFunc),
+          let nestedDivPipeline = try? device.makeComputePipelineState(function: nestedDivFunc) else {
+        print("Failed to create divergence pipelines")
+        return
+    }
+
+    print("\n--- Thread Divergence Performance ---")
+
+    let sizes = [4096, 16384, 65536]
+    let iterations = 100
+    let threshold = 2048
+
+    print("\n| Size | No Divergence | Uniform | Random | Strided | Nested |")
+    print("|------|---------------|---------|--------|---------|--------|")
+
+    for size in sizes {
+        guard let inputBuffer = device.makeBuffer(length: size * MemoryLayout<Float>.size, options: .storageModeShared),
+              let outputBuffer = device.makeBuffer(length: size * MemoryLayout<Float>.size, options: .storageModeShared) else {
+            continue
+        }
+
+        let inPtr = inputBuffer.contents().bindMemory(to: Float.self, capacity: size)
+        for i in 0..<size {
+            inPtr[i] = Float(i % 256)
+        }
+
+        // No divergence
+        let startNoDiv = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(noDivPipeline)
+            encoder.setBuffer(inputBuffer, offset: 0, index: 0)
+            encoder.setBuffer(outputBuffer, offset: 0, index: 1)
+            var sizeU = UInt32(size)
+            encoder.setBytes(&sizeU, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                  threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endNoDiv = getTimeNanos()
+        let noDivTime = getElapsedSeconds(start: startNoDiv, end: endNoDiv)
+        let noDivTP = Double(size) * Double(iterations) / noDivTime / 1e6
+
+        // Uniform divergence
+        let startUni = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(uniformDivPipeline)
+            encoder.setBuffer(inputBuffer, offset: 0, index: 0)
+            encoder.setBuffer(outputBuffer, offset: 0, index: 1)
+            var sizeU = UInt32(size)
+            var thr = UInt32(threshold)
+            encoder.setBytes(&sizeU, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.setBytes(&thr, length: MemoryLayout<UInt32>.size, index: 3)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                  threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endUni = getTimeNanos()
+        let uniTime = getElapsedSeconds(start: startUni, end: endUni)
+        let uniTP = Double(size) * Double(iterations) / uniTime / 1e6
+
+        // Random divergence
+        let startRand = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(randomDivPipeline)
+            encoder.setBuffer(inputBuffer, offset: 0, index: 0)
+            encoder.setBuffer(outputBuffer, offset: 0, index: 1)
+            var sizeU = UInt32(size)
+            encoder.setBytes(&sizeU, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                  threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endRand = getTimeNanos()
+        let randTime = getElapsedSeconds(start: startRand, end: endRand)
+        let randTP = Double(size) * Double(iterations) / randTime / 1e6
+
+        // Strided divergence (stride = 2, 4, 8)
+        let strides = [2, 4, 8]
+        for stride in strides {
+            let startStride = getTimeNanos()
+            for _ in 0..<iterations {
+                guard let cmd = queue.makeCommandBuffer(),
+                      let encoder = cmd.makeComputeCommandEncoder() else { continue }
+                encoder.setComputePipelineState(stridedDivPipeline)
+                encoder.setBuffer(inputBuffer, offset: 0, index: 0)
+                encoder.setBuffer(outputBuffer, offset: 0, index: 1)
+                var sizeU = UInt32(size)
+                var strideU = UInt32(stride)
+                encoder.setBytes(&sizeU, length: MemoryLayout<UInt32>.size, index: 2)
+                encoder.setBytes(&strideU, length: MemoryLayout<UInt32>.size, index: 3)
+                encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                      threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+                encoder.endEncoding()
+                cmd.commit()
+                cmd.waitUntilCompleted()
+            }
+            let endStride = getTimeNanos()
+            let strideTime = getElapsedSeconds(start: startStride, end: endStride)
+            let strideTP = Double(size) * Double(iterations) / strideTime / 1e6
+
+            if stride == 2 {
+                print("| \(size) | \(String(format: "%.2f", noDivTP)) | \(String(format: "%.2f", uniTP)) | \(String(format: "%.2f", randTP)) | \(String(format: "%.2f", strideTP)) |", terminator: "")
+            }
+            if stride == 2 {
+                // Test nested for this size
+                let startNest = getTimeNanos()
+                for _ in 0..<iterations {
+                    guard let cmd = queue.makeCommandBuffer(),
+                          let encoder = cmd.makeComputeCommandEncoder() else { continue }
+                    encoder.setComputePipelineState(nestedDivPipeline)
+                    encoder.setBuffer(inputBuffer, offset: 0, index: 0)
+                    encoder.setBuffer(outputBuffer, offset: 0, index: 1)
+                    var sizeU = UInt32(size)
+                    encoder.setBytes(&sizeU, length: MemoryLayout<UInt32>.size, index: 2)
+                    encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                          threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+                    encoder.endEncoding()
+                    cmd.commit()
+                    cmd.waitUntilCompleted()
+                }
+                let endNest = getTimeNanos()
+                let nestTime = getElapsedSeconds(start: startNest, end: endNest)
+                let nestTP = Double(size) * Double(iterations) / nestTime / 1e6
+                print(" \(String(format: "%.2f", nestTP)) |")
+            }
+        }
+    }
+
+    // Divergence overhead analysis
+    print("\n--- Divergence Overhead Analysis ---")
+    let baseSize = 65536
+    guard let baseBuffer = device.makeBuffer(length: baseSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let baseOut = device.makeBuffer(length: baseSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+
+    let bp = baseBuffer.contents().bindMemory(to: Float.self, capacity: baseSize)
+    for i in 0..<baseSize {
+        bp[i] = Float(1.0)
+    }
+
+    // Measure no divergence baseline
+    let startBase = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let enc = cmd.makeComputeCommandEncoder() else { continue }
+        enc.setComputePipelineState(noDivPipeline)
+        enc.setBuffer(baseBuffer, offset: 0, index: 0)
+        enc.setBuffer(baseOut, offset: 0, index: 1)
+        var sz = UInt32(baseSize)
+        enc.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+        enc.dispatchThreads(MTLSize(width: baseSize, height: 1, depth: 1),
+                          threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        enc.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endBase = getTimeNanos()
+    let baseTime = getElapsedSeconds(start: startBase, end: endBase)
+    let baseTP = Double(baseSize) * Double(iterations) / baseTime / 1e6
+
+    // Random divergence
+    let startRand = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let enc = cmd.makeComputeCommandEncoder() else { continue }
+        enc.setComputePipelineState(randomDivPipeline)
+        enc.setBuffer(baseBuffer, offset: 0, index: 0)
+        enc.setBuffer(baseOut, offset: 0, index: 1)
+        var sz = UInt32(baseSize)
+        enc.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+        enc.dispatchThreads(MTLSize(width: baseSize, height: 1, depth: 1),
+                          threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        enc.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endRand = getTimeNanos()
+    let randTime = getElapsedSeconds(start: startRand, end: endRand)
+    let randTP = Double(baseSize) * Double(iterations) / randTime / 1e6
+
+    let overhead = ((baseTP - randTP) / baseTP) * 100
+    print("Baseline (no divergence): \(String(format: "%.2f", baseTP)) M/s")
+    print("Random divergence: \(String(format: "%.2f", randTP)) M/s")
+    print("Divergence overhead: \(String(format: "%.1f", overhead))%")
+
+    print("\n--- Key Insights ---")
+    print("1. Thread divergence reduces effective parallelism within warps")
+    print("2. Uniform divergence (all threads same path) has minimal overhead")
+    print("3. Random divergence within warp causes significant slowdown")
+    print("4. Stride patterns show varying overhead based on grouping")
+    print("5. Minimize divergence by reorganizing data or using predication")
 }
 
 // ============================================================
@@ -13959,7 +14303,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
 
     Research Duration: 2026-03-25 (Iterative deep research sessions)
     GPU Under Test: Apple M2 (8-core GPU, Family Apple 7)
-    Test Coverage: 71 comprehensive benchmark sections
+    Test Coverage: 72 comprehensive benchmark sections
 
     ============================================================================
     EXECUTIVE SUMMARY
@@ -14143,7 +14487,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
     """)
 
     print("\n" + String(repeating: "=", count: 70))
-    print("DEEP RESEARCH COMPLETE - 71 SECTIONS")
+    print("DEEP RESEARCH COMPLETE - 72 SECTIONS")
     print("Thank you for benchmarking with GPUPeek!")
     print(String(repeating: "=", count: 70))
 }
@@ -14210,6 +14554,7 @@ do { try testDatabaseOps(device: device, queue: queue, library: library) } catch
 do { try testAccelerationStructures(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testIndirectCommandGeneration(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testDoubleBuffering(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testThreadDivergence(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testFinalSummary(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")

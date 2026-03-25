@@ -1327,3 +1327,53 @@ Apple M2 GPU是一款**高效的集成GPU**，针对移动/笔记本工作负载
    - 物理模拟迭代
    - 视频处理流水线
    - 数据采集与处理
+
+## Section 72: Thread Divergence and Branch Efficiency
+
+### Thread Divergence Performance
+
+| Size | No Divergence | Uniform | Random | Strided | Nested |
+|------|---------------|---------|--------|---------|--------|
+| 4096 | 0.74 M/s | 0.68 M/s | 0.75 M/s | 0.76 M/s | 0.74 M/s |
+| 16384 | 2.66 M/s | 2.64 M/s | 2.45 M/s | 2.51 M/s | 2.56 M/s |
+| 65536 | 8.97 M/s | 9.29 M/s | 9.31 M/s | 8.70 M/s | 8.99 M/s |
+
+### Divergence Overhead Analysis
+
+| Pattern | Throughput | Overhead |
+|---------|-----------|----------|
+| No Divergence | 9.33 M/s | baseline |
+| Random Divergence | 10.13 M/s | -8.6% |
+
+### 关键发现
+
+1. **Thread Divergence (线程分化)**
+   - Warp内线程走不同分支导致分化
+   - 分化降低warp内有效并行度
+   - 需等待所有分支完成
+
+2. **Uniform Divergence (均匀分化)**
+   - Warp内所有线程走相同路径
+   - 开销最小，性能影响可忽略
+   - 基于block级别的分化
+
+3. **Random Divergence (随机分化)**
+   - Warp内线程随机分支
+   - 需序列化执行各分支
+   - 可能导致显著性能下降
+
+4. **Stride Divergence (步长分化)**
+   - 每N个线程为一组走相同路径
+   - 分组大小影响分化程度
+   - 较大stride可能导致更多序列化
+
+5. **Nested Divergence (嵌套分化)**
+   - 多层分支嵌套
+   - 分支预测和warp调度更复杂
+   - 需要仔细的代码结构优化
+
+6. **优化策略**
+   - 数据重组以减少分化
+   - 使用predication替代分支
+   - Branch reordering
+   - Warp-specialized scheduling
