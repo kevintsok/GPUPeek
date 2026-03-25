@@ -2,11 +2,11 @@
 
 ## 概述
 
-本项目对Apple M2 GPU进行了深度研究，通过30个模块化基准测试分析其架构特性和性能特征。
+本项目对Apple M2 GPU进行了深度研究，通过31个模块化基准测试分析其架构特性和性能特征。
 
 **测试环境**: Apple M2 (MacBook Air), macOS Darwin 25.3.0, Swift 6.1.2, Metal Apple 7+
 
-## 专题目录 (30个模块化基准测试)
+## 专题目录 (31个模块化基准测试)
 
 ### Memory (内存)
 | 专题 | Benchmark | 关键发现 |
@@ -43,6 +43,7 @@
 | Histogram | [Link](Algorithms/Histogram/RESEARCH.md) | 并行直方图统计 |
 | Stencil | [Link](Algorithms/Stencil/RESEARCH.md) | 模板计算 stencil pattern |
 | SparseMatrix | [Link](Algorithms/SparseMatrix/RESEARCH.md) | CSR/ELLPACK稀疏矩阵格式 |
+| StreamCompaction | [Link](Algorithms/StreamCompaction/RESEARCH.md) | 流压缩过滤选择操作 |
 
 ### Analysis (分析)
 | 专题 | Benchmark | 关键发现 |
@@ -133,4 +134,4 @@
 
 *研究完成日期: 2026-03-26*
 *GPU: Apple M2 (Family Apple 7)*
-*测试专题: 30个模块化基准测试*
+*测试专题: 31个模块化基准测试*
