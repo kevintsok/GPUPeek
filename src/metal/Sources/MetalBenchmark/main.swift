@@ -13664,6 +13664,286 @@ func testIndirectCommandGeneration(device: MTLDevice, queue: MTLCommandQueue, li
 }
 
 // ============================================================
+// 71. DOUBLE BUFFERING AND PING-PONG TECHNIQUES
+// Frame synchronization and iterative compute patterns
+// ============================================================
+func testDoubleBuffering(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("71. Double Buffering and Ping-Pong Techniques")
+    print(String(repeating: "=", count: 70))
+
+    let pingPongShaderSource = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    // Simple iterative compute: each frame reads from src, writes to dst
+    kernel void iterative_compute(device float* src [[buffer(0)]],
+                                device float* dst [[buffer(1)]],
+                                constant uint& size [[buffer(2)]],
+                                constant float& factor [[buffer(3)]],
+                                uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        // Simple blur/average operation
+        float val = src[id];
+        if (id > 0) val += src[id - 1] * 0.5;
+        if (id < size - 1) val += src[id + 1] * 0.5;
+        dst[id] = val * factor;
+    }
+
+    // Triple buffering: compute with 3 buffers
+    kernel void triple_buffer_compute(device float* src [[buffer(0)]],
+                                   device float* dst [[buffer(1)]],
+                                   device float* scratch [[buffer(2)]],
+                                   constant uint& size [[buffer(3)]],
+                                   constant float& factor [[buffer(4)]],
+                                   uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float val = src[id];
+        if (id > 0) val += src[id - 1] * 0.25;
+        if (id < size - 1) val += src[id + 1] * 0.25;
+        scratch[id] = val;
+        dst[id] = scratch[id] * factor;
+    }
+
+    // Atomic counter-based frame synchronization
+    kernel void frame_sync_init(device atomic_uint* counters [[buffer(0)]],
+                             uint id [[thread_position_in_grid]]) {
+        if (id == 0) {
+            atomic_store_explicit(&counters[0], 0, memory_order_relaxed);
+            atomic_store_explicit(&counters[1], 0, memory_order_relaxed);
+        }
+    }
+
+    kernel void frame_sync_compute(device float* buffer [[buffer(0)]],
+                                device atomic_uint* counters [[buffer(1)]],
+                                constant uint& size [[buffer(2)]],
+                                constant uint& frame [[buffer(3)]],
+                                uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        uint counter = atomic_fetch_add_explicit(&counters[frame & 1], 1, memory_order_relaxed);
+        buffer[id] = buffer[id] * 0.99 + float(counter) * 0.001;
+    }
+
+    // Ring buffer access pattern
+    kernel void ring_buffer_write(device float* ringBuffer [[buffer(0)]],
+                                constant uint& bufferSize [[buffer(1)]],
+                                constant uint& writeIndex [[buffer(2)]],
+                                constant float& value [[buffer(3)]],
+                                uint id [[thread_position_in_grid]]) {
+        if (id >= bufferSize) return;
+        uint idx = (writeIndex + id) % bufferSize;
+        ringBuffer[idx] = value + float(id);
+    }
+
+    kernel void ring_buffer_read(device float* ringBuffer [[buffer(0)]],
+                              device float* output [[buffer(1)]],
+                              constant uint& bufferSize [[buffer(2)]],
+                              constant uint& readIndex [[buffer(3)]],
+                              uint id [[thread_position_in_grid]]) {
+        if (id >= bufferSize) return;
+        uint idx = (readIndex + id) % bufferSize;
+        output[id] = ringBuffer[idx];
+    }
+    """
+
+    guard let pingpongLibrary = try? device.makeLibrary(source: pingPongShaderSource, options: MTLCompileOptions()) else {
+        print("Failed to create ping-pong library")
+        return
+    }
+
+    guard let iterativeFunc = pingpongLibrary.makeFunction(name: "iterative_compute"),
+          let tripleFunc = pingpongLibrary.makeFunction(name: "triple_buffer_compute"),
+          let syncInitFunc = pingpongLibrary.makeFunction(name: "frame_sync_init"),
+          let syncComputeFunc = pingpongLibrary.makeFunction(name: "frame_sync_compute"),
+          let ringWriteFunc = pingpongLibrary.makeFunction(name: "ring_buffer_write"),
+          let ringReadFunc = pingpongLibrary.makeFunction(name: "ring_buffer_read"),
+          let iterativePipeline = try? device.makeComputePipelineState(function: iterativeFunc),
+          let triplePipeline = try? device.makeComputePipelineState(function: tripleFunc),
+          let syncInitPipeline = try? device.makeComputePipelineState(function: syncInitFunc),
+          let syncComputePipeline = try? device.makeComputePipelineState(function: syncComputeFunc),
+          let ringWritePipeline = try? device.makeComputePipelineState(function: ringWriteFunc),
+          let ringReadPipeline = try? device.makeComputePipelineState(function: ringReadFunc) else {
+        print("Failed to create ping-pong pipelines")
+        return
+    }
+
+    let bufferSize = 65536
+    let iterations = 100
+
+    // Create ping-pong buffers
+    guard let bufferA = device.makeBuffer(length: bufferSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let bufferB = device.makeBuffer(length: bufferSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let counterBuffer = device.makeBuffer(length: 2 * MemoryLayout<UInt32>.size, options: .storageModeShared) else {
+        print("Failed to create ping-pong buffers")
+        return
+    }
+
+    // Initialize buffers
+    let aPtr = bufferA.contents().bindMemory(to: Float.self, capacity: bufferSize)
+    let bPtr = bufferB.contents().bindMemory(to: Float.self, capacity: bufferSize)
+    for i in 0..<bufferSize {
+        aPtr[i] = Float(1.0)
+        bPtr[i] = Float(0.0)
+    }
+
+    print("\n--- Double Buffering (Ping-Pong) Performance ---")
+    print("Buffer Size: \(bufferSize), Iterations: \(iterations)")
+
+    // Sequential ping-pong (simulate frame-by-frame)
+    let startDouble = getTimeNanos()
+    var srcBuffer = bufferA
+    var dstBuffer = bufferB
+    var factor: Float = 0.95
+
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(iterativePipeline)
+        encoder.setBuffer(srcBuffer, offset: 0, index: 0)
+        encoder.setBuffer(dstBuffer, offset: 0, index: 1)
+        var size = UInt32(bufferSize)
+        encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.setBytes(&factor, length: MemoryLayout<Float>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: bufferSize, height: 1, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+
+        // Swap buffers
+        let temp = srcBuffer
+        srcBuffer = dstBuffer
+        dstBuffer = temp
+    }
+    let endDouble = getTimeNanos()
+    let doubleTime = getElapsedSeconds(start: startDouble, end: endDouble)
+    let doubleThroughput = Double(bufferSize) * Double(iterations) / doubleTime / 1e6
+    print("| Sequential Ping-Pong | \(bufferSize) x \(iterations) | \(String(format: "%.2f", doubleThroughput)) M/s |")
+
+    // Triple buffering test
+    guard let bufferC = device.makeBuffer(length: bufferSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create third buffer")
+        return
+    }
+
+    let cPtr = bufferC.contents().bindMemory(to: Float.self, capacity: bufferSize)
+    for i in 0..<bufferSize {
+        cPtr[i] = Float(0.5)
+    }
+
+    print("\n--- Triple Buffering Performance ---")
+    let startTriple = getTimeNanos()
+    var writeBuffer = bufferA
+    var readBuffer = bufferB
+    var scratchBuffer = bufferC
+
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(triplePipeline)
+        encoder.setBuffer(readBuffer, offset: 0, index: 0)
+        encoder.setBuffer(writeBuffer, offset: 0, index: 1)
+        encoder.setBuffer(scratchBuffer, offset: 0, index: 2)
+        var size = UInt32(bufferSize)
+        encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.setBytes(&factor, length: MemoryLayout<Float>.size, index: 4)
+        encoder.dispatchThreads(MTLSize(width: bufferSize, height: 1, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+
+        // Rotate buffers
+        let temp = readBuffer
+        readBuffer = scratchBuffer
+        scratchBuffer = writeBuffer
+        writeBuffer = temp
+    }
+    let endTriple = getTimeNanos()
+    let tripleTime = getElapsedSeconds(start: startTriple, end: endTriple)
+    let tripleThroughput = Double(bufferSize) * Double(iterations) / tripleTime / 1e6
+    print("| Triple Buffering | \(bufferSize) x \(iterations) | \(String(format: "%.2f", tripleThroughput)) M/s |")
+
+    // Frame synchronization test
+    print("\n--- Frame Synchronization (Atomic Counter) ---")
+    let startSync = getTimeNanos()
+    for frameIdx in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(syncComputePipeline)
+        encoder.setBuffer(bufferA, offset: 0, index: 0)
+        encoder.setBuffer(counterBuffer, offset: 0, index: 1)
+        var size = UInt32(bufferSize)
+        var frame = UInt32(frameIdx)
+        encoder.setBytes(&size, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.setBytes(&frame, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: bufferSize, height: 1, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endSync = getTimeNanos()
+    let syncTime = getElapsedSeconds(start: startSync, end: endSync)
+    let syncThroughput = Double(bufferSize) * Double(iterations) / syncTime / 1e6
+    print("| Frame Sync | \(bufferSize) x \(iterations) | \(String(format: "%.2f", syncThroughput)) M/s |")
+
+    // Ring buffer test
+    print("\n--- Ring Buffer Performance ---")
+    let ringSize = 4096
+    guard let ringBuffer = device.makeBuffer(length: ringSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let ringOutput = device.makeBuffer(length: ringSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create ring buffer")
+        return
+    }
+
+    let startRing = getTimeNanos()
+    for frame in 0..<UInt32(iterations) {
+        var writeIdx = frame % UInt32(ringSize)
+        var value: Float = Float(frame)
+
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(ringWritePipeline)
+        encoder.setBuffer(ringBuffer, offset: 0, index: 0)
+        var rSize = UInt32(ringSize)
+        encoder.setBytes(&rSize, length: MemoryLayout<UInt32>.size, index: 1)
+        encoder.setBytes(&writeIdx, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder.setBytes(&value, length: MemoryLayout<Float>.size, index: 3)
+        encoder.dispatchThreads(MTLSize(width: ringSize, height: 1, depth: 1),
+                              threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+
+        var readIdx = (frame + 1) % UInt32(ringSize)
+        guard let cmd2 = queue.makeCommandBuffer(),
+              let encoder2 = cmd2.makeComputeCommandEncoder() else { continue }
+        encoder2.setComputePipelineState(ringReadPipeline)
+        encoder2.setBuffer(ringBuffer, offset: 0, index: 0)
+        encoder2.setBuffer(ringOutput, offset: 0, index: 1)
+        encoder2.setBytes(&rSize, length: MemoryLayout<UInt32>.size, index: 2)
+        encoder2.setBytes(&readIdx, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder2.dispatchThreads(MTLSize(width: ringSize, height: 1, depth: 1),
+                                threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder2.endEncoding()
+        cmd2.commit()
+        cmd2.waitUntilCompleted()
+    }
+    let endRing = getTimeNanos()
+    let ringTime = getElapsedSeconds(start: startRing, end: endRing)
+    let ringThroughput = Double(ringSize) * Double(iterations) * 2 / ringTime / 1e6
+    print("| Ring Buffer (RW) | \(ringSize) x \(iterations) x 2 | \(String(format: "%.2f", ringThroughput)) M/s |")
+
+    print("\n--- Key Insights ---")
+    print("1. Double buffering enables read-write separation for iterative algorithms")
+    print("2. Triple buffering adds extra buffer for overlap and better pipelining")
+    print("3. Atomic counters enable GPU-side frame synchronization")
+    print("4. Ring buffers provide efficient circular FIFO for streaming data")
+    print("5. Essential for real-time graphics, physics simulations, and video processing")
+}
+
+// ============================================================
 // 50. FINAL RESEARCH SUMMARY AND CONCLUSIONS
 // ============================================================
 func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
@@ -13679,7 +13959,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
 
     Research Duration: 2026-03-25 (Iterative deep research sessions)
     GPU Under Test: Apple M2 (8-core GPU, Family Apple 7)
-    Test Coverage: 70 comprehensive benchmark sections
+    Test Coverage: 71 comprehensive benchmark sections
 
     ============================================================================
     EXECUTIVE SUMMARY
@@ -13863,7 +14143,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
     """)
 
     print("\n" + String(repeating: "=", count: 70))
-    print("DEEP RESEARCH COMPLETE - 70 SECTIONS")
+    print("DEEP RESEARCH COMPLETE - 71 SECTIONS")
     print("Thank you for benchmarking with GPUPeek!")
     print(String(repeating: "=", count: 70))
 }
@@ -13929,6 +14209,7 @@ do { try testFFTConvolution(device: device, queue: queue, library: library) } ca
 do { try testDatabaseOps(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testAccelerationStructures(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testIndirectCommandGeneration(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testDoubleBuffering(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testFinalSummary(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")

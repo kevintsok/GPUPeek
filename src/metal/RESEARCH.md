@@ -1278,3 +1278,52 @@ Apple M2 GPU是一款**高效的集成GPU**，针对移动/笔记本工作负载
    - 遮挡查询(Occlusion Queries)
    - 动态场景渲染
    - GPU驱动的渲染管线
+
+## Section 71: Double Buffering and Ping-Pong Techniques
+
+### Double Buffering Performance
+
+| Pattern | Size x Iterations | Throughput |
+|---------|-------------------|------------|
+| Sequential Ping-Pong | 65536 x 100 | 10.01 M/s |
+| Triple Buffering | 65536 x 100 | 9.59 M/s |
+
+### Frame Synchronization Performance
+
+| Pattern | Size x Iterations | Throughput |
+|---------|-------------------|------------|
+| Atomic Counter Sync | 65536 x 100 | 10.18 M/s |
+
+### Ring Buffer Performance
+
+| Pattern | Size x Iterations | Throughput |
+|---------|-------------------|------------|
+| Ring Buffer (RW) | 4096 x 100 x 2 | 0.77 M/s |
+
+### 关键发现
+
+1. **Double Buffering (双缓冲)**
+   - 读写分离，用于迭代算法
+   - 每帧交换源和目标缓冲区
+   - 避免读写冲突
+
+2. **Triple Buffering (三缓冲)**
+   - 增加额外缓冲区用于流水线重叠
+   - 提供更好的帧率稳定性
+   - 允许前一帧完成前开始新帧计算
+
+3. **Frame Synchronization (帧同步)**
+   - 原子计数器实现GPU端帧同步
+   - 确保多pass渲染的正确顺序
+   - 减少CPU-GPU同步开销
+
+4. **Ring Buffer (环形缓冲区)**
+   - 循环FIFO数据结构
+   - 适合流式数据处理
+   - 读写指针模运算实现
+
+5. **应用场景**
+   - 实时图形渲染
+   - 物理模拟迭代
+   - 视频处理流水线
+   - 数据采集与处理
