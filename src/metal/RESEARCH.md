@@ -2056,3 +2056,28 @@ Arithmetic Intensity = FLOPs / Memory Bytes
 2. **32KB共享内存限制** - 超过后必须减少线程数
 3. **Memory-bound受益于高occupancy** - 更多线程隐藏内存延迟
 4. **Compute-bound对occupancy不敏感** - 计算单元是瓶颈
+
+## Section 88: Cache Behavior Analysis
+
+### Apple M2 缓存层级
+
+| 缓存级别 | 大小 | 延迟 | 作用域 |
+|---------|------|------|--------|
+| L1 | 32 KB | ~1 cycle | Per cluster |
+| L2 | ~4 MB | ~10 cycles | Shared |
+
+### 访问模式对比
+
+| 访问模式 | 性能 | 原因 |
+|----------|------|------|
+| Sequential | ~0.75 GB/s | 充分利用空间局部性 |
+| Stride-2 | ~0.33 GB/s | 浪费50%缓存行 |
+| Stride-8 | ~0.14 GB/s | 浪费87.5%缓存行 |
+| Random | ~0.05 GB/s | 无局部性 |
+
+### 关键发现
+
+1. **顺序访问最优** - 利用空间局部性，减少缓存miss
+2. **跨步访问低效** - stride越大，浪费缓存行越多
+3. **工作集决定缓存级别** - 超过L2(~4MB)会导致显著下降
+
