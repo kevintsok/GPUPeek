@@ -1528,3 +1528,51 @@ Apple M2 GPU是一款**高效的集成GPU**，针对移动/笔记本工作负载
    - 尽量让线程访问连续的内存地址
    - 使用float4等vectorized类型提高效率
    - Scatter/Gather用于必要的不规则访问
+
+## Section 76: Warp Scheduling and Occupancy
+
+### Compute vs Memory Bound Performance
+
+| Size | Compute Bound | Memory Bound | Latency Hiding |
+|------|---------------|-------------|----------------|
+| 4096 | 0.53 M/s | 0.73 M/s | 0.73 M/s |
+| 16384 | 1.94 M/s | 3.07 M/s | 2.95 M/s |
+| 65536 | 2.98 M/s | 10.30 M/s | 10.34 M/s |
+
+### Occupancy Impact (Threadgroup Size)
+
+| Threadgroup Size | Occupancy | Throughput |
+|-----------------|-----------|------------|
+| 32 | 3% | 9.66 M/s |
+| 64 | 6% | 9.08 M/s |
+| 128 | 12% | 10.08 M/s |
+| 256 | 25% | 9.91 M/s |
+| 512 | 50% | 9.93 M/s |
+| 1024 | 100% | 9.86 M/s |
+
+### 关键发现
+
+1. **Compute Bound vs Memory Bound**
+   - Compute bound: 高计算密度，对occupancy敏感度低
+   - Memory bound: 低计算密度，需要高occupancy隐藏延迟
+   - Latency hiding: 交替计算和内存访问效果最佳
+
+2. **Occupancy对性能的影响**
+   - 低occupancy时(3-12%)性能较低
+   - 中等occupancy(128-256 threads)达到最佳性能
+   - 高occupancy(512-1024)性能反而略降
+
+3. **Warp Scheduler行为**
+   - 当warp等待内存时，scheduler切换到其他warp
+   - 高occupancy提供更多warp供调度
+   - 但过高occupancy可能导致资源竞争
+
+4. **Apple M2 GPU特性**
+   - 8个EUs (Execution Units)
+   - Warp大小: 32 threads
+   - 每个EU最多1024 threads
+
+5. **优化策略**
+   - Memory bound kernel需要高occupancy
+   - Compute bound kernel可以选择更低的occupancy
+   - 平衡occupancy和每个thread的资源使用

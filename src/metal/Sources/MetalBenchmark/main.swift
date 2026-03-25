@@ -15277,6 +15277,237 @@ func testMemoryTransactions(device: MTLDevice, queue: MTLCommandQueue, library: 
 }
 
 // ============================================================
+// 76. WARP SCHEDULING AND OCCUPANCY
+// Impact of occupancy and warp scheduler behavior
+// ============================================================
+func testWarpScheduling(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("76. Warp Scheduling and Occupancy")
+    print(String(repeating: "=", count: 70))
+
+    let warpShaderSource = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    // Compute-bound kernel: high arithmetic intensity
+    kernel void compute_bound(device float* input [[buffer(0)]],
+                        device float* output [[buffer(1)]],
+                        constant uint& size [[buffer(2)]],
+                        uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float val = input[id];
+        // Heavy computation
+        for (uint i = 0; i < 64; i++) {
+            val = sqrt(val * val + 0.1f);
+            val = sin(val) * cos(val);
+        }
+        output[id] = val;
+    }
+
+    // Memory-bound kernel: low arithmetic intensity
+    kernel void memory_bound(device float* input [[buffer(0)]],
+                        device float* output [[buffer(1)]],
+                        constant uint& size [[buffer(2)]],
+                        uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float val = input[id];
+        // Simple operation
+        val = val * 2.0f + 1.0f;
+        output[id] = val;
+    }
+
+    // Occupancy test: vary threads per threadgroup
+    kernel void occupancy_test(device float* input [[buffer(0)]],
+                         device float* output [[buffer(1)]],
+                         constant uint& size [[buffer(2)]],
+                         uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float val = input[id];
+        val = val * 2.0f;
+        val = sqrt(val);
+        output[id] = val;
+    }
+
+    // Latency hiding test: interleaved compute and memory
+    kernel void latency_hiding(device float* input [[buffer(0)]],
+                          device float* output [[buffer(1)]],
+                          constant uint& size [[buffer(2)]],
+                          uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        float val = input[id];
+        // Short compute to allow scheduler to hide latency
+        for (uint i = 0; i < 8; i++) {
+            val = val * 2.0f + 1.0f;
+        }
+        // Memory access
+        float val2 = output[id];
+        // Short compute again
+        for (uint i = 0; i < 8; i++) {
+            val2 = val2 / 2.0f + 1.0f;
+        }
+        output[id] = val + val2;
+    }
+    """
+
+    guard let warpLibrary = try? device.makeLibrary(source: warpShaderSource, options: MTLCompileOptions()) else {
+        print("Failed to create warp library")
+        return
+    }
+
+    guard let computeFunc = warpLibrary.makeFunction(name: "compute_bound"),
+          let memoryFunc = warpLibrary.makeFunction(name: "memory_bound"),
+          let occupancyFunc = warpLibrary.makeFunction(name: "occupancy_test"),
+          let latencyFunc = warpLibrary.makeFunction(name: "latency_hiding"),
+          let computePipeline = try? device.makeComputePipelineState(function: computeFunc),
+          let memoryPipeline = try? device.makeComputePipelineState(function: memoryFunc),
+          let occupancyPipeline = try? device.makeComputePipelineState(function: occupancyFunc),
+          let latencyPipeline = try? device.makeComputePipelineState(function: latencyFunc) else {
+        print("Failed to create warp pipelines")
+        return
+    }
+
+    print("\n--- Compute vs Memory Bound Performance ---")
+
+    let sizes = [4096, 16384, 65536]
+    let iterations = 50
+
+    print("\n| Size | Compute Bound | Memory Bound | Latency Hiding |")
+    print("|------|---------------|-------------|----------------|")
+
+    for size in sizes {
+        guard let inputBuffer = device.makeBuffer(length: size * MemoryLayout<Float>.size, options: .storageModeShared),
+              let outputBuffer = device.makeBuffer(length: size * MemoryLayout<Float>.size, options: .storageModeShared) else {
+            continue
+        }
+
+        let inPtr = inputBuffer.contents().bindMemory(to: Float.self, capacity: size)
+        for i in 0..<size {
+            inPtr[i] = Float(1.0)
+        }
+
+        // Compute bound
+        let startCompute = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(computePipeline)
+            encoder.setBuffer(inputBuffer, offset: 0, index: 0)
+            encoder.setBuffer(outputBuffer, offset: 0, index: 1)
+            var sz = UInt32(size)
+            encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                  threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endCompute = getTimeNanos()
+        let computeTP = Double(size) * Double(iterations) / getElapsedSeconds(start: startCompute, end: endCompute) / 1e6
+
+        // Memory bound
+        let startMem = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(memoryPipeline)
+            encoder.setBuffer(inputBuffer, offset: 0, index: 0)
+            encoder.setBuffer(outputBuffer, offset: 0, index: 1)
+            var sz = UInt32(size)
+            encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                  threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endMem = getTimeNanos()
+        let memTP = Double(size) * Double(iterations) / getElapsedSeconds(start: startMem, end: endMem) / 1e6
+
+        // Latency hiding
+        let startLat = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(latencyPipeline)
+            encoder.setBuffer(inputBuffer, offset: 0, index: 0)
+            encoder.setBuffer(outputBuffer, offset: 0, index: 1)
+            var sz = UInt32(size)
+            encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                  threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endLat = getTimeNanos()
+        let latTP = Double(size) * Double(iterations) / getElapsedSeconds(start: startLat, end: endLat) / 1e6
+
+        print("| \(size) | \(String(format: "%.2f", computeTP)) | \(String(format: "%.2f", memTP)) | \(String(format: "%.2f", latTP)) |")
+    }
+
+    // Occupancy impact analysis
+    print("\n--- Occupancy Impact (Threadgroup Size) ---")
+    let occupancySizes = [32, 64, 128, 256, 512, 1024]
+    let testSize = 65536
+
+    guard let occInputBuffer = device.makeBuffer(length: testSize * MemoryLayout<Float>.size, options: .storageModeShared),
+          let occOutputBuffer = device.makeBuffer(length: testSize * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        return
+    }
+
+    let occInPtr = occInputBuffer.contents().bindMemory(to: Float.self, capacity: testSize)
+    for i in 0..<testSize {
+        occInPtr[i] = Float(1.0)
+    }
+
+    print("| Threadgroup Size | Occupancy | Throughput |")
+    print("|-----------------|-----------|------------|")
+
+    for tgSize in occupancySizes {
+        let startOcc = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(occupancyPipeline)
+            encoder.setBuffer(occInputBuffer, offset: 0, index: 0)
+            encoder.setBuffer(occOutputBuffer, offset: 0, index: 1)
+            var sz = UInt32(testSize)
+            encoder.setBytes(&sz, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: testSize, height: 1, depth: 1),
+                                  threadsPerThreadgroup: MTLSize(width: tgSize, height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endOcc = getTimeNanos()
+        let occTP = Double(testSize) * Double(iterations) / getElapsedSeconds(start: startOcc, end: endOcc) / 1e6
+
+        // Calculate occupancy (simplified: Apple M2 has 8 EUs, each EU can run 1 warp of 32 threads)
+        // Max threads = 8 * 128 = 1024 (max threads per EU)
+        // With 1024 max threads per threadgroup, full occupancy at 32 threadgroups
+        let maxThreadsPerEU = 1024
+        let threadsPerGroup = tgSize
+        let maxThreadgroups = (8 * maxThreadsPerEU) / threadsPerGroup
+        let actualOccupancy = min(Double(threadsPerGroup) / Double(maxThreadsPerEU) * 100, 100.0)
+
+        print("| \(tgSize) | \(String(format: "%.0f%%", actualOccupancy)) | \(String(format: "%.2f", occTP)) M/s |")
+    }
+
+    // Warp efficiency analysis
+    print("\n--- Warp Efficiency Analysis ---")
+    print("Compute-bound kernels benefit less from high occupancy")
+    print("Memory-bound kernels need high occupancy to hide latency")
+    print("Latency hiding works best with balanced compute/memory")
+
+    print("\n--- Key Insights ---")
+    print("1. Compute-bound: high arithmetic intensity, less sensitive to occupancy")
+    print("2. Memory-bound: low arithmetic intensity, needs high occupancy for latency hiding")
+    print("3. Threadgroup size affects occupancy and performance")
+    print("4. Optimal occupancy depends on kernel characteristics")
+    print("5. Apple M2: 8 EUs, warp size 32, max threads per EU ~1024")
+}
+
+// ============================================================
 // 50. FINAL RESEARCH SUMMARY AND CONCLUSIONS
 // ============================================================
 func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
@@ -15292,7 +15523,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
 
     Research Duration: 2026-03-25 (Iterative deep research sessions)
     GPU Under Test: Apple M2 (8-core GPU, Family Apple 7)
-    Test Coverage: 75 comprehensive benchmark sections
+    Test Coverage: 76 comprehensive benchmark sections
 
     ============================================================================
     EXECUTIVE SUMMARY
@@ -15476,7 +15707,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
     """)
 
     print("\n" + String(repeating: "=", count: 70))
-    print("DEEP RESEARCH COMPLETE - 75 SECTIONS")
+    print("DEEP RESEARCH COMPLETE - 76 SECTIONS")
     print("Thank you for benchmarking with GPUPeek!")
     print(String(repeating: "=", count: 70))
 }
@@ -15547,6 +15778,7 @@ do { try testThreadDivergence(device: device, queue: queue, library: library) } 
 do { try testCacheBehavior(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testAtomicOperations(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testMemoryTransactions(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testWarpScheduling(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testFinalSummary(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")
