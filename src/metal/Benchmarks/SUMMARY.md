@@ -2,11 +2,11 @@
 
 ## 概述
 
-本项目对Apple M2 GPU进行了深度研究，通过31个模块化基准测试分析其架构特性和性能特征。
+本项目对Apple M2 GPU进行了深度研究，通过32个模块化基准测试分析其架构特性和性能特征。
 
 **测试环境**: Apple M2 (MacBook Air), macOS Darwin 25.3.0, Swift 6.1.2, Metal Apple 7+
 
-## 专题目录 (31个模块化基准测试)
+## 专题目录 (32个模块化基准测试)
 
 ### Memory (内存)
 | 专题 | Benchmark | 关键发现 |
@@ -15,6 +15,7 @@
 | Coalescing | [Link](Memory/Coalescing/RESEARCH.md) | 合并访问比非合并快5.3x |
 | BankConflict | [Link](Memory/BankConflict/RESEARCH.md) | 跨步访问产生1.8x性能损失 |
 | LatencyHiding | [Link](Memory/LatencyHiding/RESEARCH.md) | 多内存操作实现5.5x加速 |
+| ConstantMemory | [Link](Memory/ConstantMemory/RESEARCH.md) | 广播读取比散射快数倍 |
 
 ### Compute (计算)
 | 专题 | Benchmark | 关键发现 |
@@ -134,4 +135,4 @@
 
 *研究完成日期: 2026-03-26*
 *GPU: Apple M2 (Family Apple 7)*
-*测试专题: 31个模块化基准测试*
+*测试专题: 32个模块化基准测试*
