@@ -1576,3 +1576,58 @@ Apple M2 GPU是一款**高效的集成GPU**，针对移动/笔记本工作负载
    - Memory bound kernel需要高occupancy
    - Compute bound kernel可以选择更低的occupancy
    - 平衡occupancy和每个thread的资源使用
+
+## Section 77: Precision Analysis and Numerical Accuracy
+
+### Precision Performance Comparison
+
+| Size | FP32 Ops | FP16 Ops | Speedup |
+|------|----------|----------|---------|
+| 4096 | 0.62 M/s | 0.63 M/s | 1.02x |
+| 16384 | 2.01 M/s | 2.09 M/s | 1.04x |
+| 65536 | 6.20 M/s | 7.06 M/s | 1.14x |
+
+### Numerical Accuracy Analysis
+
+| Precision | Throughput | Error |
+|-----------|------------|-------|
+| FP32 | 0.08 M/s | 8.23e-06 |
+| FP16 | 0.08 M/s | 2.20e-02 |
+
+Expected sum: 1.024000 (1024 iterations × 0.001)
+FP32 result: 1.023992 (error: 8.23e-06)
+FP16 result: 1.001953 (error: 2.20e-02)
+
+### Mixed Precision Performance
+
+| Size | Throughput |
+|------|------------|
+| 4096 | 0.63 M/s |
+| 16384 | 2.16 M/s |
+
+### 关键发现
+
+1. **FP16 vs FP32 Performance**
+   - FP16提供约1.14x加速比
+   - Apple M2对FP16有原生支持
+   - 计算密集型kernel加速更明显
+
+2. **精度对比**
+   - FP16: ~3.3位十进制精度
+   - FP32: ~7位十进制精度
+   - FP16累积误差约2700x大于FP32
+
+3. **误差分析**
+   - 累积操作中误差逐渐增大
+   - FP16的subnormal表示范围有限
+   - 1024次累积后FP16误差达2.2%
+
+4. **Mixed Precision应用**
+   - FP16存储和累加，FP32输出
+   - 平衡速度和精度
+   - 常用于ML inference
+
+5. **应用建议**
+   - ML inference: FP16
+   - 精度要求高: FP32
+   - 混合精度: 根据误差容忍度选择
