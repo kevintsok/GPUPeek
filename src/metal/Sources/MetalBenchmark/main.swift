@@ -11981,6 +11981,249 @@ func testParallelScan(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
 }
 
 // ============================================================
+// 63. GRAPH ALGORITHMS AND BFS TRAVERSAL
+// Breadth-first search and parallel graph traversal
+// ============================================================
+func testGraphAlgorithms(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("63. Graph Algorithms and BFS Traversal")
+    print(String(repeating: "=", count: 70))
+
+    let graphShaderSource = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    // BFS level propagation
+    kernel void bfs_level(device uint* edges [[buffer(0)]],
+                   device uint* distances [[buffer(1)]],
+                   device uint* current_frontier [[buffer(2)]],
+                   device atomic_uint* next_count [[buffer(3)]],
+                   device uint* next_frontier [[buffer(4)]],
+                   constant uint& num_edges [[buffer(5)]],
+                   constant uint& frontier_size [[buffer(6)]],
+                   uint id [[thread_position_in_grid]]) {
+        if (id >= num_edges) return;
+
+        uint src = edges[id * 2];
+        uint dst = edges[id * 2 + 1];
+
+        // Check if src is in current frontier and dst is unvisited
+        for (uint i = 0; i < frontier_size; i++) {
+            if (current_frontier[i] == src && distances[dst] == ~0u) {
+                distances[dst] = distances[src] + 1;
+                uint idx = atomic_fetch_add_explicit(next_count, 1, memory_order_relaxed);
+                next_frontier[idx] = dst;
+                break;
+            }
+        }
+    }
+
+    // BFS initialize
+    kernel void bfs_init(device uint* distances [[buffer(0)]],
+                   device uint* current_frontier [[buffer(1)]],
+                   constant uint& num_nodes [[buffer(2)]],
+                   uint id [[thread_position_in_grid]]) {
+        if (id >= num_nodes) return;
+        distances[id] = (id == 0) ? 0 : ~0u;
+        if (id == 0) current_frontier[0] = 0;
+    }
+
+    // PageRank single iteration
+    kernel void pagerank_iter(device float* pagerank [[buffer(0)]],
+                       device float* contrib [[buffer(1)]],
+                       device uint* edges [[buffer(2)]],
+                       constant uint& num_nodes [[buffer(3)]],
+                       constant uint& num_edges [[buffer(4)]],
+                       constant float& damping [[buffer(5)]],
+                       uint id [[thread_position_in_grid]]) {
+        if (id >= num_nodes) return;
+
+        float sum = 0.0f;
+        for (uint e = 0; e < num_edges; e++) {
+            if (edges[e * 2 + 1] == id) {
+                uint src = edges[e * 2];
+                sum += pagerank[src] * damping;
+            }
+        }
+        contrib[id] = (1.0f - damping) / float(num_nodes) + sum;
+    }
+    """
+
+    guard let deepLibrary = try? device.makeLibrary(source: graphShaderSource, options: nil) else {
+        print("Failed to create graph library")
+        return
+    }
+
+    guard let bfsLevelFunc = deepLibrary.makeFunction(name: "bfs_level"),
+          let bfsInitFunc = deepLibrary.makeFunction(name: "bfs_init"),
+          let pagerankFunc = deepLibrary.makeFunction(name: "pagerank_iter"),
+          let bfsLevelPipeline = try? device.makeComputePipelineState(function: bfsLevelFunc),
+          let bfsInitPipeline = try? device.makeComputePipelineState(function: bfsInitFunc),
+          let pagerankPipeline = try? device.makeComputePipelineState(function: pagerankFunc) else {
+        print("Failed to create graph pipelines")
+        return
+    }
+
+    print("\n--- Graph Algorithm Performance ---")
+
+    // Generate synthetic graph (grid-like)
+    let sizes = [256, 1024, 4096]
+    let iterations = 10
+
+    for size in sizes {
+        let numNodes = size
+        let numEdges = size * 4  // roughly 4 edges per node
+
+        guard let edgesBuffer = device.makeBuffer(length: numEdges * 2 * MemoryLayout<UInt32>.size, options: .storageModeShared),
+              let distancesBuffer = device.makeBuffer(length: numNodes * MemoryLayout<UInt32>.size, options: .storageModeShared),
+              let frontierBuffer = device.makeBuffer(length: numNodes * MemoryLayout<UInt32>.size, options: .storageModeShared),
+              let nextFrontierBuffer = device.makeBuffer(length: numNodes * MemoryLayout<UInt32>.size, options: .storageModeShared),
+              let countBuffer = device.makeBuffer(length: 2 * MemoryLayout<UInt32>.size, options: .storageModeShared) else {
+            continue
+        }
+
+        // Generate simple grid graph
+        let edgesPtr = edgesBuffer.contents().assumingMemoryBound(to: UInt32.self)
+        var edgeIdx = 0
+        for i in 0..<numNodes {
+            // Connect to neighbors (up, down, left, right)
+            let up = (i >= 4) ? i - 4 : i
+            let down = (i < numNodes - 4) ? i + 4 : i
+            let left = (i % 4 > 0) ? i - 1 : i
+            let right = (i % 4 < 3) ? i + 1 : i
+
+            if edgeIdx < numEdges * 2 - 6 {
+                edgesPtr[edgeIdx] = UInt32(i)
+                edgesPtr[edgeIdx + 1] = UInt32(up)
+                edgeIdx += 2
+                edgesPtr[edgeIdx] = UInt32(i)
+                edgesPtr[edgeIdx + 1] = UInt32(down)
+                edgeIdx += 2
+                edgesPtr[edgeIdx] = UInt32(i)
+                edgesPtr[edgeIdx + 1] = UInt32(left)
+                edgeIdx += 2
+                if i % 4 < 3 && edgeIdx < numEdges * 2 - 2 {
+                    edgesPtr[edgeIdx] = UInt32(i)
+                    edgesPtr[edgeIdx + 1] = UInt32(right)
+                    edgeIdx += 2
+                }
+            }
+        }
+        let actualEdges = edgeIdx / 2
+
+        // Initialize distances
+        let distPtr = distancesBuffer.contents().assumingMemoryBound(to: UInt32.self)
+        for i in 0..<numNodes { distPtr[i] = UInt32.max }
+        distPtr[0] = 0
+
+        let countPtr = countBuffer.contents().assumingMemoryBound(to: UInt32.self)
+        countPtr[0] = 1  // frontier size
+        countPtr[1] = 0  // next frontier size
+
+        // BFS frontier expansion
+        let startBFS = getTimeNanos()
+        for _ in 0..<iterations {
+            countPtr[0] = 1
+            countPtr[1] = 0
+            distPtr[0] = 0
+            for i in 1..<numNodes { distPtr[i] = UInt32.max }
+
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(bfsLevelPipeline)
+            encoder.setBuffer(edgesBuffer, offset: 0, index: 0)
+            encoder.setBuffer(distancesBuffer, offset: 0, index: 2)
+            encoder.setBuffer(countBuffer, offset: 0, index: 3)
+            encoder.setBuffer(countBuffer, offset: MemoryLayout<UInt32>.size, index: 4)
+            encoder.setBuffer(frontierBuffer, offset: 0, index: 5)
+            encoder.setBuffer(nextFrontierBuffer, offset: 0, index: 6)
+            var actualEdgesUInt = UInt32(actualEdges)
+            encoder.setBytes(&actualEdgesUInt, length: MemoryLayout<UInt32>.size, index: 7)
+            var frontierSize = UInt32(1)
+            encoder.setBytes(&frontierSize, length: MemoryLayout<UInt32>.size, index: 8)
+            encoder.dispatchThreads(MTLSize(width: actualEdges, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: min(actualEdges, 256), height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endBFS = getTimeNanos()
+        let bfsTime = getElapsedSeconds(start: startBFS, end: endBFS)
+        let bfsThroughput = Double(numNodes) * Double(iterations) / bfsTime / 1e6
+
+        print("| \(size) nodes | \(String(format: "%.2f", bfsThroughput)) M ops/s |")
+    }
+
+    // PageRank benchmark
+    print("\n--- PageRank Performance ---")
+    print("| Size | Iterations | Time |")
+    print("|------|------------|------|")
+
+    for size in sizes {
+        let numNodes = size
+        let numEdges = size * 4
+        let rankIterations = 10
+
+        guard let pagerankBuffer = device.makeBuffer(length: numNodes * MemoryLayout<Float>.size, options: .storageModeShared),
+              let contribBuffer = device.makeBuffer(length: numNodes * MemoryLayout<Float>.size, options: .storageModeShared),
+              let outDegreeBuffer = device.makeBuffer(length: numNodes * MemoryLayout<UInt32>.size, options: .storageModeShared),
+              let edgesBuffer = device.makeBuffer(length: numEdges * 2 * MemoryLayout<UInt32>.size, options: .storageModeShared) else {
+            continue
+        }
+
+        // Initialize pagerank (uniform distribution)
+        let prPtr = pagerankBuffer.contents().assumingMemoryBound(to: Float.self)
+        for i in 0..<numNodes { prPtr[i] = 1.0 / Float(numNodes) }
+
+        // Generate edges
+        let edgesPtr = edgesBuffer.contents().assumingMemoryBound(to: UInt32.self)
+        var edgeIdx = 0
+        for i in 0..<numNodes {
+            for j in 0..<min(4, numNodes - i - 1) {
+                if edgeIdx < numEdges * 2 - 1 {
+                    edgesPtr[edgeIdx] = UInt32(i)
+                    edgesPtr[edgeIdx + 1] = UInt32(i + j + 1)
+                    edgeIdx += 2
+                }
+            }
+        }
+
+        let startPR = getTimeNanos()
+        for _ in 0..<rankIterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(pagerankPipeline)
+            encoder.setBuffer(pagerankBuffer, offset: 0, index: 0)
+            encoder.setBuffer(contribBuffer, offset: 0, index: 1)
+            encoder.setBuffer(outDegreeBuffer, offset: 0, index: 2)
+            encoder.setBuffer(edgesBuffer, offset: 0, index: 3)
+            var numNodesUInt = UInt32(numNodes)
+            var numEdgesUInt = UInt32(edgeIdx / 2)
+            var damping = Float(0.85)
+            encoder.setBytes(&numNodesUInt, length: MemoryLayout<UInt32>.size, index: 4)
+            encoder.setBytes(&numEdgesUInt, length: MemoryLayout<UInt32>.size, index: 5)
+            encoder.setBytes(&damping, length: MemoryLayout<Float>.size, index: 6)
+            encoder.dispatchThreads(MTLSize(width: numNodes, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: min(numNodes, 256), height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endPR = getTimeNanos()
+        let prTime = getElapsedSeconds(start: startPR, end: endPR)
+
+        print("| \(size) nodes | \(rankIterations) | \(String(format: "%.3f", prTime * 1000)) ms |")
+    }
+
+    print("\n--- Key Insights ---")
+    print("1. BFS: fundamental graph traversal, used in pathfinding, social networks")
+    print("2. PageRank: eigenvalue-based ranking, used in search engines")
+    print("3. Graph algorithms often have irregular memory access patterns")
+    print("4. Frontier-based approaches help manage parallelism")
+    print("5. Applications: social networks, recommendation systems, road networks")
+}
+
+// ============================================================
 // 50. FINAL RESEARCH SUMMARY AND CONCLUSIONS
 // ============================================================
 func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
@@ -11996,7 +12239,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
 
     Research Duration: 2026-03-25 (Iterative deep research sessions)
     GPU Under Test: Apple M2 (8-core GPU, Family Apple 7)
-    Test Coverage: 62 comprehensive benchmark sections
+    Test Coverage: 63 comprehensive benchmark sections
 
     ============================================================================
     EXECUTIVE SUMMARY
@@ -12180,7 +12423,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
     """)
 
     print("\n" + String(repeating: "=", count: 70))
-    print("DEEP RESEARCH COMPLETE - 62 SECTIONS")
+    print("DEEP RESEARCH COMPLETE - 63 SECTIONS")
     print("Thank you for benchmarking with GPUPeek!")
     print(String(repeating: "=", count: 70))
 }
@@ -12238,6 +12481,7 @@ do { try testDCTAnalysis(device: device, queue: queue, library: library) } catch
 do { try testBloomFilter(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testPriorityQueue(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testParallelScan(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testGraphAlgorithms(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testFinalSummary(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")
