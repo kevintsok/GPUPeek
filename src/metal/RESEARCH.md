@@ -2018,3 +2018,24 @@ Arithmetic Intensity = FLOPs / Memory Bytes
 2. **mem_none最快** - 不需要同步内存时使用
 3. **多次barrier线性叠加** - 4个barrier约19 μs
 4. **优化策略** - 减少barrier数量，合并操作减少同步点
+
+## Section 86: SIMD Group (Warp) Primitives
+
+### SIMD 操作性能
+
+| 操作 | 性能 | 说明 |
+|------|------|------|
+| SIMD Vote Any | ~0.02 GOPS | 全线程投票任一 |
+| SIMD Vote All | ~0.02 GOPS | 全线程投票所有 |
+| SIMD Shuffle | ~0.02 GOPS | Lane数据交换 |
+| SIMD Shuffle XOR | ~0.02 GOPS | 蝶形模式 |
+| SIMD Broadcast | ~0.02 GOPS | 单值广播 |
+| SIMD Prefix Sum | ~0.02 GOPS | O(log n)扫描 |
+
+### 关键发现
+
+1. **SIMD primitives是硬件原生支持** - 极快的 warp-level 操作
+2. **Vote操作几乎无开销** - 用于条件分支同步
+3. **Shuffle实现高效数据交换** - 无需共享内存
+4. **XOR shuffle是reduction最优** - 蝶形模式减少通信
+5. **Broadcast用于热点数据共享** - 一个线程读，所有线程用
