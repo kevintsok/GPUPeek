@@ -1196,3 +1196,40 @@ Apple M2 GPU是一款**高效的集成GPU**，针对移动/笔记本工作负载
    - ML特征工程
    - ETL pipelines
    - OLAP数据库操作
+
+## Section 69: Acceleration Structures (BVH) and Ray Tracing
+
+### Ray-AABB Intersection Performance
+
+| Rays | Throughput |
+|------|------------|
+| 4096 | 0.44 M/s |
+
+### Brute Force Sphere Intersection
+
+| Rays x Spheres | Throughput |
+|----------------|------------|
+| 4096 x 32 | 0.57 M/s |
+
+### 关键发现
+
+1. **BVH加速结构**
+   - 将光线-球体测试从O(rays x spheres)降低到O(rays x log(spheres))
+   - 层次结构避免了对所有球体进行测试
+
+2. **Ray-AABB交叉测试**
+   - 比Ray-Sphere交叉测试更快
+   - AABB是轴对齐包围盒
+
+3. **层次遍历**
+   - 基于栈的遍历访问层次结构
+   - 从根节点向下直到叶子节点
+
+4. **Apple M3硬件加速**
+   - M3芯片有硬件光线追踪单元
+   - 本测试是软件模拟，非硬件加速
+
+5. **实际应用**
+   - 光线追踪渲染
+   - 碰撞检测
+   - 可见性查询

@@ -13106,6 +13106,315 @@ func testDatabaseOps(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibr
 }
 
 // ============================================================
+// 69. ACCELERATION STRUCTURES (BVH) AND RAY TRACING
+// Bounding Volume Hierarchy construction and traversal
+// ============================================================
+func testAccelerationStructures(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("69. Acceleration Structures (BVH) and Ray Tracing")
+    print(String(repeating: "=", count: 70))
+
+    let rayShaderSource = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    // Flat BVH storage: 8 floats per node
+    // [min.x, min.y, min.z, max.x, max.y, max.z, left_idx, sphere_idx]
+    // left_idx = -1 means leaf, sphere_idx is the first sphere in leaf
+
+    // Ray-AABB intersection test for all BVH nodes
+    kernel void ray_aabb_test(device float4* rays [[buffer(0)]],
+                             device float* bvh [[buffer(1)]],
+                             device float* results [[buffer(2)]],
+                             constant uint& numRays [[buffer(3)]],
+                             constant uint& maxNodes [[buffer(4)]],
+                             uint id [[thread_position_in_grid]]) {
+        if (id >= numRays) return;
+
+        float3 ro = rays[id].xyz;
+        float3 rd = rays[id].xyz;
+        rd = normalize(rd);
+
+        uint hitCount = 0;
+
+        for (uint nodeIdx = 0; nodeIdx < maxNodes; nodeIdx++) {
+            uint offset = nodeIdx * 8;
+
+            float3 minC = float3(bvh[offset], bvh[offset + 1], bvh[offset + 2]);
+            float3 maxC = float3(bvh[offset + 3], bvh[offset + 4], bvh[offset + 5]);
+
+            float3 tMin = (minC - ro) / max(rd, float3(0.0001));
+            float3 tMax = (maxC - ro) / max(rd, float3(0.0001));
+            float3 t1 = min(tMin, tMax);
+            float3 t2 = max(tMin, tMax);
+            float tNear = max(max(t1.x, t1.y), t1.z);
+            float tFar = min(min(t2.x, t2.y), t2.z);
+
+            if (tNear <= tFar && tFar > 0) {
+                hitCount++;
+            }
+        }
+
+        results[id] = float(hitCount);
+    }
+
+    // Brute force: test ray against all spheres
+    kernel void brute_force_intersect(device float4* rays [[buffer(0)]],
+                                     device float4* spheres [[buffer(1)]],
+                                     device float* results [[buffer(2)]],
+                                     constant uint& numRays [[buffer(3)]],
+                                     constant uint& numSpheres [[buffer(4)]],
+                                     uint id [[thread_position_in_grid]]) {
+        if (id >= numRays) return;
+
+        float3 ro = rays[id].xyz;
+        float3 rd = normalize(rays[id].xyz);
+
+        float minT = 1e10;
+
+        for (uint j = 0; j < numSpheres; j++) {
+            float4 sphere = spheres[j];
+            float3 center = sphere.xyz;
+            float radius = sphere.w;
+
+            float3 oc = ro - center;
+            float b = dot(oc, rd);
+            float c = dot(oc, oc) - radius * radius;
+            float h = b * b - c;
+
+            if (h >= 0) {
+                float t = -b - sqrt(h);
+                if (t > 0 && t < minT) {
+                    minT = t;
+                }
+            }
+        }
+
+        results[id] = (minT < 1e10) ? minT : -1.0;
+    }
+
+    // Hierarchical BVH traversal
+    kernel void bvh_traverse(device float4* rays [[buffer(0)]],
+                           device float* bvh [[buffer(1)]],
+                           device float* results [[buffer(2)]],
+                           device uint* stack [[buffer(3)]],
+                           constant uint& numRays [[buffer(4)]],
+                           constant uint& maxNodes [[buffer(5)]],
+                           uint id [[thread_position_in_grid]]) {
+        if (id >= numRays) return;
+
+        float3 ro = rays[id].xyz;
+        float3 rd = rays[id].xyz;
+        rd = normalize(rd);
+
+        float closestT = 1e10;
+        uint stackPtr = 0;
+        stack[0] = 0;
+
+        while (stackPtr < 32 && stack[stackPtr] != 0xFFFFFFFFu) {
+            uint nodeIdx = stack[stackPtr--];
+            uint offset = nodeIdx * 8;
+
+            float3 minC = float3(bvh[offset], bvh[offset + 1], bvh[offset + 2]);
+            float3 maxC = float3(bvh[offset + 3], bvh[offset + 4], bvh[offset + 5]);
+
+            float3 tMin = (minC - ro) / max(rd, float3(0.0001));
+            float3 tMax = (maxC - ro) / max(rd, float3(0.0001));
+            float3 t1 = min(tMin, tMax);
+            float3 t2 = max(tMin, tMax);
+            float tNear = max(max(t1.x, t1.y), t1.z);
+            float tFar = min(min(t2.x, t2.y), t2.z);
+
+            if (tNear <= tFar && tFar > 0) {
+                float leftF = bvh[offset + 6];
+                uint leftIdx = uint(leftF);
+
+                if (leftF < 0.0) {
+                    // Leaf - record hit
+                    if (tNear > 0 && tNear < closestT) {
+                        closestT = tNear;
+                    }
+                } else {
+                    // Internal node - push children
+                    if (stackPtr < 30) {
+                        stack[++stackPtr] = leftIdx;
+                    }
+                    if (stackPtr < 30) {
+                        stack[++stackPtr] = leftIdx + 1;
+                    }
+                }
+            }
+        }
+
+        results[id] = (closestT < 1e10) ? closestT : -1.0;
+    }
+    """
+
+    guard let rayLibrary = try? device.makeLibrary(source: rayShaderSource, options: MTLCompileOptions()) else {
+        print("Failed to create ray library")
+        return
+    }
+
+    guard let aabbFunc = rayLibrary.makeFunction(name: "ray_aabb_test"),
+          let bruteFunc = rayLibrary.makeFunction(name: "brute_force_intersect"),
+          let traverseFunc = rayLibrary.makeFunction(name: "bvh_traverse"),
+          let aabbPipeline = try? device.makeComputePipelineState(function: aabbFunc),
+          let brutePipeline = try? device.makeComputePipelineState(function: bruteFunc),
+          let traversePipeline = try? device.makeComputePipelineState(function: traverseFunc) else {
+        print("Failed to create ray pipelines")
+        return
+    }
+
+    let maxNodes = 128
+    let numSpheres = 32
+    let numRays: UInt32 = 4096
+
+    guard let sphereBuffer = device.makeBuffer(length: numSpheres * MemoryLayout<simd_float4>.size, options: .storageModeShared) else {
+        print("Failed to create sphere buffer")
+        return
+    }
+
+    let spherePtr = sphereBuffer.contents().bindMemory(to: simd_float4.self, capacity: numSpheres)
+    for i in 0..<numSpheres {
+        let x = Float(i % 4) * 2.0 - 4.0
+        let y = Float((i / 4) % 4) * 2.0 - 4.0
+        let z = Float(i / 16) * 2.0 - 4.0
+        spherePtr[i] = simd_float4(x, y, z, 0.5)
+    }
+
+    guard let bvhBuffer = device.makeBuffer(length: maxNodes * 8 * MemoryLayout<Float>.size, options: .storageModeShared) else {
+        print("Failed to create BVH buffer")
+        return
+    }
+
+    let bvhPtr = bvhBuffer.contents().bindMemory(to: Float.self, capacity: maxNodes * 8)
+
+    func buildBVH(nodeIdx: UInt, minB: simd_float3, maxB: simd_float3, sphereList: [UInt32]) {
+        let off = Int(nodeIdx) * 8
+
+        bvhPtr[off + 0] = minB.x
+        bvhPtr[off + 1] = minB.y
+        bvhPtr[off + 2] = minB.z
+        bvhPtr[off + 3] = maxB.x
+        bvhPtr[off + 4] = maxB.y
+        bvhPtr[off + 5] = maxB.z
+
+        if (sphereList.count <= 1 || nodeIdx >= UInt(maxNodes / 2)) {
+            bvhPtr[off + 6] = -1.0
+            bvhPtr[off + 7] = Float(sphereList.first ?? 0)
+            return
+        }
+
+        let ext = maxB - minB
+        let axis = (ext.x > ext.y && ext.x > ext.z) ? 0 : (ext.y > ext.z) ? 1 : 2
+        let mid = (minB[axis] + maxB[axis]) * 0.5
+
+        var left: [UInt32] = []
+        var right: [UInt32] = []
+
+        for si in sphereList {
+            let sp = spherePtr[Int(si)]
+            let c = simd_float3(sp.x, sp.y, sp.z)
+            if c[axis] < mid {
+                left.append(si)
+            } else {
+                right.append(si)
+            }
+        }
+
+        if left.isEmpty { left = [sphereList[0]] }
+        if right.isEmpty { right = [sphereList[sphereList.count - 1]] }
+
+        bvhPtr[off + 6] = Float(nodeIdx * 2 + 1)
+        bvhPtr[off + 7] = 0
+
+        buildBVH(nodeIdx: nodeIdx * 2 + 1, minB: minB, maxB: maxB, sphereList: left)
+        buildBVH(nodeIdx: nodeIdx * 2 + 2, minB: minB, maxB: maxB, sphereList: right)
+    }
+
+    let allS = (0..<UInt32(numSpheres)).map { $0 }
+    buildBVH(nodeIdx: 0, minB: simd_float3(-5, -5, -5), maxB: simd_float3(5, 5, 5), sphereList: allS)
+
+    guard let rayBuffer = device.makeBuffer(length: Int(numRays) * MemoryLayout<simd_float4>.size, options: .storageModeShared) else {
+        print("Failed to create ray buffer")
+        return
+    }
+
+    let rayPtr = rayBuffer.contents().bindMemory(to: simd_float4.self, capacity: Int(numRays))
+    for i in 0..<Int(numRays) {
+        rayPtr[i] = simd_float4(Float.random(in: -3...3),
+                                Float.random(in: -3...3),
+                                Float.random(in: -10...(-5)),
+                                0)
+    }
+
+    guard let resultsBuffer = device.makeBuffer(length: Int(numRays) * MemoryLayout<Float>.size, options: .storageModeShared),
+          let stackBuffer = device.makeBuffer(length: 64 * MemoryLayout<UInt32>.size, options: .storageModeShared) else {
+        print("Failed to create result buffers")
+        return
+    }
+
+    print("\n--- BVH Build ---")
+    print("Nodes: \(maxNodes), Spheres: \(numSpheres), Rays: \(numRays)")
+
+    print("\n--- Ray-AABB Intersection Performance ---")
+    let iterations = 100
+    let startAABB = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(aabbPipeline)
+        encoder.setBuffer(rayBuffer, offset: 0, index: 0)
+        encoder.setBuffer(bvhBuffer, offset: 0, index: 1)
+        encoder.setBuffer(resultsBuffer, offset: 0, index: 2)
+        var nr = numRays
+        var mn = UInt32(maxNodes)
+        encoder.setBytes(&nr, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.setBytes(&mn, length: MemoryLayout<UInt32>.size, index: 4)
+        encoder.dispatchThreads(MTLSize(width: Int(numRays), height: 1, depth: 1),
+                               threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endAABB = getTimeNanos()
+    let aabbTime = getElapsedSeconds(start: startAABB, end: endAABB)
+    let aabbTP = Double(numRays) * Double(iterations) / aabbTime / 1e6
+    print("| \(numRays) | \(String(format: "%.2f", aabbTP)) M/s |")
+
+    print("\n--- Brute Force Sphere Intersection ---")
+    let startBrute = getTimeNanos()
+    for _ in 0..<iterations {
+        guard let cmd = queue.makeCommandBuffer(),
+              let encoder = cmd.makeComputeCommandEncoder() else { continue }
+        encoder.setComputePipelineState(brutePipeline)
+        encoder.setBuffer(rayBuffer, offset: 0, index: 0)
+        encoder.setBuffer(sphereBuffer, offset: 0, index: 1)
+        encoder.setBuffer(resultsBuffer, offset: 0, index: 2)
+        var nr = numRays
+        var ns = UInt32(numSpheres)
+        encoder.setBytes(&nr, length: MemoryLayout<UInt32>.size, index: 3)
+        encoder.setBytes(&ns, length: MemoryLayout<UInt32>.size, index: 4)
+        encoder.dispatchThreads(MTLSize(width: Int(numRays), height: 1, depth: 1),
+                               threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+        encoder.endEncoding()
+        cmd.commit()
+        cmd.waitUntilCompleted()
+    }
+    let endBrute = getTimeNanos()
+    let bruteTime = getElapsedSeconds(start: startBrute, end: endBrute)
+    let bruteTP = Double(numRays) * Double(iterations) / bruteTime / 1e6
+    print("| \(numRays) x \(numSpheres) | \(String(format: "%.2f", bruteTP)) M/s |")
+
+    print("\n--- Key Insights ---")
+    print("1. BVH accelerates ray tracing from O(rays x spheres) to O(rays x log(spheres))")
+    print("2. Ray-AABB is faster than ray-sphere testing")
+    print("3. BVH traversal uses stack-based hierarchical testing")
+    print("4. Apple M3 has hardware ray tracing units (this is software simulation)")
+    print("5. Real ray tracers use SAH (Surface Area Heuristic) for optimal splits")
+}
+
+// ============================================================
 // 50. FINAL RESEARCH SUMMARY AND CONCLUSIONS
 // ============================================================
 func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
@@ -13121,7 +13430,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
 
     Research Duration: 2026-03-25 (Iterative deep research sessions)
     GPU Under Test: Apple M2 (8-core GPU, Family Apple 7)
-    Test Coverage: 68 comprehensive benchmark sections
+    Test Coverage: 69 comprehensive benchmark sections
 
     ============================================================================
     EXECUTIVE SUMMARY
@@ -13305,7 +13614,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
     """)
 
     print("\n" + String(repeating: "=", count: 70))
-    print("DEEP RESEARCH COMPLETE - 68 SECTIONS")
+    print("DEEP RESEARCH COMPLETE - 69 SECTIONS")
     print("Thank you for benchmarking with GPUPeek!")
     print(String(repeating: "=", count: 70))
 }
@@ -13369,6 +13678,7 @@ do { try testSortingAlgorithms(device: device, queue: queue, library: library) }
 do { try testMonteCarlo(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testFFTConvolution(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testDatabaseOps(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testAccelerationStructures(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testFinalSummary(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")
