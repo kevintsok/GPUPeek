@@ -2097,4 +2097,22 @@ Arithmetic Intensity = FLOPs / Memory Bytes
 3. **混合精度最优** - FP16计算 + FP32累加
 4. **FP64不支持** - Apple M2 Metal不支持双精度
 
+## Section 90: Texture Performance
+
+### Texture vs Buffer 性能
+
+| 访问方式 | 性能 | 特点 |
+|----------|------|------|
+| Texture Read | ~0.17 GOPS | 通过采样器硬件 |
+| Buffer Read | ~0.17 GOPS | 直接内存访问 |
+| Float4 Buffer | ~0.68 GOPS | 向量化4x加速 |
+
+### 关键发现
+
+1. **Texture vs Buffer无显著差异** - 在直接读取模式下性能相当
+2. **Texture缓存优化2D访问** - 适合图像处理
+3. **采样器增加灵活性** - 硬件支持滤波和坐标变换
+4. **Buffer向量化更快** - Float4读取比Texture快约4倍
+
+
 
