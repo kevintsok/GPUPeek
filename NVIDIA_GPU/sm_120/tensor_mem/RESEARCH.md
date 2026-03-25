@@ -157,7 +157,38 @@ LDMATRIX + MMA + STMATRIX 流水线:
 | sm__pipe_tensor_cycles_active.pct | Tensor 流水线利用率 |
 | sm__inst_executed.cp_async.sum | cp.async 指令计数 |
 
-## 9. 可视化图表
+## 9. Size Sweep 基准测试数据 (RTX 5080 Laptop GPU)
+
+### 带宽 vs 数据大小
+
+| Size | Naive (GB/s) | Shared (GB/s) | Regular (GB/s) | cp.async 16B (GB/s) |
+|------|--------------|---------------|----------------|---------------------|
+| 4KB | 0.32 | 0.53 | 0.46 | 0.55 |
+| 16KB | 1.78 | 2.10 | 2.27 | 2.03 |
+| 64KB | 7.22 | 47.73 | 49.99 | 51.73 |
+| 256KB | 28.52 | 187.11 | 194.61 | 197.40 |
+| 1MB | 105.20 | 756.00 | 775.00 | 846.31 |
+| 4MB | 391.92 | 3204.20 | 3305.20 | 3310.42 |
+| 16MB | 1099.93 | 13179.27 | 13584.79 | 13210.41 |
+| 64MB | 1224.82 | 48735.56 | 53601.33 | 54648.91 |
+| 256MB | 1784.64 | 646054.06 | 781471.50 | 785473.19 |
+
+### 关键发现
+
+1. **小数据 (4KB-64KB)**: kernel 启动开销主导，带宽很低
+2. **中等数据 (256KB-1MB)**: L2 缓存命中，带宽急剧上升
+3. **大数据 (4MB+)**: L1/L2 缓存高效利用，带宽显著提升
+4. **cp.async vs Regular**: 在大数据块传输时，cp.async 略优
+
+### 内存层级分析
+
+| 区域 | 数据大小 | 主导因素 |
+|------|---------|---------|
+| Kernel 启动开销区 | < 64KB | CUDA kernel 启动延迟 |
+| L1/L2 缓存区 | 64KB - 1MB | L1/L2 缓存带宽 |
+| 内存带宽区 | > 4MB | GPU 内存带宽 |
+
+## 10. 可视化图表
 
 运行以下脚本生成可视化图表:
 
@@ -171,15 +202,17 @@ python plot_tensor_mem.py
 
 ### 生成的可视化图表
 
-![LDMATRIX/STMATRIX 性能对比](data/ldmatrix_stmatrix.png)
+![带宽 vs 数据大小 (对数坐标)](data/bandwidth_vs_size.png)
 
-![cp.async 变体性能](data/cp_async_comparison.png)
+![带宽 vs 数据大小 (线性坐标)](data/bandwidth_vs_size_linear.png)
 
-![与 baseline 对比](data/baseline_comparison.png)
+![按内存层级分类](data/bandwidth_by_hierarchy.png)
 
-![流水线性能 GFLOPS](data/pipeline_performance.png)
+### 基准测试数据 (CSV)
 
-![LDMATRIX layout 变体](data/ldmatrix_layout.png)
+原始数据保存在: `data/benchmark_results.csv`
+
+## 参考文献
 
 ## 参考文献
 

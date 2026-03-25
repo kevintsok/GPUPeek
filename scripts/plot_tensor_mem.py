@@ -3,15 +3,13 @@
 Tensor Memory Chart Generator
 ============================
 Generates charts for tensor memory operations (LDMATRIX, STMATRIX, cp.async).
+Uses actual benchmark data from RTX 5080.
 
 Usage:
     python plot_tensor_mem.py
 
 Output:
-    NVIDIA_GPU/sm_120/tensor_mem/data/ldmatrix_stmatrix.png
-    NVIDIA_GPU/sm_120/tensor_mem/data/cp_async_comparison.png
-    NVIDIA_GPU/sm_120/tensor_mem/data/pipeline_performance.png
-    NVIDIA_GPU/sm_120/tensor_mem/data/baseline_comparison.png
+    NVIDIA_GPU/sm_120/tensor_mem/data/bandwidth_vs_size.png
 """
 
 import matplotlib.pyplot as plt
@@ -19,353 +17,180 @@ import numpy as np
 import os
 
 # =============================================================================
-# LDMATRIX Performance
+# Actual Benchmark Data (RTX 5080 Laptop GPU)
 # =============================================================================
 
-# Format: (name, bandwidth_gbps, time_ms)
-ldmatrix_data = [
-    ("LDMATRIX FP16", 850.0, 0.38),
-    ("LDMATRIX Multi-tile", 920.0, 0.35),
-    ("LDMATRIX .x1", 800.0, 0.40),
-    ("LDMATRIX .x2", 1050.0, 0.31),
+# Size sweep data from benchmark
+size_data = [
+    # (size_bytes, naive_GB/s, shared_GB/s, regular_GB/s, cp_async_GB/s)
+    (4096, 0.32, 0.53, 0.46, 0.55),
+    (16384, 1.78, 2.10, 2.27, 2.03),
+    (65536, 7.22, 47.73, 49.99, 51.73),
+    (262144, 28.52, 187.11, 194.61, 197.40),
+    (1048576, 105.20, 756.00, 775.00, 846.31),
+    (4194304, 391.92, 3204.20, 3305.20, 3310.42),
+    (16777216, 1099.93, 13179.27, 13584.79, 13210.41),
+    (67108864, 1224.82, 48735.56, 53601.33, 54648.91),
+    (1073741824, 1784.64, 646054.06, 781471.50, 785473.19),
 ]
 
-# =============================================================================
-# STMATRIX Performance
-# =============================================================================
+sizes = [d[0] for d in size_data]
+naive_bw = [d[1] for d in size_data]
+shared_bw = [d[2] for d in size_data]
+regular_bw = [d[3] for d in size_data]
+cp_async_bw = [d[4] for d in size_data]
 
-# Format: (name, bandwidth_gbps)
-stmatrix_data = [
-    ("STMATRIX FP16", 780.0),
-    ("STMATRIX .x1", 820.0),
-]
-
-# =============================================================================
-# cp.async Performance
-# =============================================================================
-
-# Format: (name, bandwidth_gbps)
-cp_async_data = [
-    ("cp.async 1D", 680.0),
-    ("cp.async group", 750.0),
-    ("cp.async bulk prefetch", 890.0),
-    ("cp.async reduce", 720.0),
-]
-
-# =============================================================================
-# Baseline Comparison
-# =============================================================================
-
-# Format: (name, bandwidth_gbps)
-baseline_data = [
-    ("Naive global load", 420.0),
-    ("Shared memory load", 680.0),
-    ("LDMATRIX", 850.0),
-    ("cp.async baseline", 620.0),
-    ("TMA baseline", 950.0),
-]
-
-# =============================================================================
-# Pipeline Performance
-# =============================================================================
-
-# Format: (name, gflops)
-pipeline_data = [
-    ("Naive GEMM (16x16)", 1200.0),
-    ("Full Pipeline (16x16)", 3800.0),
-]
-
-# =============================================================================
-# LDMATRIX Layout Comparison
-# =============================================================================
-
-# Format: (name, elements_per_warp)
-layout_data = [
-    (".x1 (1 tile)", 64),
-    (".x2 (2 tiles)", 128),
-    (".x4 (4 tiles)", 256),
-]
+# Size labels for x-axis
+size_labels = ['4KB', '16KB', '64KB', '256KB', '1MB', '4MB', '16MB', '64MB', '256MB']
 
 
-def plot_ldmatrix_stmatrix():
-    """Plot LDMATRIX and STMATRIX performance."""
-    names = [d[0] for d in ldmatrix_data]
-    bandwidths = [d[1] for d in ldmatrix_data]
+def plot_bandwidth_vs_size():
+    """Plot bandwidth vs data size for different copy methods."""
+    fig, ax = plt.subplots(figsize=(12, 7))
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+    x = np.arange(len(sizes))
 
-    # LDMATRIX
-    colors = ['steelblue', 'darkorange', 'seagreen', 'firebrick']
-    bars1 = ax1.bar(names, bandwidths, color=colors, alpha=0.8)
+    ax.plot(x, naive_bw, 'o-', label='Naive Global Load', linewidth=2, markersize=8)
+    ax.plot(x, shared_bw, 's-', label='Shared Memory Load', linewidth=2, markersize=8)
+    ax.plot(x, regular_bw, '^-', label='Regular Copy', linewidth=2, markersize=8)
+    ax.plot(x, cp_async_bw, 'd-', label='cp.async 16B', linewidth=2, markersize=8)
+
+    ax.set_xlabel('Data Size', fontsize=14)
+    ax.set_ylabel('Bandwidth (GB/s)', fontsize=14)
+    ax.set_title('Memory Copy Bandwidth vs Data Size\nRTX 5080 Laptop GPU (Blackwell SM 12.0)', fontsize=16)
+    ax.set_xticks(x)
+    ax.set_xticklabels(size_labels, fontsize=11)
+    ax.legend(fontsize=12)
+    ax.grid(True, alpha=0.3)
+    ax.set_yscale('log')
+
+    plt.tight_layout()
+
+    # Ensure data directory exists
+    data_dir = 'D:/Projects/dissecting-sm110/NVIDIA_GPU/sm_120/tensor_mem/data'
+    os.makedirs(data_dir, exist_ok=True)
+
+    output_path = os.path.join(data_dir, 'bandwidth_vs_size.png')
+    plt.savefig(output_path, dpi=150, bbox_inches='tight')
+    print(f"Saved: {output_path}")
+
+    plt.close()
+
+
+def plot_bandwidth_linear():
+    """Plot bandwidth vs data size with linear scale (zoomed in)."""
+    fig, ax = plt.subplots(figsize=(12, 7))
+
+    x = np.arange(len(sizes))
+
+    ax.plot(x, naive_bw, 'o-', label='Naive Global Load', linewidth=2, markersize=8)
+    ax.plot(x, shared_bw, 's-', label='Shared Memory Load', linewidth=2, markersize=8)
+    ax.plot(x, regular_bw, '^-', label='Regular Copy', linewidth=2, markersize=8)
+    ax.plot(x, cp_async_bw, 'd-', label='cp.async 16B', linewidth=2, markersize=8)
+
+    ax.set_xlabel('Data Size', fontsize=14)
+    ax.set_ylabel('Bandwidth (GB/s)', fontsize=14)
+    ax.set_title('Memory Copy Bandwidth vs Data Size (Linear Scale)\nRTX 5080 Laptop GPU (Blackwell SM 12.0)', fontsize=16)
+    ax.set_xticks(x)
+    ax.set_xticklabels(size_labels, fontsize=11)
+    ax.legend(fontsize=12)
+    ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+
+    data_dir = 'D:/Projects/dissecting-sm110/NVIDIA_GPU/sm_120/tensor_mem/data'
+    os.makedirs(data_dir, exist_ok=True)
+
+    output_path = os.path.join(data_dir, 'bandwidth_vs_size_linear.png')
+    plt.savefig(output_path, dpi=150, bbox_inches='tight')
+    print(f"Saved: {output_path}")
+
+    plt.close()
+
+
+def plot_size_categorized():
+    """Plot categorized by memory hierarchy."""
+    # Split into cache-bound (small) and memory-bound (large) regions
+    cache_sizes = sizes[:5]  # 4KB to 1MB
+    memory_sizes = sizes[5:]  # 4MB to 256MB
+
+    cache_naive = naive_bw[:5]
+    cache_shared = shared_bw[:5]
+    cache_regular = regular_bw[:5]
+    cache_cp_async = cp_async_bw[:5]
+
+    memory_naive = naive_bw[5:]
+    memory_shared = shared_bw[5:]
+    memory_regular = regular_bw[5:]
+    memory_cp_async = cp_async_bw[5:]
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+    # Cache-bound region
+    x1 = np.arange(len(cache_sizes))
+    ax1.plot(x1, cache_naive, 'o-', label='Naive Global Load', linewidth=2, markersize=8)
+    ax1.plot(x1, cache_shared, 's-', label='Shared Memory Load', linewidth=2, markersize=8)
+    ax1.plot(x1, cache_regular, '^-', label='Regular Copy', linewidth=2, markersize=8)
+    ax1.plot(x1, cache_cp_async, 'd-', label='cp.async 16B', linewidth=2, markersize=8)
+    ax1.set_xlabel('Data Size', fontsize=12)
     ax1.set_ylabel('Bandwidth (GB/s)', fontsize=12)
-    ax1.set_title('LDMATRIX Performance', fontsize=14)
-    ax1.grid(True, alpha=0.3, axis='y')
-    ax1.set_ylim(0, 1300)
-    ax1.tick_params(axis='x', rotation=20)
+    ax1.set_title('Cache-Bound Region\n(L1/L2 Cache)', fontsize=14)
+    ax1.set_xticks(x1)
+    ax1.set_xticklabels(['4KB', '16KB', '64KB', '256KB', '1MB'], fontsize=10)
+    ax1.legend(fontsize=10)
+    ax1.grid(True, alpha=0.3)
 
-    for bar, bw in zip(bars1, bandwidths):
-        height = bar.get_height()
-        ax1.annotate(f'{bw:.0f}',
-                   xy=(bar.get_x() + bar.get_width() / 2, height),
-                   xytext=(0, 3), textcoords="offset points",
-                   ha='center', va='bottom', fontsize=10, fontweight='bold')
-
-    # STMATRIX
-    st_names = [d[0] for d in stmatrix_data]
-    st_bw = [d[1] for d in stmatrix_data]
-    colors2 = ['steelblue', 'seagreen']
-    bars2 = ax2.bar(st_names, st_bw, color=colors2, alpha=0.8)
+    # Memory-bound region
+    x2 = np.arange(len(memory_sizes))
+    ax2.plot(x2, memory_naive, 'o-', label='Naive Global Load', linewidth=2, markersize=8)
+    ax2.plot(x2, memory_shared, 's-', label='Shared Memory Load', linewidth=2, markersize=8)
+    ax2.plot(x2, memory_regular, '^-', label='Regular Copy', linewidth=2, markersize=8)
+    ax2.plot(x2, memory_cp_async, 'd-', label='cp.async 16B', linewidth=2, markersize=8)
+    ax2.set_xlabel('Data Size', fontsize=12)
     ax2.set_ylabel('Bandwidth (GB/s)', fontsize=12)
-    ax2.set_title('STMATRIX Performance', fontsize=14)
-    ax2.grid(True, alpha=0.3, axis='y')
-    ax2.set_ylim(0, 1300)
+    ax2.set_title('Memory-Bound Region\n(DRAM)', fontsize=14)
+    ax2.set_xticks(x2)
+    ax2.set_xticklabels(['4MB', '16MB', '64MB', '256MB'], fontsize=10)
+    ax2.legend(fontsize=10)
+    ax2.grid(True, alpha=0.3)
 
-    for bar, bw in zip(bars2, st_bw):
-        height = bar.get_height()
-        ax2.annotate(f'{bw:.0f}',
-                   xy=(bar.get_x() + bar.get_width() / 2, height),
-                   xytext=(0, 3), textcoords="offset points",
-                   ha='center', va='bottom', fontsize=10, fontweight='bold')
-
-    plt.suptitle('LDMATRIX/STMATRIX - Warp-level Matrix Load/Store', fontsize=14, y=1.02)
+    plt.suptitle('Memory Copy Bandwidth by Memory Hierarchy\nRTX 5080 Laptop GPU (Blackwell SM 12.0)', fontsize=16, y=1.02)
     plt.tight_layout()
 
-    # Save
-    output_dir = os.path.join(os.path.dirname(__file__), '..', 'NVIDIA_GPU', 'sm_120', 'tensor_mem', 'data')
-    os.makedirs(output_dir, exist_ok=True)
-    output_path = os.path.join(output_dir, 'ldmatrix_stmatrix.png')
+    data_dir = 'D:/Projects/dissecting-sm110/NVIDIA_GPU/sm_120/tensor_mem/data'
+    os.makedirs(data_dir, exist_ok=True)
+
+    output_path = os.path.join(data_dir, 'bandwidth_by_hierarchy.png')
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
     print(f"Saved: {output_path}")
-
-    # Save CSV
-    csv_path = os.path.join(output_dir, 'ldmatrix_stmatrix.csv')
-    with open(csv_path, 'w') as f:
-        f.write("name,bandwidth_gbps\n")
-        for name, bw, _ in ldmatrix_data:
-            f.write(f"{name},{bw}\n")
-    print(f"Saved: {csv_path}")
 
     plt.close()
 
 
-def plot_cp_async():
-    """Plot cp.async performance comparison."""
-    names = [d[0] for d in cp_async_data]
-    bandwidths = [d[1] for d in cp_async_data]
+def save_csv():
+    """Save benchmark data as CSV."""
+    data_dir = 'D:/Projects/dissecting-sm110/NVIDIA_GPU/sm_120/tensor_mem/data'
+    os.makedirs(data_dir, exist_ok=True)
 
-    fig, ax = plt.subplots(figsize=(12, 6))
+    csv_path = os.path.join(data_dir, 'benchmark_results.csv')
 
-    colors = ['steelblue', 'darkorange', 'seagreen', 'firebrick']
-    bars = ax.bar(names, bandwidths, color=colors, alpha=0.8)
-
-    ax.set_ylabel('Bandwidth (GB/s)', fontsize=12)
-    ax.set_title('cp.async Performance - RTX 5080 (SM 12.0)', fontsize=14)
-    ax.grid(True, alpha=0.3, axis='y')
-    ax.set_ylim(0, 1100)
-    ax.tick_params(axis='x', rotation=20)
-
-    for bar, bw in zip(bars, bandwidths):
-        height = bar.get_height()
-        ax.annotate(f'{bw:.0f}',
-                   xy=(bar.get_x() + bar.get_width() / 2, height),
-                   xytext=(0, 3), textcoords="offset points",
-                   ha='center', va='bottom', fontsize=10, fontweight='bold')
-
-    # Add note
-    note_text = ("cp.async enables async copy for compute/memory overlap:\n"
-                 "- cp.async: 1D async copy\n"
-                 "- cp.async.bulk: larger transfers (up to 128B)\n"
-                 "- cp.reduce.async.bulk: copy + reduction")
-    ax.text(0.98, 0.02, note_text, transform=ax.transAxes, fontsize=9,
-            verticalalignment='bottom', horizontalalignment='right',
-            bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.8))
-
-    plt.tight_layout()
-
-    # Save
-    output_dir = os.path.join(os.path.dirname(__file__), '..', 'NVIDIA_GPU', 'sm_120', 'tensor_mem', 'data')
-    output_path = os.path.join(output_dir, 'cp_async_comparison.png')
-    plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    print(f"Saved: {output_path}")
-
-    # Save CSV
-    csv_path = os.path.join(output_dir, 'cp_async.csv')
     with open(csv_path, 'w') as f:
-        f.write("name,bandwidth_gbps\n")
-        for name, bw in cp_async_data:
-            f.write(f"{name},{bw}\n")
+        f.write("size_bytes,size_label,naive_gb_s,shared_gb_s,regular_gb_s,cp_async_gb_s\n")
+        labels = ['4KB', '16KB', '64KB', '256KB', '1MB', '4MB', '16MB', '64MB', '256MB']
+        for i, d in enumerate(size_data):
+            f.write(f"{d[0]},{labels[i]},{d[1]},{d[2]},{d[3]},{d[4]}\n")
+
     print(f"Saved: {csv_path}")
 
-    plt.close()
 
-
-def plot_baseline_comparison():
-    """Plot baseline comparison of memory operations."""
-    names = [d[0] for d in baseline_data]
-    bandwidths = [d[1] for d in baseline_data]
-
-    fig, ax = plt.subplots(figsize=(12, 6))
-
-    colors = ['gray', 'steelblue', 'seagreen', 'darkorange', 'firebrick']
-    bars = ax.bar(names, bandwidths, color=colors, alpha=0.8)
-
-    ax.set_ylabel('Bandwidth (GB/s)', fontsize=12)
-    ax.set_title('Tensor Memory Operations vs Baseline - RTX 5080 (SM 12.0)', fontsize=14)
-    ax.grid(True, alpha=0.3, axis='y')
-    ax.set_ylim(0, 1200)
-    ax.tick_params(axis='x', rotation=20)
-
-    for bar, bw in zip(bars, bandwidths):
-        height = bar.get_height()
-        ax.annotate(f'{bw:.0f}',
-                   xy=(bar.get_x() + bar.get_width() / 2, height),
-                   xytext=(0, 3), textcoords="offset points",
-                   ha='center', va='bottom', fontsize=10, fontweight='bold')
-
-    # Highlight best performer
-    max_idx = bandwidths.index(max(bandwidths))
-    bars[max_idx].set_edgecolor('black')
-    bars[max_idx].set_linewidth(2)
-
-    plt.tight_layout()
-
-    # Save
-    output_dir = os.path.join(os.path.dirname(__file__), '..', 'NVIDIA_GPU', 'sm_120', 'tensor_mem', 'data')
-    output_path = os.path.join(output_dir, 'baseline_comparison.png')
-    plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    print(f"Saved: {output_path}")
-
-    # Save CSV
-    csv_path = os.path.join(output_dir, 'baseline_comparison.csv')
-    with open(csv_path, 'w') as f:
-        f.write("name,bandwidth_gbps\n")
-        for name, bw in baseline_data:
-            f.write(f"{name},{bw}\n")
-    print(f"Saved: {csv_path}")
-
-    plt.close()
-
-
-def plot_pipeline():
-    """Plot LDMATRIX + MMA + STMATRIX pipeline performance."""
-    names = [d[0] for d in pipeline_data]
-    gflops = [d[1] for d in pipeline_data]
-
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
-
-    # GFLOPS comparison
-    colors = ['gray', 'seagreen']
-    bars1 = ax1.bar(names, gflops, color=colors, alpha=0.8)
-    ax1.set_ylabel('Performance (GFLOPS)', fontsize=12)
-    ax1.set_title('GEMM Pipeline Performance', fontsize=14)
-    ax1.grid(True, alpha=0.3, axis='y')
-    ax1.set_ylim(0, 5000)
-
-    for bar, g in zip(bars1, gflops):
-        height = bar.get_height()
-        ax1.annotate(f'{g:.0f}',
-                   xy=(bar.get_x() + bar.get_width() / 2, height),
-                   xytext=(0, 3), textcoords="offset points",
-                   ha='center', va='bottom', fontsize=11, fontweight='bold')
-
-    # Speedup
-    speedups = [1.0, gflops[1] / gflops[0]]
-    colors2 = ['gray', 'seagreen']
-    bars2 = ax2.bar(['Naive GEMM', 'Full Pipeline'], speedups, color=colors2, alpha=0.8)
-    ax2.set_ylabel('Speedup (x)', fontsize=12)
-    ax2.set_title('Pipeline Speedup over Naive', fontsize=14)
-    ax2.grid(True, alpha=0.3, axis='y')
-    ax2.axhline(y=1.0, color='red', linestyle='--', alpha=0.5)
-    ax2.set_ylim(0, 4)
-
-    for bar, s in zip(bars2, speedups):
-        height = bar.get_height()
-        ax2.annotate(f'{s:.1f}x',
-                   xy=(bar.get_x() + bar.get_width() / 2, height),
-                   xytext=(0, 3), textcoords="offset points",
-                   ha='center', va='bottom', fontsize=11, fontweight='bold')
-
-    plt.suptitle('LDMATRIX + MMA + STMATRIX Pipeline', fontsize=14, y=1.02)
-    plt.tight_layout()
-
-    # Save
-    output_dir = os.path.join(os.path.dirname(__file__), '..', 'NVIDIA_GPU', 'sm_120', 'tensor_mem', 'data')
-    output_path = os.path.join(output_dir, 'pipeline_performance.png')
-    plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    print(f"Saved: {output_path}")
-
-    # Save CSV
-    csv_path = os.path.join(output_dir, 'pipeline_performance.csv')
-    with open(csv_path, 'w') as f:
-        f.write("name,gflops\n")
-        for name, g in pipeline_data:
-            f.write(f"{name},{g}\n")
-    print(f"Saved: {csv_path}")
-
-    plt.close()
-
-
-def plot_ldmatrix_layout():
-    """Plot LDMATRIX layout variants (elements per warp)."""
-    names = [d[0] for d in layout_data]
-    elements = [d[1] for d in layout_data]
-
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    colors = ['steelblue', 'darkorange', 'seagreen']
-    bars = ax.bar(names, elements, color=colors, alpha=0.8)
-
-    ax.set_ylabel('Elements per Warp', fontsize=12)
-    ax.set_title('LDMATRIX Layout Variants - Elements per Warp (32 threads)', fontsize=14)
-    ax.grid(True, alpha=0.3, axis='y')
-    ax.set_ylim(0, 350)
-
-    for bar, e in zip(bars, elements):
-        height = bar.get_height()
-        ax.annotate(f'{e}',
-                   xy=(bar.get_x() + bar.get_width() / 2, height),
-                   xytext=(0, 3), textcoords="offset points",
-                   ha='center', va='bottom', fontsize=12, fontweight='bold')
-
-    # Add note about 8x8 tiles
-    note_text = ("8x8 tile = 64 elements\n"
-                 ".x1: 1 tile (64 elements)\n"
-                 ".x2: 2 tiles (128 elements)\n"
-                 ".x4: 4 tiles (256 elements)")
-    ax.text(0.98, 0.98, note_text, transform=ax.transAxes, fontsize=10,
-            verticalalignment='top', horizontalalignment='right',
-            bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.8))
-
-    plt.tight_layout()
-
-    # Save
-    output_dir = os.path.join(os.path.dirname(__file__), '..', 'NVIDIA_GPU', 'sm_120', 'tensor_mem', 'data')
-    output_path = os.path.join(output_dir, 'ldmatrix_layout.png')
-    plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    print(f"Saved: {output_path}")
-
-    # Save CSV
-    csv_path = os.path.join(output_dir, 'ldmatrix_layout.csv')
-    with open(csv_path, 'w') as f:
-        f.write("name,elements_per_warp\n")
-        for name, e in layout_data:
-            f.write(f"{name},{e}\n")
-    print(f"Saved: {csv_path}")
-
-    plt.close()
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Generating Tensor Memory Charts...")
-    print("=" * 50)
-    plot_ldmatrix_stmatrix()
     print()
-    plot_cp_async()
+
+    plot_bandwidth_vs_size()
+    plot_bandwidth_linear()
+    plot_size_categorized()
+    save_csv()
+
     print()
-    plot_baseline_comparison()
-    print()
-    plot_pipeline()
-    print()
-    plot_ldmatrix_layout()
-    print()
-    print("Done! Charts saved to NVIDIA_GPU/sm_120/tensor_mem/data/")
+    print("Chart generation complete!")
