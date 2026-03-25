@@ -215,36 +215,6 @@ static void runReduxPerfComparison(size_t N) {
     timer.stop();
     printf("  Redux conceptual: %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
 
-    // Test 10: TRUE redux.sync.add intrinsic
-    printf("\n[Test 7d] TRUE redux.sync.add (intrinsic):\n");
-    timer.start();
-    for (int i = 0; i < iterations; i++) {
-        reduxSyncAddKernel<<<numBlocks, blockSize>>>(d_input, d_output, N);
-    }
-    CHECK_CUDA(cudaDeviceSynchronize());
-    timer.stop();
-    printf("  redux.sync.add: %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
-
-    // Test 11: TRUE redux.sync.min intrinsic
-    printf("\n[Test 7e] TRUE redux.sync.min (intrinsic):\n");
-    timer.start();
-    for (int i = 0; i < iterations; i++) {
-        reduxSyncMinKernel<<<numBlocks, blockSize>>>(d_input, d_output, N);
-    }
-    CHECK_CUDA(cudaDeviceSynchronize());
-    timer.stop();
-    printf("  redux.sync.min: %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
-
-    // Test 12: TRUE redux.sync.max intrinsic
-    printf("\n[Test 7f] TRUE redux.sync.max (intrinsic):\n");
-    timer.start();
-    for (int i = 0; i < iterations; i++) {
-        reduxSyncMaxKernel<<<numBlocks, blockSize>>>(d_input, d_output, N);
-    }
-    CHECK_CUDA(cudaDeviceSynchronize());
-    timer.stop();
-    printf("  redux.sync.max: %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
-
     // Verify results
     float* h_output = nullptr;
     CHECK_CUDA(cudaMallocHost(&h_output, (N / 32) * sizeof(float)));
@@ -359,24 +329,29 @@ static void runVoteTests(size_t N) {
 }
 
 // =============================================================================
-// True Redux.sync Intrinsic Tests
+// True Redux.sync Intrinsic Tests (Integer versions)
+// =============================================================================
+//
+// NOTE: __reduce_*_sync intrinsics only support int/unsigned int types.
+// For float reductions, hardware uses shuffle-based approach internally.
+// This test uses integer types to demonstrate true redux.sync performance.
 // =============================================================================
 
 static void runTrueReduxSyncTests(size_t N) {
-    printf("\n--- True Redux.sync Intrinsic Tests ---\n");
+    printf("\n--- True Redux.sync Intrinsic Tests (INT) ---\n");
 
-    size_t bytes = N * sizeof(float);
-    float *d_input = nullptr;
-    float *d_output = nullptr;
+    size_t bytes = N * sizeof(int);
+    int *d_input = nullptr;
+    int *d_output = nullptr;
 
     CHECK_CUDA(cudaMalloc(&d_input, bytes));
-    CHECK_CUDA(cudaMalloc(&d_output, (N / 32) * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&d_output, (N / 32) * sizeof(int)));
 
-    // Initialize input
-    float* h_input = nullptr;
+    // Initialize input with sequential values
+    int* h_input = nullptr;
     CHECK_CUDA(cudaMallocHost(&h_input, bytes));
     for (size_t i = 0; i < N; i++) {
-        h_input[i] = static_cast<float>(i + 1);
+        h_input[i] = static_cast<int>(i + 1);
     }
     CHECK_CUDA(cudaMemcpy(d_input, h_input, bytes, cudaMemcpyHostToDevice));
     CHECK_CUDA(cudaFreeHost(h_input));
@@ -388,54 +363,53 @@ static void runTrueReduxSyncTests(size_t N) {
     GPUTimer timer;
     const int iterations = 100;
 
-    // Test: redux.sync.add
-    printf("\n[True redux.sync] ADD:\n");
+    // Test: redux.sync.add (INTEGER)
+    printf("\n[True redux.sync] INT ADD:\n");
     timer.start();
     for (int i = 0; i < iterations; i++) {
-        reduxSyncAddKernel<<<numBlocks, blockSize>>>(d_input, d_output, N);
+        reduxSyncAddIntKernel<<<numBlocks, blockSize>>>(d_input, d_output, N);
     }
     CHECK_CUDA(cudaDeviceSynchronize());
     timer.stop();
-    float redux_add_time = timer.elapsed_ms();
-    printf("  redux.sync.add: %.3f ms for %d iterations\n", redux_add_time, iterations);
+    printf("  redux.sync.add (int): %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
 
     // Verify
-    float* h_output = nullptr;
-    CHECK_CUDA(cudaMallocHost(&h_output, (N / 32) * sizeof(float)));
-    CHECK_CUDA(cudaMemcpy(h_output, d_output, (N / 32) * sizeof(float), cudaMemcpyDeviceToHost));
-    printf("  Sum verification: warp[0] = %.2f (expected: 496)\n", h_output[0]);
+    int* h_output = nullptr;
+    CHECK_CUDA(cudaMallocHost(&h_output, (N / 32) * sizeof(int)));
+    CHECK_CUDA(cudaMemcpy(h_output, d_output, (N / 32) * sizeof(int), cudaMemcpyDeviceToHost));
+    printf("  Sum verification: warp[0] = %d (expected: 496)\n", h_output[0]);
     CHECK_CUDA(cudaFreeHost(h_output));
 
-    // Test: redux.sync.min
-    printf("\n[True redux.sync] MIN:\n");
+    // Test: redux.sync.min (INTEGER)
+    printf("\n[True redux.sync] INT MIN:\n");
     timer.start();
     for (int i = 0; i < iterations; i++) {
-        reduxSyncMinKernel<<<numBlocks, blockSize>>>(d_input, d_output, N);
+        reduxSyncMinIntKernel<<<numBlocks, blockSize>>>(d_input, d_output, N);
     }
     CHECK_CUDA(cudaDeviceSynchronize());
     timer.stop();
-    printf("  redux.sync.min: %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
+    printf("  redux.sync.min (int): %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
 
     // Verify
-    CHECK_CUDA(cudaMallocHost(&h_output, (N / 32) * sizeof(float)));
-    CHECK_CUDA(cudaMemcpy(h_output, d_output, (N / 32) * sizeof(float), cudaMemcpyDeviceToHost));
-    printf("  Min verification: warp[0] = %.2f (expected: 1.0)\n", h_output[0]);
+    CHECK_CUDA(cudaMallocHost(&h_output, (N / 32) * sizeof(int)));
+    CHECK_CUDA(cudaMemcpy(h_output, d_output, (N / 32) * sizeof(int), cudaMemcpyDeviceToHost));
+    printf("  Min verification: warp[0] = %d (expected: 1)\n", h_output[0]);
     CHECK_CUDA(cudaFreeHost(h_output));
 
-    // Test: redux.sync.max
-    printf("\n[True redux.sync] MAX:\n");
+    // Test: redux.sync.max (INTEGER)
+    printf("\n[True redux.sync] INT MAX:\n");
     timer.start();
     for (int i = 0; i < iterations; i++) {
-        reduxSyncMaxKernel<<<numBlocks, blockSize>>>(d_input, d_output, N);
+        reduxSyncMaxIntKernel<<<numBlocks, blockSize>>>(d_input, d_output, N);
     }
     CHECK_CUDA(cudaDeviceSynchronize());
     timer.stop();
-    printf("  redux.sync.max: %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
+    printf("  redux.sync.max (int): %.3f ms for %d iterations\n", timer.elapsed_ms(), iterations);
 
     // Verify
-    CHECK_CUDA(cudaMallocHost(&h_output, (N / 32) * sizeof(float)));
-    CHECK_CUDA(cudaMemcpy(h_output, d_output, (N / 32) * sizeof(float), cudaMemcpyDeviceToHost));
-    printf("  Max verification: warp[0] = %.2f (expected: 32.0)\n", h_output[0]);
+    CHECK_CUDA(cudaMallocHost(&h_output, (N / 32) * sizeof(int)));
+    CHECK_CUDA(cudaMemcpy(h_output, d_output, (N / 32) * sizeof(int), cudaMemcpyDeviceToHost));
+    printf("  Max verification: warp[0] = %d (expected: 32)\n", h_output[0]);
     CHECK_CUDA(cudaFreeHost(h_output));
 
     CHECK_CUDA(cudaFree(d_input));
