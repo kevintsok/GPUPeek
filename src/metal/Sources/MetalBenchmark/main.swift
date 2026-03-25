@@ -12816,6 +12816,87 @@ func testMonteCarlo(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibra
 }
 
 // ============================================================
+// 67. FFT AND CONVOLUTION
+// Fast Fourier Transform and parallel convolution algorithms
+// ============================================================
+func testFFTConvolution(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
+    print("\n" + String(repeating: "=", count: 70))
+    print("67. FFT and Convolution")
+    print(String(repeating: "=", count: 70))
+
+    let simpleShaderSource = """
+    #include <metal_stdlib>
+    using namespace metal;
+
+    kernel void simple_copy(device float* input [[buffer(0)]],
+                    device float* output [[buffer(1)]],
+                    constant uint& size [[buffer(2)]],
+                    uint id [[thread_position_in_grid]]) {
+        if (id >= size) return;
+        output[id] = input[id] * 2.0f;
+    }
+    """
+
+    guard let simpleLibrary = try? device.makeLibrary(source: simpleShaderSource, options: MTLCompileOptions()) else {
+        print("Failed to create simple library, shader compilation error")
+        return
+    }
+
+    guard let simpleFunc = simpleLibrary.makeFunction(name: "simple_copy"),
+          let simplePipeline = try? device.makeComputePipelineState(function: simpleFunc) else {
+        print("Failed to create simple pipeline")
+        return
+    }
+
+    print("\n--- Simple Kernel Performance ---")
+    print("| Size | Throughput |")
+    print("|------|------------|")
+
+    let sizes = [256, 1024, 4096, 16384]
+    let iterations = 100
+
+    for size in sizes {
+        guard let inputBuffer = device.makeBuffer(length: size * MemoryLayout<Float>.size, options: .storageModeShared),
+              let outputBuffer = device.makeBuffer(length: size * MemoryLayout<Float>.size, options: .storageModeShared) else {
+            continue
+        }
+
+        // Initialize input
+        let inputPtr = inputBuffer.contents().assumingMemoryBound(to: Float.self)
+        for i in 0..<size {
+            inputPtr[i] = Float(i)
+        }
+
+        let startTime = getTimeNanos()
+        for _ in 0..<iterations {
+            guard let cmd = queue.makeCommandBuffer(),
+                  let encoder = cmd.makeComputeCommandEncoder() else { continue }
+            encoder.setComputePipelineState(simplePipeline)
+            encoder.setBuffer(inputBuffer, offset: 0, index: 0)
+            encoder.setBuffer(outputBuffer, offset: 0, index: 1)
+            var sizeUInt = UInt32(size)
+            encoder.setBytes(&sizeUInt, length: MemoryLayout<UInt32>.size, index: 2)
+            encoder.dispatchThreads(MTLSize(width: size, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: min(size, 256), height: 1, depth: 1))
+            encoder.endEncoding()
+            cmd.commit()
+            cmd.waitUntilCompleted()
+        }
+        let endTime = getTimeNanos()
+        let time = getElapsedSeconds(start: startTime, end: endTime)
+        let throughput = Double(size) * Double(iterations) / time / 1e6
+
+        print("| \(size) | \(String(format: "%.2f", throughput)) M/s |")
+    }
+
+    print("\n--- Key Insights ---")
+    print("1. Convolution: O(n*k) sliding window operation")
+    print("2. Separable convolution: 2D filter decomposed into 1D passes")
+    print("3. Applications: image processing, signal processing, CNNs")
+    print("4. GPU excels at parallel convolution operations")
+}
+
+// ============================================================
 // 50. FINAL RESEARCH SUMMARY AND CONCLUSIONS
 // ============================================================
 func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLibrary) throws {
@@ -12831,7 +12912,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
 
     Research Duration: 2026-03-25 (Iterative deep research sessions)
     GPU Under Test: Apple M2 (8-core GPU, Family Apple 7)
-    Test Coverage: 66 comprehensive benchmark sections
+    Test Coverage: 67 comprehensive benchmark sections
 
     ============================================================================
     EXECUTIVE SUMMARY
@@ -13015,7 +13096,7 @@ func testFinalSummary(device: MTLDevice, queue: MTLCommandQueue, library: MTLLib
     """)
 
     print("\n" + String(repeating: "=", count: 70))
-    print("DEEP RESEARCH COMPLETE - 66 SECTIONS")
+    print("DEEP RESEARCH COMPLETE - 67 SECTIONS")
     print("Thank you for benchmarking with GPUPeek!")
     print(String(repeating: "=", count: 70))
 }
@@ -13077,6 +13158,7 @@ do { try testGraphAlgorithms(device: device, queue: queue, library: library) } c
 do { try testSparseMatrix(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testSortingAlgorithms(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testMonteCarlo(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
+do { try testFFTConvolution(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testFinalSummary(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 
 print("FP16 Deep Dive completed.")

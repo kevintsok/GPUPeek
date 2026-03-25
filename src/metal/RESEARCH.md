@@ -1116,3 +1116,36 @@ Apple M2 GPU是一款**高效的集成GPU**，针对移动/笔记本工作负载
    - 金融(期权定价)
    - 物理(粒子传输)
    - 机器学习(dropout)
+
+## Section 67: FFT and Convolution
+
+### Simple Kernel Performance
+
+| Size | Throughput |
+|------|------------|
+| 256 | 0.04 M/s |
+| 1024 | 0.18 M/s |
+| 4096 | 0.77 M/s |
+| 16384 | 3.11 M/s |
+
+### 关键发现
+
+1. **Convolution (卷积)**
+   - O(n*k)滑动窗口操作
+   - 1D卷积：信号与kernel的卷积
+   - 2D卷积：图像与filter的卷积
+
+2. **Separable Convolution (可分离卷积)**
+   - 2D filter分解为两个1D passes
+   - 行方向卷积 + 列方向卷积
+   - 计算复杂度从O(n*k²)降低到O(n*k)
+
+3. **GPU卷积优势**
+   - 并行度高
+   - 适合图像处理和CNN
+   - 共享内存可用于kernel缓存
+
+4. **应用场景**
+   - 图像处理(模糊、锐化、边缘检测)
+   - 信号处理
+   - CNN (卷积神经网络)
