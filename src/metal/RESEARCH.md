@@ -2081,3 +2081,20 @@ Arithmetic Intensity = FLOPs / Memory Bytes
 2. **跨步访问低效** - stride越大，浪费缓存行越多
 3. **工作集决定缓存级别** - 超过L2(~4MB)会导致显著下降
 
+## Section 89: Precision Analysis
+
+### FP16 vs FP32 性能
+
+| 操作 | FP32 | FP16 | 加速比 |
+|------|------|------|--------|
+| 向量运算 | 0.17 GOPS | 0.19 GOPS | 1.12x |
+| GEMM (Tiled) | 4.88 GFLOPS | 14.98 GFLOPS | 3.07x |
+
+### 关键发现
+
+1. **FP16比FP32快约2倍** - 尤其在带宽受限操作
+2. **FP16精度有限** - 约3.3位十进制精度
+3. **混合精度最优** - FP16计算 + FP32累加
+4. **FP64不支持** - Apple M2 Metal不支持双精度
+
+
