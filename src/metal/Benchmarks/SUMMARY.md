@@ -2,11 +2,11 @@
 
 ## 概述
 
-本项目对Apple M2 GPU进行了深度研究，通过54个模块化基准测试分析其架构特性和性能特征。
+本项目对Apple M2 GPU进行了深度研究，通过55个模块化基准测试分析其架构特性和性能特征。
 
 **测试环境**: Apple M2 (MacBook Air), macOS Darwin 25.3.0, Swift 6.1.2, Metal Apple 7+
 
-## 专题目录 (54个模块化基准测试)
+## 专题目录 (55个模块化基准测试)
 
 ### Memory (内存)
 | 专题 | Benchmark | 关键发现 |
@@ -36,6 +36,7 @@
 | Atomics | [Link](Synchronization/Atomics/RESEARCH.md) | 原子操作比非原子慢10-50x |
 | Barriers | [Link](Synchronization/Barriers/RESEARCH.md) | Barrier固定开销~4.8μs |
 | WarpPrimitives | [Link](Synchronization/WarpPrimitives/RESEARCH.md) | SIMD primitives硬件原生支持 |
+| SharedEvent | [Link](Synchronization/SharedEvent/RESEARCH.md) | GPU-CPU事件同步机制 |
 
 ### Algorithms (算法)
 | 专题 | Benchmark | 关键发现 |
@@ -157,4 +158,4 @@
 
 *研究完成日期: 2026-03-26*
 *GPU: Apple M2 (Family Apple 7)*
-*测试专题: 54个模块化基准测试*
+*测试专题: 55个模块化基准测试*
