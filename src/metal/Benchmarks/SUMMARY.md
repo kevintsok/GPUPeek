@@ -26,6 +26,7 @@
 | Vectorization | [Link](Compute/Vectorization/RESEARCH.md) | Float4向量化提供4x加速 |
 | Convolution | [Link](Compute/Convolution/RESEARCH.md) | 卷积是CNN核心操作 |
 | FP64 | [Link](Compute/FP64/RESEARCH.md) | Apple M2不支持双精度 |
+| MixedPrecisionGEMM | [Link](Compute/MixedPrecisionGEMM/RESEARCH.md) | FP16输入+FP32累加=2x加速 |
 | InstructionMix | [Link](Compute/InstructionMix/RESEARCH.md) | FMA峰值12.33 GOPS |
 | BranchDivergence | [Link](Compute/BranchDivergence/RESEARCH.md) | SIMD组分支发散损失~30% |
 
@@ -151,4 +152,4 @@
 
 *研究完成日期: 2026-03-26*
 *GPU: Apple M2 (Family Apple 7)*
-*测试专题: 48个模块化基准测试*
+*测试专题: 49个模块化基准测试*
