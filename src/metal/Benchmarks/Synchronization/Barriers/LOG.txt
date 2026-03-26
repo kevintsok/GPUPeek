@@ -1,0 +1,6 @@
+=== 12. Memory Fence Impact ===
+
+No Fence:           0.12 GOPS
+Threadgroup Fence:  0.06 GOPS
+Fence Overhead:     1.8x
+

@@ -1,0 +1,9 @@
+=== 35. 3x3 Convolution Analysis ===
+
+3x3 Convolution (1M pixels, 1024x1024): 0.319 GOPS
+(GOPS = 9 FLOPs per pixel)
+
+--------------------------------------------------
+3x3 Convolution Analysis Complete
+--------------------------------------------------
+

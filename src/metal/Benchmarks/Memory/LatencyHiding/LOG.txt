@@ -1,0 +1,6 @@
+=== 3. Memory Latency Hiding Analysis ===
+
+Hidden (8x ops): 0.31 GOPS
+Exposed (1x op): 0.06 GOPS
+Hiding Factor:   5.1x
+

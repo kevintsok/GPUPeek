@@ -1,0 +1,13 @@
+=== 5. Atomic Operation Contention Analysis ===
+
+Low Contention:  0.023 GOPS
+High Contention: 0.022 GOPS
+Contention Cost: 1.1x
+
+--- Advanced Atomic Operations ---
+Fetch Add: 0.024 GOPS
+Fetch Min: 0.023 GOPS
+Fetch Max: 0.022 GOPS
+Compare-And-Swap: 0.009 GOPS
+Note: Metal only supports memory_order_relaxed for device atomics
+

@@ -1,0 +1,6 @@
+=== 16. Double Buffering Analysis ===
+
+Single Buffer: 0.019 GOPS (baseline)
+Double Buffer A: 0.018 GOPS
+Double Buffer B: 0.018 GOPS
+

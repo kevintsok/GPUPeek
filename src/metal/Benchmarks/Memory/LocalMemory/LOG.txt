@@ -1,0 +1,11 @@
+=== 39. Local Memory Copy Analysis ===
+
+Local Memory Copy (1M elements):
+  Baseline (global->global): 0.341 GB/s
+  Global->Shared->Global: 0.325 GB/s
+  Block-strided avg: 0.071 GB/s
+
+--------------------------------------------------
+Local Memory Copy Analysis Complete
+--------------------------------------------------
+

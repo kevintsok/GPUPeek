@@ -1,0 +1,9 @@
+=== 38. Matrix Square (A x A^T) Analysis ===
+
+Matrix Square A*A^T (512x512, K=512): 0.93 GOPS
+(2*M*M*K FLOPs per iteration)
+
+--------------------------------------------------
+Matrix Square Analysis Complete
+--------------------------------------------------
+

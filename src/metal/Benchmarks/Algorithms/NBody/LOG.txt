@@ -1,0 +1,9 @@
+=== 36. N-Body Simulation Analysis ===
+
+N-Body Simulation (1024 bodies): 0.8621 GOPS
+(O(n²) = 1048576 pairwise interactions)
+
+--------------------------------------------------
+N-Body Simulation Analysis Complete
+--------------------------------------------------
+

@@ -1,0 +1,6 @@
+=== 4. SIMD-Group Branch Divergence Analysis ===
+
+Converged:       0.06 GOPS
+Divergent:      0.07 GOPS
+Divergence Cost: 0.9x
+

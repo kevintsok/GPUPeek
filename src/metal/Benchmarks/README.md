@@ -43,21 +43,25 @@ Benchmarks/
 
 ## 运行基准测试
 
-每个benchmark都是独立的Swift模块，可以单独编译和运行：
+主程序位于 `../Sources/MetalBenchmark/main.swift`，包含所有84个基准测试专题：
 
 ```bash
-cd /path/to/metal
+cd ../Sources/MetalBenchmark
 swift build
 swift run MetalBenchmark
 ```
 
-## 研究报告
+## 研究报告与日志
 
-每个benchmark目录下都包含 `RESEARCH.md` 文件，记录了该专题的：
-- 测试环境和方法
-- 关键性能数据
-- 优化建议
-- 相关专题链接
+每个benchmark目录下包含：
+
+| 文件 | 说明 |
+|------|------|
+| `Benchmark.swift` | 独立基准测试代码 |
+| `RESEARCH.md` | 详细研究报告和分析 |
+| `LOG.txt` | 基准测试运行日志 |
+
+日志文件 `_logs/full_run.log` 包含完整的84个专题运行输出。
 
 ## 关键发现汇总
 

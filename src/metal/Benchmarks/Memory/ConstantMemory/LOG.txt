@@ -1,0 +1,6 @@
+=== 7. Constant Memory Broadcast Analysis ===
+
+Constant Broadcast (same value): 0.06 GOPS
+Constant Scattered (diff values): 0.06 GOPS
+Constant Cache Efficiency: 1.1x
+

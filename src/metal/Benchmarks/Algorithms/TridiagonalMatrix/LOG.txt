@@ -1,0 +1,4 @@
+=== 24. Tridiagonal Matrix Solver Analysis ===
+
+Tridiagonal Solver (Thomas, 1M): 0.028 GOPS
+

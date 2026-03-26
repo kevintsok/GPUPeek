@@ -1,0 +1,6 @@
+=== 25. Prefix Sum / Scan Analysis ===
+
+Scan Naive (sequential): 0.000 GOPS
+Scan Hillis-Steele (work-efficient): 0.215 GOPS
+Scan Kogge-Stone (latency-optimal): 0.236 GOPS
+

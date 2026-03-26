@@ -1,0 +1,22 @@
+=== 41. Comprehensive GEMM Performance Study ===
+
+
+----------------------------------------------------------------------
+GEMM Performance Comparison (GFLOPS)
+----------------------------------------------------------------------
+| Size | Naive    | Tiled    | Reg-4x4  | Speedup |
+|------|----------|----------|----------|---------|
+| 128   |     0.25 |     0.28 |     0.46 |  1.86x |
+| 256   |     0.96 |     0.47 |     1.33 |  1.38x |
+| 512   |     1.49 |     1.90 |     8.09 |  5.44x |
+| 1024   |     3.54 |     2.13 |    18.53 |  5.23x |
+----------------------------------------------------------------------
+Key Insights:
+- Register-blocked 4x4 achieves highest performance through vectorization
+- Tiled version benefits from shared memory caching for larger matrices
+- Naive implementation is memory-bound on Apple M2 unified architecture
+
+--------------------------------------------------
+Comprehensive GEMM Study Complete
+--------------------------------------------------
+

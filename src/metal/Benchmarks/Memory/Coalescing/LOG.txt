@@ -1,0 +1,6 @@
+=== 1. Memory Coalescing Analysis ===
+
+Coalesced Read:  0.59 GB/s
+Non-Coalesced:   0.11 GB/s
+Coalescing Gain: 5.5x
+

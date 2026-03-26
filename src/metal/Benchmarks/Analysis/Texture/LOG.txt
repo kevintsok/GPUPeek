@@ -1,0 +1,5 @@
+=== 11. Texture Memory Access Analysis ===
+
+Buffer Linear Read: 0.17 GOPS
+Texture2D Float Read: 0.17 GOPS
+

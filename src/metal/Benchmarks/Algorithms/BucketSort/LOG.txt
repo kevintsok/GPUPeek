@@ -1,0 +1,4 @@
+=== 26. Bucket Sort Analysis ===
+
+Bucket Sort (256K, 256 buckets): 0.006 GOPS
+

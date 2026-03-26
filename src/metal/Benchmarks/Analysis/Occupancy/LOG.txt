@@ -1,0 +1,7 @@
+=== 10. Occupancy Analysis (Shared Memory Tradeoff) ===
+
+Low Occupancy (32 thr, 1KB):     0.05 GOPS
+Med Occupancy (128 thr, 256B):   0.05 GOPS
+High Occupancy (512 thr, 64B):   0.05 GOPS
+Best Occupancy: High with 0.05 GOPS
+

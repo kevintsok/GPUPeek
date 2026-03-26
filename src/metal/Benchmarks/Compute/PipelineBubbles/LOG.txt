@@ -1,0 +1,7 @@
+=== 12. Pipeline Latency Analysis ===
+
+Dep Chain (add):     0.16 GOPS
+Dep Chain (mul):     0.16 GOPS
+Independent Ops:     0.16 GOPS
+Dep vs Indep Ratio:  0.98x
+

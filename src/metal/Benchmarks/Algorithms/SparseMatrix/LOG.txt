@@ -1,0 +1,4 @@
+=== 23. Sparse Matrix Vector Multiply (SpMV) Analysis ===
+
+SpMV CSR Naive (8192x8192, 3355443 nnz): 0.029 GOPS
+

@@ -1,0 +1,6 @@
+=== 9. Command Buffer Batching Analysis ===
+
+Batched (3 kernels/cmd): 0.11 GOPS
+Sequential (1 kernel/cmd): 0.08 GOPS
+Batch Speedup: 1.52x
+

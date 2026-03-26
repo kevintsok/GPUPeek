@@ -1,0 +1,6 @@
+=== 15. Indirect Addressing Analysis ===
+
+Gather (indexed read): 0.029 GOPS
+Scatter (indexed write): 0.033 GOPS
+Gather+Process: 0.032 GOPS
+

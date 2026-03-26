@@ -1,0 +1,10 @@
+=== 31. Warp-Level Reduction Analysis ===
+
+Warp Shuffle Reduce: 0.019 GOPS
+Warp Vote Any: 0.024 GOPS
+Warp Shuffle XOR: 0.024 GOPS
+
+============================================================
+Deep GPU Architecture Research Complete
+============================================================
+
