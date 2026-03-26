@@ -2,11 +2,11 @@
 
 ## 概述
 
-本项目对Apple M2 GPU进行了深度研究，通过36个模块化基准测试分析其架构特性和性能特征。
+本项目对Apple M2 GPU进行了深度研究，通过37个模块化基准测试分析其架构特性和性能特征。
 
 **测试环境**: Apple M2 (MacBook Air), macOS Darwin 25.3.0, Swift 6.1.2, Metal Apple 7+
 
-## 专题目录 (36个模块化基准测试)
+## 专题目录 (37个模块化基准测试)
 
 ### Memory (内存)
 | 专题 | Benchmark | 关键发现 |
@@ -49,6 +49,7 @@
 | HashAnalysis | [Link](Algorithms/HashAnalysis/RESEARCH.md) | 哈希表/BloomFilter分析 |
 | ImageProcessing | [Link](Algorithms/ImageProcessing/RESEARCH.md) | 卷积/边缘检测等图像操作 |
 | PriorityQueue | [Link](Algorithms/PriorityQueue/RESEARCH.md) | 堆/优先级队列操作 |
+| MonteCarlo | [Link](Algorithms/MonteCarlo/RESEARCH.md) | 随机数生成/蒙特卡洛模拟 |
 
 ### Analysis (分析)
 | 专题 | Benchmark | 关键发现 |
@@ -139,4 +140,4 @@
 
 *研究完成日期: 2026-03-26*
 *GPU: Apple M2 (Family Apple 7)*
-*测试专题: 36个模块化基准测试*
+*测试专题: 37个模块化基准测试*
