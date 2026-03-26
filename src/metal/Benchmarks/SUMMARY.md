@@ -2,11 +2,11 @@
 
 ## 概述
 
-本项目对Apple M2 GPU进行了深度研究，通过58个模块化基准测试分析其架构特性和性能特征。
+本项目对Apple M2 GPU进行了深度研究，通过59个模块化基准测试分析其架构特性和性能特征。
 
 **测试环境**: Apple M2 (MacBook Air), macOS Darwin 25.3.0, Swift 6.1.2, Metal Apple 7+
 
-## 专题目录 (58个模块化基准测试)
+## 专题目录 (59个模块化基准测试)
 
 ### Memory (内存)
 | 专题 | Benchmark | 关键发现 |
@@ -29,6 +29,7 @@
 | MixedPrecisionGEMM | [Link](Compute/MixedPrecisionGEMM/RESEARCH.md) | FP16输入+FP32累加=2x加速 |
 | InstructionMix | [Link](Compute/InstructionMix/RESEARCH.md) | FMA峰值12.33 GOPS |
 | BranchDivergence | [Link](Compute/BranchDivergence/RESEARCH.md) | SIMD组分支发散损失~30% |
+| TensorCoreEmulation | [Link](Compute/TensorCoreEmulation/RESEARCH.md) | WMMA软件模拟无原生Tensor Core |
 
 ### Synchronization (同步)
 | 专题 | Benchmark | 关键发现 |
@@ -161,4 +162,4 @@
 
 *研究完成日期: 2026-03-26*
 *GPU: Apple M2 (Family Apple 7)*
-*测试专题: 58个模块化基准测试*
+*测试专题: 59个模块化基准测试*
