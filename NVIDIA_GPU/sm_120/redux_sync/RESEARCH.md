@@ -77,21 +77,25 @@ Elements: 1048576 (4.00 MB)
 
 ![Redux 操作性能](data/redux_operations.png)
 
-### Basic Operations (100 iterations)
+### Basic Operations (100 iterations) - 重要澄清
 
-| Test | Method | Time (ms) |
-|------|--------|-----------|
-| Test 1 | Redux ADD (conceptual) | 2.147 |
-| Test 2 | Redux MIN | 1.858 |
-| Test 3 | Redux MAX | 1.731 |
+**警告**: Test 1-3 使用的是**顺序循环**实现，不是真正的 redux.sync 指令！
+
+| Test | Method | Time (ms) | 实际实现 |
+|------|--------|-----------|---------|
+| Test 1 | Redux ADD (sequential loop) | 2.147 | `for (i=warp_start+1; i<warp_end; i++) val += input[i]` |
+| Test 2 | Redux MIN (sequential loop) | 1.858 | `for (i=warp_start+1; i<warp_end; i++) val = min(val, input[i])` |
+| Test 3 | Redux MAX (sequential loop) | 1.731 | `for (i=warp_start+1; i<warp_end; i++) val = max(val, input[i])` |
+
+**真正的 redux.sync 测试见下方 Test 7d-7f**
 
 ### Bitwise Operations (100 iterations)
 
-| Test | Method | Time (ms) |
-|------|--------|-----------|
-| Test 4 | Redux AND | 1.829 |
-| Test 5 | Redux OR | 1.824 |
-| Test 6 | Redux XOR | 1.729 |
+| Test | Method | Time (ms) | 实际实现 |
+|------|--------|-----------|---------|
+| Test 4 | Redux AND (sequential loop) | 1.829 | Sequential for-loop |
+| Test 5 | Redux OR (sequential loop) | 1.824 | Sequential for-loop |
+| Test 6 | Redux XOR (sequential loop) | 1.729 | Sequential for-loop |
 
 ### Performance Comparison (100 iterations)
 
@@ -100,9 +104,9 @@ Elements: 1048576 (4.00 MB)
 | Test 7a | Shuffle Reduction (baseline) | 1.056 | 5次shuffle循环 |
 | Test 7b | Butterfly Reduction | 0.943 | 5次异或shuffle |
 | Test 7c | Redux Conceptual (simulated) | 1.040 | 单指令概念模拟 |
-| Test 7d | **TRUE redux.sync.add (int)** | 0.945 | 真正的 RRED 指令 |
-| Test 7e | **TRUE redux.sync.min (int)** | 0.991 | 真正的 RRED 指令 |
-| Test 7f | **TRUE redux.sync.max (int)** | 0.899 | 真正的 RRED 指令 |
+| Test 7d | **TRUE redux.sync.add (int)** | 0.945 | 真正的 RRED 指令，使用 `__reduce_add_sync()` |
+| Test 7e | **TRUE redux.sync.min (int)** | 0.991 | 真正的 RRED 指令，使用 `__reduce_min_sync()` |
+| Test 7f | **TRUE redux.sync.max (int)** | 0.899 | 真正的 RRED 指令，使用 `__reduce_max_sync()` |
 
 ![归约方法对比](data/reduction_methods.png)
 
@@ -136,13 +140,46 @@ Elements: 1048576 (4.00 MB)
 5. **Redux + Atomic 效率高**: Warp 归约后单次 atomic，远优于每线程独立 atomic
 6. **Masked redux**: `__reduce_add_sync(mask, val)` 支持部分线程活跃的归约
 
-## 9. 进一步研究建议
+## 9. 内核命名澄清
+
+本模块中有两类实现：
+
+### 顺序循环实现 (用于对比，不是真正的 redux.sync)
+```cuda
+// reduxAddKernel - 名字有误导性，实际是顺序循环
+template <typename T>
+__global__ void reduxAddKernel(const T* input, T* output, size_t N) {
+    T val = input[warp_start];
+    // 顺序循环 - 不是 redux.sync!
+    for (int i = warp_start + 1; i < warp_end; i++) {
+        val = val + input[i];
+    }
+    output[wid] = val;
+}
+```
+
+### 真正的 Redux.sync 实现
+```cuda
+// reduxSyncAddIntKernel - 使用真正的 redux.sync 指令
+__global__ void reduxSyncAddIntKernel(const int* input, int* output, size_t N) {
+    int val = input[warp_start + lane];
+    // 真正的 redux.sync - 单条指令！
+    val = __reduce_add_sync(0xffffffff, val);
+    if (lane == 0) {
+        output[wid] = val;
+    }
+}
+```
+
+**重要**: `__reduce_*_sync()` intrinsic 仅支持 int/unsigned int 类型，不支持 float！
+
+## 10. 进一步研究建议
 
 - 使用 NCU 分析真实的 redux.sync 指令数
 - 对比不同 block size 对归约效率的影响
 - 分析 warp 分歧对 redux.sync 的影响
 
-## 10. 图表生成
+## 11. 图表生成
 
 运行以下脚本生成可视化图表:
 
