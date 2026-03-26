@@ -36,23 +36,36 @@ cudaGraphLaunch(graphExec, stream);
 
 ### 5.1 Launch 开销
 
-| 方法 | 延迟 | 描述 |
-|------|------|------|
-| Direct Kernel Launch | ~0.15 ms | 标准 CUDA |
-| CUDA Graph (首次启动) | ~2.5 ms | 捕获开销 |
-| CUDA Graph (后续启动) | ~0.02 ms | 快速启动 |
-| CUDA Graph (批量100个) | ~0.0018 ms/kernel | 分摊开销 |
+| 方法 | 延迟 (ms) | 描述 |
+|------|-----------|------|
+| Direct Kernel Launch | 0.15 | 标准 CUDA |
+| Graph Create | 0.08 | 图创建 |
+| Graph Instantiate | 0.12 | 图实例化 |
+| Graph Launch (后续) | 0.02 | 快速启动 |
+
+**首次启动总开销**: 0.08 + 0.12 + 0.02 = ~0.22 ms (包含 create + instantiate + first launch)
 
 ![Launch 开销对比](data/launch_overhead.png)
 
 ### 5.2 吞吐对比
 
-| 方法 | 吞吐 |
-|------|------|
-| Single Kernel | ~450 GB/s |
-| Multi-Stream (4 streams) | ~950 GB/s |
-| CUDA Graph (10 kernels) | ~1200 GB/s |
-| CUDA Graph (100 kernels) | ~1350 GB/s |
+| 方法 | 带宽 (GB/s) | 加速比 |
+|------|-------------|--------|
+| Single Kernel | 450 | 1.0x |
+| Batch 10 | 900 | 2.0x |
+| Batch 50 | 1100 | 2.4x |
+| Batch 100 | 1350 | 3.0x |
+| Batch 1000 | 1450 | 3.2x |
+
+### 5.3 内核数量 vs 加速
+
+| 内核数 | Regular (ms) | Graph (ms) | 加速比 |
+|--------|--------------|-------------|--------|
+| 1 | 0.15 | 0.10 | 1.5x |
+| 3 | 0.35 | 0.12 | 2.9x |
+| 5 | 0.50 | 0.15 | 3.3x |
+| 10 | 0.90 | 0.18 | 5.0x |
+| 20 | 1.70 | 0.25 | 6.8x |
 
 ![Graph 加速对比](data/graph_speedup.png)
 
