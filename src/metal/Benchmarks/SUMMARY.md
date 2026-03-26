@@ -2,11 +2,11 @@
 
 ## 概述
 
-本项目对Apple M2 GPU进行了深度研究，通过41个模块化基准测试分析其架构特性和性能特征。
+本项目对Apple M2 GPU进行了深度研究，通过42个模块化基准测试分析其架构特性和性能特征。
 
 **测试环境**: Apple M2 (MacBook Air), macOS Darwin 25.3.0, Swift 6.1.2, Metal Apple 7+
 
-## 专题目录 (41个模块化基准测试)
+## 专题目录 (42个模块化基准测试)
 
 ### Memory (内存)
 | 专题 | Benchmark | 关键发现 |
@@ -54,6 +54,7 @@
 | DCT | [Link](Algorithms/DCT/RESEARCH.md) | 离散余弦变换/JPEG压缩 |
 | AccelerationStructures | [Link](Algorithms/AccelerationStructures/RESEARCH.md) | BVH/光线追踪加速结构 |
 | NBody | [Link](Algorithms/NBody/RESEARCH.md) | O(n²)引力模拟/分子动力学 |
+| MatrixSquare | [Link](Algorithms/MatrixSquare/RESEARCH.md) | A×A^T非连续内存访问 |
 
 ### Analysis (分析)
 | 专题 | Benchmark | 关键发现 |
@@ -144,4 +145,4 @@
 
 *研究完成日期: 2026-03-26*
 *GPU: Apple M2 (Family Apple 7)*
-*测试专题: 41个模块化基准测试*
+*测试专题: 42个模块化基准测试*
