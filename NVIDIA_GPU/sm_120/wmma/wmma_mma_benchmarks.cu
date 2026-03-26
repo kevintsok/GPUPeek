@@ -84,7 +84,7 @@ static void runTotalCyclesTest() {
     CHECK_CUDA(cudaMemcpy(d_a, h_a, M * K * sizeof(__half), cudaMemcpyHostToDevice));
     CHECK_CUDA(cudaMemcpy(d_b, h_b, K * N * sizeof(__half), cudaMemcpyHostToDevice));
 
-    dim3 gridDim(N / 16, M / 16);
+    dim3 gridDim(M / 16, N / 16);
     dim3 blockDim(32);
 
     // Warmup
@@ -166,7 +166,7 @@ static void runIndividualCyclesTest() {
     CHECK_CUDA(cudaMemcpy(d_a, h_a, M * K * sizeof(__half), cudaMemcpyHostToDevice));
     CHECK_CUDA(cudaMemcpy(d_b, h_b, K * N * sizeof(__half), cudaMemcpyHostToDevice));
 
-    dim3 gridDim(N / 16, M / 16);
+    dim3 gridDim(M / 16, N / 16);
     dim3 blockDim(32);
 
     // Measure load A cycles
@@ -295,7 +295,7 @@ static void runThroughputTest() {
     CHECK_CUDA(cudaMemcpy(d_a, h_a, M * K * sizeof(__half), cudaMemcpyHostToDevice));
     CHECK_CUDA(cudaMemcpy(d_b, h_b, K * N * sizeof(__half), cudaMemcpyHostToDevice));
 
-    dim3 gridDim(N / 16, M / 16);
+    dim3 gridDim(M / 16, N / 16);
     dim3 blockDim(32);
 
     // Warmup

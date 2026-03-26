@@ -17,9 +17,37 @@ cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
 # 3. 编译
 cmake --build . --config Release
 
-# 4. 运行
-./gpupeek_wmma [元素数量]
+# 4. 运行 - 默认研究基准
+./gpupeek_wmma
+
+# 5. 运行 - 性能基准（正确的张量核心利用率）
+./gpupeek_wmma --perf
+
+# 6. 运行 - 尺寸扫描（256到4096矩阵）
+./gpupeek_wmma --size-sweep
 ```
+
+## 运行模式
+
+| 模式 | 说明 | 预期结果 |
+|------|------|----------|
+| 默认 | 研究基准 | ~257 GFLOPS（问题！） |
+| `--perf` | 性能基准 | 50-89 TFLOPS（张量核心饱和） |
+| `--size-sweep` | 尺寸扫描 | 各尺寸性能对比 |
+
+## 重要发现
+
+**原始基准测试的问题（~257 GFLOPS）：**
+
+1. **网格维度错误**：`dim3 gridDim(N/16, M/16)` 但内核使用 `blockIdx.x` 作为行索引
+2. **矩阵太小**：256x256 只启动 256 个 warp，RTX 5080 可同时运行 960 个
+3. **每块只有1个warp**：Occupancy 低，张量核心未充分利用
+
+**性能计算：**
+```
+256 warps × 512 FLOPS/cycle × 1.9 GHz ≈ 247 GFLOPS
+```
+这实际上是 CUDA 核心性能，不是张量核心！
 
 ## 文件
 
