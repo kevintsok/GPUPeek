@@ -2,11 +2,11 @@
 
 ## 概述
 
-本项目对Apple M2 GPU进行了深度研究，通过55个模块化基准测试分析其架构特性和性能特征。
+本项目对Apple M2 GPU进行了深度研究，通过56个模块化基准测试分析其架构特性和性能特征。
 
 **测试环境**: Apple M2 (MacBook Air), macOS Darwin 25.3.0, Swift 6.1.2, Metal Apple 7+
 
-## 专题目录 (55个模块化基准测试)
+## 专题目录 (56个模块化基准测试)
 
 ### Memory (内存)
 | 专题 | Benchmark | 关键发现 |
@@ -86,6 +86,7 @@
 | DoubleBuffer | [Link](Optimization/DoubleBuffer/RESEARCH.md) | 异步执行才能实现真正重叠 |
 | Roofline | [Link](Optimization/Roofline/RESEARCH.md) | M2大多处于内存受限 |
 | AsyncOperations | [Link](Optimization/AsyncOperations/RESEARCH.md) | 异步提交实现CPU/GPU重叠 |
+| MultiQueue | [Link](Optimization/MultiQueue/RESEARCH.md) | 多队列并行执行内核 |
 
 ## 关键发现汇总
 
@@ -158,4 +159,4 @@
 
 *研究完成日期: 2026-03-26*
 *GPU: Apple M2 (Family Apple 7)*
-*测试专题: 55个模块化基准测试*
+*测试专题: 56个模块化基准测试*
