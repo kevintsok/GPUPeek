@@ -17,14 +17,17 @@ import os
 
 # Redux.sync Benchmark Results (RTX 5080, SM 12.0)
 # From redux_sync_research_benchmarks.cu run
-# Format: (operation, time_ms_100iter)
+# Format: (operation, time_ms_100iter, implementation)
 redux_benchmark_data = [
-    ("Redux ADD", 2.147),
-    ("Redux MIN", 1.858),
-    ("Redux MAX", 1.731),
-    ("Redux AND", 1.829),
-    ("Redux OR", 1.824),
-    ("Redux XOR", 1.729),
+    ("Redux ADD (sequential)", 2.147, "Sequential for-loop"),
+    ("Redux MIN (sequential)", 1.858, "Sequential for-loop"),
+    ("Redux MAX (sequential)", 1.731, "Sequential for-loop"),
+    ("Redux AND (sequential)", 1.829, "Sequential for-loop"),
+    ("Redux OR (sequential)", 1.824, "Sequential for-loop"),
+    ("Redux XOR (sequential)", 1.729, "Sequential for-loop"),
+    ("TRUE redux.sync.add", 0.945, "__reduce_add_sync()"),
+    ("TRUE redux.sync.min", 0.991, "__reduce_min_sync()"),
+    ("TRUE redux.sync.max", 0.899, "__reduce_max_sync()"),
 ]
 
 # Reduction Method Comparison
@@ -32,7 +35,7 @@ redux_benchmark_data = [
 reduction_method_data = [
     ("Shuffle\nReduction", 1.074),
     ("Butterfly\nReduction", 1.024),
-    ("Redux\nConceptual", 0.961),
+    ("TRUE redux.sync", 0.899),
 ]
 
 # Warp Vote Operations
@@ -48,15 +51,23 @@ def plot_redux_operations():
     operations = [d[0] for d in redux_benchmark_data]
     times = [d[1] for d in redux_benchmark_data]
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(14, 6))
 
-    colors = ['steelblue', 'darkorange', 'seagreen', 'firebrick', 'purple', 'goldenrod']
+    # Color sequential operations differently from TRUE redux.sync
+    colors = []
+    for op in operations:
+        if "TRUE redux" in op:
+            colors.append('darkgreen')
+        else:
+            colors.append('steelblue')
+
     bars = ax.bar(operations, times, color=colors, alpha=0.8)
 
     ax.set_xlabel('Redux.sync Operation', fontsize=12)
     ax.set_ylabel('Time (ms / 100 iterations)', fontsize=12)
-    ax.set_title('Redux.sync Operations Performance - RTX 5080 (SM 12.0)', fontsize=14)
+    ax.set_title('Redux.sync Operations Performance - RTX 5080 (SM 12.0)\n(Green = TRUE hardware redux.sync)', fontsize=14)
     ax.grid(True, alpha=0.3, axis='y')
+    ax.tick_params(axis='x', rotation=45)
 
     # Add value labels
     for bar, t in zip(bars, times):
@@ -64,7 +75,17 @@ def plot_redux_operations():
         ax.annotate(f'{t:.3f}',
                    xy=(bar.get_x() + bar.get_width() / 2, height),
                    xytext=(0, 3), textcoords="offset points",
-                   ha='center', va='bottom', fontsize=10)
+                   ha='center', va='bottom', fontsize=9)
+
+    # Add speedup annotation
+    seq_time = times[0]  # Redux ADD sequential = 2.147
+    true_time = times[6]  # TRUE redux.sync.add = 0.945
+    speedup = seq_time / true_time
+    ax.annotate(f'2.3x faster\n(TRUE redux.sync)',
+               xy=(6, true_time), xytext=(7, true_time + 0.5),
+               fontsize=11, color='darkgreen', fontweight='bold',
+               arrowprops=dict(arrowstyle='->', color='darkgreen', lw=2),
+               bbox=dict(boxstyle='round', facecolor='lightgreen', alpha=0.5))
 
     plt.tight_layout()
 
@@ -75,12 +96,12 @@ def plot_redux_operations():
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
     print(f"Saved: {output_path}")
 
-    # Save CSV
+    # Save CSV with implementation info
     csv_path = os.path.join(output_dir, 'redux_benchmark.csv')
     with open(csv_path, 'w') as f:
-        f.write("operation,time_ms_100iter\n")
-        for op, t in redux_benchmark_data:
-            f.write(f"{op},{t}\n")
+        f.write("operation,time_ms_100iter,implementation\n")
+        for op, t, impl in redux_benchmark_data:
+            f.write(f"{op},{t},{impl}\n")
     print(f"Saved: {csv_path}")
 
     plt.close()
@@ -92,6 +113,7 @@ def plot_reduction_methods():
 
     fig, ax = plt.subplots(figsize=(8, 6))
 
+    # TRUE redux.sync is the fastest - highlight it
     colors = ['steelblue', 'darkorange', 'seagreen']
     bars = ax.bar(methods, times, color=colors, alpha=0.8)
 
@@ -110,11 +132,11 @@ def plot_reduction_methods():
 
     # Add speedup annotation
     speedup = times[0] / times[2]
-    ax.annotate(f'Redux Conceptual\n{speedup:.1f}x faster\nthan Shuffle',
+    ax.annotate(f'TRUE redux.sync\n{speedup:.1f}x faster\nthan Shuffle',
                xy=(2, times[2]), xytext=(1.5, times[0]),
-               fontsize=10,
+               fontsize=10, color='darkgreen', fontweight='bold',
                arrowprops=dict(arrowstyle='->', color='green', lw=2),
-               bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.8))
+               bbox=dict(boxstyle='round', facecolor='lightgreen', alpha=0.8))
 
     plt.tight_layout()
 
@@ -179,8 +201,8 @@ def plot_warp_vote():
 
 def plot_redux_speedup():
     """Plot speedup comparison of reduction methods."""
-    methods = ['Shuffle\nReduction', 'Butterfly\nReduction', 'Redux\nConceptual']
-    times = [1.074, 1.024, 0.961]
+    methods = ['Shuffle\nReduction', 'Butterfly\nReduction', 'TRUE redux.sync']
+    times = [1.074, 1.024, 0.899]  # Updated with TRUE redux.sync
     baseline = times[0]
     speedups = [baseline / t for t in times]
 

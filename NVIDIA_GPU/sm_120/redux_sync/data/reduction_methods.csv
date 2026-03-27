@@ -1,4 +1,4 @@
 method,time_ms_100iter
 Shuffle Reduction,1.074
 Butterfly Reduction,1.024
-Redux Conceptual,0.961
+TRUE redux.sync,0.899
