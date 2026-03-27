@@ -1,9 +1,5 @@
 level,bandwidth_gbps,description
-Warp-Level,850.0,Low contention
-(32 values ¡ú 1 atomic)
-Block-Level,620.0,Medium contention
-(256 values ¡ú 1 atomic)
-Grid-Level (Direct),180.0,High contention
-(All threads ¡ú 1 atomic)
-Grid-Level (Reduced),720.0,Low contention
-(Block reduce + 1 atomic)
+Warp-Level,850.0,Low contention (32 values -> 1 atomic)
+Block-Level,620.0,Medium contention (256 values -> 1 atomic)
+Grid-Level (Direct),180.0,High contention (all threads -> 1 atomic)
+Grid-Level (Reduced),720.0,Low contention (block reduce + 1 atomic)
