@@ -9,6 +9,18 @@
 > - Atomic Operations: [`../atomic/`](../atomic/RESEARCH.md)
 > - Memory: [`../memory/`](../memory/RESEARCH.md)
 > - Barrier: [`../barrier/`](../barrier/RESEARCH.md)
+> - CUDA Core: [`../cuda_core/`](../cuda_core/RESEARCH.md)
+> - WMMA/Tensor Core: [`../wmma/`](../wmma/RESEARCH.md)
+> - Redux.sync: [`../redux_sync/`](../redux_sync/RESEARCH.md)
+> - Cooperative Groups: [`../cooperative_groups/`](../cooperative_groups/RESEARCH.md)
+> - CUDA Graph: [`../cuda_graph/`](../cuda_graph/RESEARCH.md)
+> - Warp Specialization: [`../warp_specialize/`](../warp_specialize/RESEARCH.md)
+> - FP8/FP4/FP6: [`../fp8/`](../fp8/RESEARCH.md), [`../fp4_fp6/`](../fp4_fp6/RESEARCH.md)
+> - DP4A: [`../dp4a/`](../dp4a/RESEARCH.md)
+> - MBarrier: [`../mbarrier/`](../mbarrier/RESEARCH.md)
+> - Multi-Stream: [`../multi_stream/`](../multi_stream/RESEARCH.md)
+> - Unified Memory: [`../unified_memory/`](../unified_memory/RESEARCH.md)
+> - Deep Research (L2/TMA): [`../deep/`](../deep/RESEARCH.md)
 
 ## 1. Occupancy 分析
 
@@ -61,13 +73,13 @@
 | Stride | Bank Conflict | 相对带宽 |
 |--------|---------------|----------|
 | 1 | 无 | 100% |
-| 2 | 中 | ~101% |
-| 4 | 高 | ~67% |
-| 8 | 严重 | ~39% |
+| 2 | 无 | ~101% |
+| 4 | 中 | ~67% |
+| 8 | 高 | ~39% |
 | 16 | 严重 | ~39% |
 | 32 | **最大** | ~36% |
 
-**实测发现**: Stride=32 时性能降至 36.5%，证实最大冲突。
+**实测发现**: Stride=32 时性能降至 36.5%，证实最大冲突。Stride=2 无冲突因为连续地址访问不同 bank。
 
 ### 避免冲突
 
@@ -86,10 +98,10 @@
 
 | 分支模式 | 开销 |
 |----------|------|
-| 无分歧 | 基准 (746-761 GB/s) |
-| 高分歧 | ~8% 减速 (796-810 GB/s) |
+| 无分歧 | 基准 (~810 GB/s) |
+| 高分歧 | ~8% 减速 (~746 GB/s) |
 
-**实测发现**: 对于简单 kernel，GPU 可以较好地处理分歧，开销不明显。
+**实测发现**: 对于简单 kernel，GPU 可以较好地处理分歧，开销不明显（约8%）。
 
 ### 原理
 当 warp 内线程走不同分支时，GPU 串行执行各分支，导致利用率下降。
