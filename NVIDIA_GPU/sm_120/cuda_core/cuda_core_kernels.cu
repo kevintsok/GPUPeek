@@ -121,6 +121,8 @@ __global__ void independentFMAThroughputKernel(float* __restrict__ data, size_t 
     size_t stride = gridDim.x * blockDim.x;
 
     for (size_t i = idx; i < N; i += stride) {
+        // Bounds check to prevent illegal memory access
+        if (i + stride * 2 >= N) continue;
         float a = data[i];
         float b = data[i + stride];
         float c = data[i + stride * 2];

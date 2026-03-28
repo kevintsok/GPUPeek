@@ -1,5 +1,4 @@
-vector_type,relative_throughput
-Scalar (float),1.0
-float2,2.0
-float4,4.0
-double2,1.8
+vector_type,bandwidth_gbps,throughput_gflops
+float (32-bit),506.47,253.23
+float2 (64-bit),260.36,130.18
+float4 (128-bit),253.40,126.70
