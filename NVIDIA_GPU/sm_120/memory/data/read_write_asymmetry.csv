@@ -1,0 +1,5 @@
+operation,bandwidth_gbps,time_ms
+Pure Read,811.0,0.15
+Pure Write,820.0,0.14
+RAW in-place,540.0,0.23
+WAR separate,800.0,0.15

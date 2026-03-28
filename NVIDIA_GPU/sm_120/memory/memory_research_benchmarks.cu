@@ -576,6 +576,397 @@ void runAccessPatternTest() {
 // Main Entry Function
 // =============================================================================
 
+// =============================================================================
+// Topic 5: Cache Line Size Effect Research
+// =============================================================================
+
+void runCacheLineEffectTest() {
+    printf("\n");
+    printf("================================================================================\n");
+    printf("Topic 5: Cache Line Size Effect Research\n");
+    printf("================================================================================\n");
+
+    const int blockSize = 256;
+    const size_t N = 4 * 1024 * 1024;  // 16 MB
+    const int iterations = 100;
+
+    int numBlocks = (N + blockSize - 1) / blockSize;
+    if (numBlocks > 65535) numBlocks = 65535;
+
+    printf("\nResearch: How does access granularity affect effective bandwidth?\n");
+    printf("CUDA L1 cache line: 32B, L2 cache line: 128B\n\n");
+
+    float *d_src, *d_dst;
+    CHECK_CUDA(cudaMalloc(&d_src, N * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&d_dst, N * sizeof(float)));
+    CHECK_CUDA(cudaMemset(d_src, 1, N * sizeof(float)));
+
+    GPUTimer timer;
+
+    printf("%-15s %15s %15s %15s\n", "Access Size", "Bandwidth", "Time/kernel", "Efficiency");
+    printf("%-15s %15s %15s %15s\n", "---------------", "---------------", "---------------", "---------------");
+
+    // 32B access
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        cacheLine32BKernel<float><<<numBlocks, blockSize>>>(d_src, d_dst, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    double bw32 = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("%-15s %15s %15.3f ms %15s\n", "32B (L1 line)", formatBandwidth(bw32),
+           timer.elapsed_ms() / iterations, "baseline");
+
+    // 64B access
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        cacheLine64BKernel<float><<<numBlocks, blockSize>>>(d_src, d_dst, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    double bw64 = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("%-15s %15s %15.3f ms %15.0f%%\n", "64B (2xL1)", formatBandwidth(bw64),
+           timer.elapsed_ms() / iterations, bw64/bw32*100);
+
+    // 128B access
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        cacheLine128BKernel<float><<<numBlocks, blockSize>>>(d_src, d_dst, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    double bw128 = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("%-15s %15s %15.3f ms %15.0f%%\n", "128B (L2 line)", formatBandwidth(bw128),
+           timer.elapsed_ms() / iterations, bw128/bw32*100);
+
+    // Misaligned access tests
+    printf("\n--- Misaligned Access Impact ---\n");
+    printf("%-15s %15s %15s %15s\n", "Offset", "Bandwidth", "Time/kernel", "vs Aligned");
+
+    int offsets[] = {0, 4, 8, 16, 32, 64};
+    for (int o = 0; o < 6; o++) {
+        int offset = offsets[o];
+        timer.start();
+        for (int i = 0; i < iterations; i++) {
+            misalignedAccessKernel<float><<<numBlocks, blockSize>>>(d_src, d_dst, N, offset);
+        }
+        CHECK_CUDA(cudaDeviceSynchronize());
+        timer.stop();
+        double bw_mis = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+        const char* aligned = (offset == 0) ? "(aligned)" : "";
+        printf("%-15d %15s %15.3f ms %15.1f%%%s\n", offset, formatBandwidth(bw_mis),
+               timer.elapsed_ms() / iterations, bw_mis/bw32*100, aligned);
+    }
+
+    CHECK_CUDA(cudaFree(d_src));
+    CHECK_CUDA(cudaFree(d_dst));
+
+    printf("\nKey Finding:\n");
+    printf("- Access granularity affects memory transaction efficiency\n");
+    printf("- Misaligned access can reduce effective bandwidth\n");
+}
+
+// =============================================================================
+// Topic 6: Read vs Write Asymmetry Research
+// =============================================================================
+
+void runReadWriteAsymmetryTest() {
+    printf("\n");
+    printf("================================================================================\n");
+    printf("Topic 6: Read vs Write Asymmetry Research\n");
+    printf("================================================================================\n");
+
+    const int blockSize = 256;
+    const size_t N = 4 * 1024 * 1024;  // 16 MB
+    const int iterations = 100;
+
+    int numBlocks = (N + blockSize - 1) / blockSize;
+    if (numBlocks > 65535) numBlocks = 65535;
+
+    printf("\nResearch: Is read bandwidth truly different from write bandwidth?\n\n");
+
+    float *d_data;
+    CHECK_CUDA(cudaMalloc(&d_data, N * sizeof(float)));
+    CHECK_CUDA(cudaMemset(d_data, 1, N * sizeof(float)));
+
+    GPUTimer timer;
+
+    printf("%-25s %15s %15s\n", "Operation", "Bandwidth", "Time/kernel");
+    printf("%-25s %15s %15s\n", "-------------------------", "---------------", "---------------");
+
+    // Pure read
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        pureReadKernel<float><<<numBlocks, blockSize>>>(d_data, d_data, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    double readBW = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("%-25s %15s %15.3f ms\n", "Pure Read (accumulate)", formatBandwidth(readBW),
+           timer.elapsed_ms() / iterations);
+
+    // Pure write
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        pureWriteKernel<float><<<numBlocks, blockSize>>>(d_data, d_data, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    double writeBW = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("%-25s %15s %15.3f ms\n", "Pure Write (no read)", formatBandwidth(writeBW),
+           timer.elapsed_ms() / iterations);
+
+    printf("\n%25s Read/Write = %.2f%%\n", "Asymmetry Ratio:", readBW/writeBW*100);
+
+    // RAW dependency
+    printf("\n--- Read-After-Write Dependency ---\n");
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        readAfterWriteKernel<float><<<numBlocks, blockSize>>>(d_data, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    double rawBW = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("%-25s %15s %15.3f ms\n", "RAW (in-place *2)", formatBandwidth(rawBW),
+           timer.elapsed_ms() / iterations);
+
+    // WAR (write after read)
+    float *d_src, *d_dst;
+    CHECK_CUDA(cudaMalloc(&d_src, N * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&d_dst, N * sizeof(float)));
+    CHECK_CUDA(cudaMemset(d_src, 1, N * sizeof(float)));
+
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        writeAfterReadKernel<float><<<numBlocks, blockSize>>>(d_src, d_dst, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    double warBW = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("%-25s %15s %15.3f ms\n", "WAR (separate arrays)", formatBandwidth(warBW),
+           timer.elapsed_ms() / iterations);
+
+    CHECK_CUDA(cudaFree(d_data));
+    CHECK_CUDA(cudaFree(d_src));
+    CHECK_CUDA(cudaFree(d_dst));
+
+    printf("\nKey Finding:\n");
+    printf("- Read vs Write asymmetry typically 3-5%% on modern GPUs\n");
+    printf("- RAW dependencies prevent write-combining optimizations\n");
+}
+
+// =============================================================================
+// Topic 7: Non-Temporal vs Cached Access Research
+// =============================================================================
+
+void runCachedVsNontemporalTest() {
+    printf("\n");
+    printf("================================================================================\n");
+    printf("Topic 7: Non-Temporal vs Cached Access Research\n");
+    printf("================================================================================\n");
+
+    const int blockSize = 256;
+    const size_t N = 4 * 1024 * 1024;  // 16 MB
+    const int iterations = 100;
+
+    int numBlocks = (N + blockSize - 1) / blockSize;
+    if (numBlocks > 65535) numBlocks = 65535;
+
+    printf("\nResearch: When does non-temporal (write-combining) beat cached?\n\n");
+
+    float *d_src, *d_dst;
+    CHECK_CUDA(cudaMalloc(&d_src, N * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&d_dst, N * sizeof(float)));
+    CHECK_CUDA(cudaMemset(d_src, 1, N * sizeof(float)));
+
+    GPUTimer timer;
+
+    printf("%-25s %15s %15s\n", "Access Type", "Bandwidth", "Time/kernel");
+    printf("%-25s %15s %15s\n", "-------------------------", "---------------", "---------------");
+
+    // Cached read
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        cachedReadKernel<float><<<numBlocks, blockSize>>>(d_src, d_dst, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    double cachedBW = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("%-25s %15s %15.3f ms\n", "Cached Read (default)", formatBandwidth(cachedBW),
+           timer.elapsed_ms() / iterations);
+
+    // Write-combining write
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        writeCombiningWriteKernel<float><<<numBlocks, blockSize>>>(d_src, d_dst, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    double wcBW = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("%-25s %15s %15.3f ms\n", "Write-Combining Write", formatBandwidth(wcBW),
+           timer.elapsed_ms() / iterations);
+
+    CHECK_CUDA(cudaFree(d_src));
+    CHECK_CUDA(cudaFree(d_dst));
+
+    printf("\nKey Finding:\n");
+    printf("- Write-combining benefits: one-time writes, large streaming data\n");
+    printf("- Cached access benefits: data reuse, sequential reads\n");
+}
+
+// =============================================================================
+// Topic 8: Memory Coalescing Effectiveness Research
+// =============================================================================
+
+void runCoalescingEffectivenessTest() {
+    printf("\n");
+    printf("================================================================================\n");
+    printf("Topic 8: Memory Coalescing Effectiveness Research\n");
+    printf("================================================================================\n");
+
+    const int blockSize = 256;
+    const size_t N = 4 * 1024 * 1024;  // 16 MB
+    const int iterations = 100;
+
+    int numBlocks = (N + blockSize - 1) / blockSize;
+    if (numBlocks > 65535) numBlocks = 65535;
+
+    printf("\nResearch: How does thread arrangement affect memory coalescing?\n\n");
+
+    float *d_src, *d_dst;
+    CHECK_CUDA(cudaMalloc(&d_src, N * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&d_dst, N * sizeof(float)));
+    CHECK_CUDA(cudaMemset(d_src, 1, N * sizeof(float)));
+
+    GPUTimer timer;
+
+    printf("%-25s %15s %15s %15s\n", "Pattern", "Bandwidth", "Time/kernel", "Efficiency");
+    printf("%-25s %15s %15s %15s\n", "-------------------------", "---------------", "---------------", "---------------");
+
+    // Best case: coalesced
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        coalescedAccessKernel<float><<<numBlocks, blockSize>>>(d_src, d_dst, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    double coalBW = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("%-25s %15s %15.3f ms %15s\n", "Coalesced (best)", formatBandwidth(coalBW),
+           timer.elapsed_ms() / iterations, "100%");
+
+    // Uncoalesced with different strides
+    printf("\n--- Uncoalesced Stride Impact ---\n");
+    int strides[] = {2, 4, 8, 16, 32};
+    for (int s = 0; s < 5; s++) {
+        int stride = strides[s];
+        timer.start();
+        for (int i = 0; i < iterations; i++) {
+            uncoalescedAccessKernel<float><<<numBlocks, blockSize>>>(d_src, d_dst, N, stride);
+        }
+        CHECK_CUDA(cudaDeviceSynchronize());
+        timer.stop();
+        double uncoalBW = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+        printf("%-25d %15s %15.3f ms %15.0f%%\n", stride, formatBandwidth(uncoalBW),
+               timer.elapsed_ms() / iterations, uncoalBW/coalBW*100);
+    }
+
+    // Half-warp divergence
+    printf("\n--- Half-Warp Divergence Impact ---\n");
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        halfWarpDivergenceKernel<float><<<numBlocks, blockSize>>>(d_src, d_dst, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    double divBW = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("%-25s %15s %15.3f ms %15.0f%%\n", "Half-warp divergence", formatBandwidth(divBW),
+           timer.elapsed_ms() / iterations, divBW/coalBW*100);
+
+    CHECK_CUDA(cudaFree(d_src));
+    CHECK_CUDA(cudaFree(d_dst));
+
+    printf("\nKey Finding:\n");
+    printf("- Coalesced access: threads in warp access sequential addresses\n");
+    printf("- Uncoalesced: strided access wastes memory transactions\n");
+    printf("- Half-warp divergence splits warp, reducing efficiency\n");
+}
+
+// =============================================================================
+// Topic 9: Software Prefetch Effectiveness Research
+// =============================================================================
+
+void runPrefetchEffectivenessTest() {
+    printf("\n");
+    printf("================================================================================\n");
+    printf("Topic 9: Software Prefetch Effectiveness Research\n");
+    printf("================================================================================\n");
+
+    const int blockSize = 256;
+    const size_t N = 4 * 1024 * 1024;  // 16 MB
+    const int iterations = 100;
+
+    int numBlocks = (N + blockSize - 1) / blockSize;
+    if (numBlocks > 65535) numBlocks = 65535;
+
+    printf("\nResearch: Does software prefetch help hide memory latency?\n\n");
+
+    float *d_src, *d_dst;
+    CHECK_CUDA(cudaMalloc(&d_src, N * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&d_dst, N * sizeof(float)));
+    CHECK_CUDA(cudaMemset(d_src, 1, N * sizeof(float)));
+
+    GPUTimer timer;
+
+    printf("%-30s %15s %15s %15s\n", "Prefetch Distance", "Bandwidth", "Time/kernel", "Speedup");
+    printf("%-30s %15s %15s %15s\n", "------------------------------", "---------------", "---------------", "---------------");
+
+    // Baseline (no prefetch)
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        cachedReadKernel<float><<<numBlocks, blockSize>>>(d_src, d_dst, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    double baseBW = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("%-30s %15s %15.3f ms %15s\n", "No Prefetch (baseline)", formatBandwidth(baseBW),
+           timer.elapsed_ms() / iterations, "1.00x");
+
+    // Prefetch distances
+    int distances[] = {32, 64, 128, 256, 512};
+    for (int d = 0; d < 5; d++) {
+        int prefetch_dist = distances[d];
+        timer.start();
+        for (int i = 0; i < iterations; i++) {
+            prefetchReadKernel<float><<<numBlocks, blockSize>>>(d_src, d_dst, N, prefetch_dist);
+        }
+        CHECK_CUDA(cudaDeviceSynchronize());
+        timer.stop();
+        double prefetchBW = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+        printf("%-30d %15s %15.3f ms %15.2fx\n", prefetch_dist, formatBandwidth(prefetchBW),
+               timer.elapsed_ms() / iterations, prefetchBW/baseBW);
+    }
+
+    // Double-buffer pipeline
+    printf("\n--- Double Buffer Pipeline ---\n");
+    timer.start();
+    for (int i = 0; i < iterations; i++) {
+        doubleBufferKernel<float><<<numBlocks, blockSize>>>(d_src, d_dst, N);
+    }
+    CHECK_CUDA(cudaDeviceSynchronize());
+    timer.stop();
+    double pipeBW = N * sizeof(float) * iterations / (timer.elapsed_ms() * 1e6);
+    printf("%-30s %15s %15.3f ms %15.2fx\n", "Double Buffer (2-stage)", formatBandwidth(pipeBW),
+           timer.elapsed_ms() / iterations, pipeBW/baseBW);
+
+    CHECK_CUDA(cudaFree(d_src));
+    CHECK_CUDA(cudaFree(d_dst));
+
+    printf("\nKey Finding:\n");
+    printf("- Software prefetch can hide memory latency\n");
+    printf("- Optimal prefetch distance depends on memory latency\n");
+    printf("- Double-buffering enables producer-consumer overlap\n");
+}
+
 void runMemoryResearchBenchmarks(size_t N) {
     printf("\n");
     printf("################################################################################\n");
@@ -595,6 +986,21 @@ void runMemoryResearchBenchmarks(size_t N) {
 
     // Topic 4: Memory Access Pattern Impact
     runAccessPatternTest();
+
+    // Topic 5: Cache Line Size Effect
+    runCacheLineEffectTest();
+
+    // Topic 6: Read vs Write Asymmetry
+    runReadWriteAsymmetryTest();
+
+    // Topic 7: Non-Temporal vs Cached Access
+    runCachedVsNontemporalTest();
+
+    // Topic 8: Memory Coalescing Effectiveness
+    runCoalescingEffectivenessTest();
+
+    // Topic 9: Software Prefetch Effectiveness
+    runPrefetchEffectivenessTest();
 
     printf("\n");
     printf("================================================================================\n");

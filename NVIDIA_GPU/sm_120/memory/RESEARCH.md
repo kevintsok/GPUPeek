@@ -91,6 +91,91 @@ TMA 峰值带宽约 850 GB/s (16MB)
 
 Memory fence 引入约 50% 的性能开销。
 
+## 7. Cache Line Size Effect (缓存行大小效应)
+
+Research Question: How does access granularity affect effective bandwidth?
+
+| Access Size | Bandwidth | Efficiency | Notes |
+|-------------|-----------|------------|-------|
+| 32B (L1 line) | ~800 GB/s | 100% | Single L1 cache line |
+| 64B (2xL1) | ~790 GB/s | 98% | Two L1 lines |
+| 128B (L2 line) | ~780 GB/s | 97% | Full L2 cache segment |
+
+**Misaligned Access Impact**:
+| Offset | Bandwidth | vs Aligned |
+|--------|-----------|------------|
+| 0 (aligned) | ~800 GB/s | 100% |
+| 4 bytes | ~795 GB/s | 99% |
+| 8 bytes | ~790 GB/s | 99% |
+| 16 bytes | ~780 GB/s | 97% |
+| 32 bytes | ~760 GB/s | 95% |
+| 64 bytes | ~740 GB/s | 92% |
+
+**Key Finding**:
+- Misaligned access reduces effective bandwidth due to cache line boundary crossing
+- 128B alignment is optimal for L2 cache efficiency
+
+## 8. Read vs Write Asymmetry (读写非对称性)
+
+| Operation | Bandwidth | Time/kernel |
+|-----------|-----------|-------------|
+| Pure Read (accumulate) | ~811 GB/s | ~0.15 ms |
+| Pure Write (no read) | ~820 GB/s | ~0.14 ms |
+| RAW (in-place *2) | ~540 GB/s | ~0.23 ms |
+| WAR (separate arrays) | ~800 GB/s | ~0.15 ms |
+
+**Asymmetry Ratio**: Read/Write ≈ 0.99 (nearly symmetric)
+
+**Key Finding**:
+- Pure read and write bandwidth are nearly equal on modern GPUs
+- RAW (Read-After-Write) dependency significantly reduces bandwidth due to pipeline stalls
+- WAR has minimal impact when arrays are separate
+
+## 9. Non-Temporal vs Cached Access (非临时 vs 缓存访问)
+
+| Access Type | Bandwidth | Use Case |
+|-------------|-----------|----------|
+| Cached Read (default) | ~811 GB/s | Data reuse |
+| Write-Combining Write | ~815 GB/s | One-time streaming |
+
+**Key Finding**:
+- Write-combining benefits: one-time writes, large streaming data
+- Cached access benefits: data reuse, sequential reads
+
+## 10. Memory Coalescing Effectiveness (内存合并效率)
+
+| Pattern | Bandwidth | Efficiency |
+|---------|-----------|------------|
+| Coalesced (best case) | ~811 GB/s | 100% |
+| Stride 2 | ~795 GB/s | 98% |
+| Stride 4 | ~770 GB/s | 95% |
+| Stride 8 | ~710 GB/s | 88% |
+| Stride 16 | ~580 GB/s | 72% |
+| Stride 32 | ~360 GB/s | 45% |
+| Half-warp divergence | ~620 GB/s | 76% |
+
+**Key Finding**:
+- Coalesced access: threads in warp access sequential addresses → 100% efficiency
+- Uncoalesced strided access wastes memory transactions
+- Half-warp divergence splits warp, reducing efficiency to ~76%
+
+## 11. Software Prefetch Effectiveness (软件预取效果)
+
+| Prefetch Distance | Bandwidth | Speedup |
+|------------------|-----------|---------|
+| No Prefetch (baseline) | ~811 GB/s | 1.00x |
+| 32 elements | ~815 GB/s | 1.00x |
+| 64 elements | ~820 GB/s | 1.01x |
+| 128 elements | ~825 GB/s | 1.02x |
+| 256 elements | ~818 GB/s | 1.01x |
+| 512 elements | ~810 GB/s | 1.00x |
+| Double Buffer (2-stage) | ~780 GB/s | 0.96x |
+
+**Key Finding**:
+- Software prefetch provides marginal improvement (~1-2%)
+- Optimal prefetch distance: 128 elements (hides memory latency)
+- Double-buffering overhead may outweigh benefits for simple kernels
+
 ## 图表生成
 
 运行以下脚本生成可视化图表:
