@@ -1,4 +1,4 @@
 access_size,bandwidth_gbps,efficiency_pct
-32B,800.0,100.0
-64B,790.0,98.0
-128B,780.0,97.0
+32B (L1 line),375.90,100.0
+64B (2xL1),108.83,28.9
+128B (L2 line),382.56,101.8

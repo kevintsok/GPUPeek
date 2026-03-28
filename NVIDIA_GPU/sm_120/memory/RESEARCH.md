@@ -10,49 +10,50 @@
 
 | 数据大小 | 状态 | 读取带宽 | 写入带宽 |
 |---------|------|----------|----------|
-| 1 KB | 寄存器/L1 | ~95 GB/s | ~92 GB/s |
-| 64 KB | L1 缓存 | ~285 GB/s | ~278 GB/s |
-| 256 KB | L1/L2 边界 | ~420 GB/s | ~415 GB/s |
-| 1 MB | L2 缓存 | ~580 GB/s | ~565 GB/s |
-| 4 MB | L2 缓存 | ~745 GB/s | ~730 GB/s |
-| 16 MB | **峰值** | **~811 GB/s** | ~798 GB/s |
-| 64 MB | L2 miss → DRAM | ~765 GB/s | ~740 GB/s |
-| 128 MB | DRAM | ~720 GB/s | ~705 GB/s |
-| 256 MB | DRAM | ~680 GB/s | ~665 GB/s |
+| 1 KB | 寄存器/L1 | 0.01 GB/s | 0.01 GB/s |
+| 64 KB | L1 缓存 | 6.80 GB/s | 6.80 GB/s |
+| 256 KB | L1/L2 边界 | 1.89 GB/s | 1.89 GB/s |
+| 1 MB | L2 缓存 | 108.32 GB/s | 108.32 GB/s |
+| 4 MB | L2 缓存 | 311.89 GB/s | 311.89 GB/s |
+| 16 MB | **峰值** | **808.28 GB/s** | 808.28 GB/s |
+| 64 MB | L2 miss → DRAM | 366.92 GB/s | 366.92 GB/s |
+| 128 MB | DRAM | 182.67 GB/s | 182.67 GB/s |
+| 256 MB | DRAM | 223.64 GB/s | 223.64 GB/s |
 
 **关键发现**:
-- 峰值带宽约 **811 GB/s** (16MB 工作集，L2 完全缓存)
-- L1 缓存带宽约 285 GB/s (64KB)
-- L2 缓存带宽约 745 GB/s (4MB)
-- DRAM 带宽约 680-765 GB/s (64MB+)
-- **写入带宽略低于读取带宽** (约 3-5% 差异)
+- 峰值带宽实测 **808.28 GB/s** (16MB 工作集，L2 完全缓存)
+- 小数据尺寸受 kernel 启动开销影响较大
+- L2 缓存峰值约 311.89 GB/s (4MB)
+- DRAM 带宽在 182-367 GB/s 范围 (64MB+)
+- **实测读写带宽相同** (测试 kernel 设计导致)
 
 ![内存带宽 vs 数据尺寸](data/memory_bandwidth_vs_size.png)
 
 ![数据类型带宽对比](data/dtype_bandwidth_comparison.png)
 
-### 1.2 跨距访问效率 (Read vs Write)
+### 1.2 跨距访问效率 (实测)
 
-| Stride | 读取效率 | 写入效率 | Bank Conflict |
-|--------|----------|----------|--------------|
-| 1 | 100% | 100% | 无 |
-| 2 | 98% | 97% | 无 |
-| 4 | 95% | 94% | 低 |
-| 8 | 88% | 85% | 中 |
-| 16 | 72% | 68% | 高 |
-| 32 | 45% | 42% | **最大** |
-| 64 | 32% | 30% | 周期性 |
-| 128 | 18% | 16% | 低 |
+| Stride | 实测效率 | Bank Conflict |
+|--------|----------|--------------|
+| 1 | 100% | 无 |
+| 2 | 66.1% | 无 |
+| 4 | 74.9% | 低 |
+| 8 | 55.7% | 中 |
+| 16 | 38.9% | 高 |
+| 32 | 24.0% | **最大** |
+| 64 | 14.3% | 周期性 |
+| 128 | 10.2% | 低 |
+| 256 | 4.8% | 低 |
 
 ![Stride 访问效率](data/stride_efficiency.png)
 
 **分析**:
-- Stride = 1-2: 无明显冲突，效率接近 100%
-- Stride = 4-8: 低中度冲突，效率开始下降
-- Stride = 16-32: **严重冲突**，特别是 stride=32 时降到 35-45%
+- Stride = 1: 基线效率 100%
+- Stride = 2-4: 效率反而下降，可能与测试方法相关
+- Stride = 16-32: **严重冲突**，stride=32 时降到 24%
 - Stride > 64: 缓存行跨越访问，带宽持续下降
 
-**关键发现**: Stride = 32 是最差情况，与 32-bank 架构直接相关
+**关键发现**: Stride = 32 是最差情况，实测 24% 效率
 
 ## 2. 内存层级带宽
 
@@ -119,17 +120,18 @@ Research Question: How does access granularity affect effective bandwidth?
 
 | Operation | Bandwidth | Time/kernel |
 |-----------|-----------|-------------|
-| Pure Read (accumulate) | ~811 GB/s | ~0.15 ms |
-| Pure Write (no read) | ~820 GB/s | ~0.14 ms |
-| RAW (in-place *2) | ~540 GB/s | ~0.23 ms |
-| WAR (separate arrays) | ~800 GB/s | ~0.15 ms |
+| Pure Read (accumulate) | 422.96 GB/s | 0.040 ms |
+| Pure Write (no read) | 188.68 GB/s | 0.089 ms |
+| RAW (in-place *2) | 217.67 GB/s | 0.077 ms |
+| WAR (separate arrays) | 825.18 GB/s | 0.020 ms |
 
-**Asymmetry Ratio**: Read/Write ≈ 0.99 (nearly symmetric)
+**Asymmetry Ratio**: Read/Write = 224% (read faster than write for this kernel)
 
 **Key Finding**:
-- Pure read and write bandwidth are nearly equal on modern GPUs
-- RAW (Read-After-Write) dependency significantly reduces bandwidth due to pipeline stalls
-- WAR has minimal impact when arrays are separate
+- Pure read (422.96 GB/s) 显著快于 pure write (188.68 GB/s)
+- RAW (Read-After-Write) dependency: 217.67 GB/s
+- WAR (Write-After-Read) 在独立数组时性能最佳: 825.18 GB/s
+- 写操作通常受限于内存控制器带宽
 
 ## 9. Non-Temporal vs Cached Access (非临时 vs 缓存访问)
 
@@ -146,35 +148,35 @@ Research Question: How does access granularity affect effective bandwidth?
 
 | Pattern | Bandwidth | Efficiency |
 |---------|-----------|------------|
-| Coalesced (best case) | ~811 GB/s | 100% |
-| Stride 2 | ~795 GB/s | 98% |
-| Stride 4 | ~770 GB/s | 95% |
-| Stride 8 | ~710 GB/s | 88% |
-| Stride 16 | ~580 GB/s | 72% |
-| Stride 32 | ~360 GB/s | 45% |
-| Half-warp divergence | ~620 GB/s | 76% |
+| Coalesced (best case) | 263.39 GB/s | 100% |
+| Stride 2 | 138.44 GB/s | 52.6% |
+| Stride 4 | 210.31 GB/s | 79.8% |
+| Stride 8 | 114.46 GB/s | 43.5% |
+| Stride 16 | 184.24 GB/s | 69.9% |
+| Stride 32 | 156.45 GB/s | 59.4% |
+| Half-warp divergence | 178.39 GB/s | 67.7% |
 
 **Key Finding**:
 - Coalesced access: threads in warp access sequential addresses → 100% efficiency
-- Uncoalesced strided access wastes memory transactions
-- Half-warp divergence splits warp, reducing efficiency to ~76%
+- Uncoalesced strided access 显著降低效率
+- Half-warp divergence splits warp, reducing efficiency to ~68%
 
 ## 11. Software Prefetch Effectiveness (软件预取效果)
 
 | Prefetch Distance | Bandwidth | Speedup |
 |------------------|-----------|---------|
-| No Prefetch (baseline) | ~811 GB/s | 1.00x |
-| 32 elements | ~815 GB/s | 1.00x |
-| 64 elements | ~820 GB/s | 1.01x |
-| 128 elements | ~825 GB/s | 1.02x |
-| 256 elements | ~818 GB/s | 1.01x |
-| 512 elements | ~810 GB/s | 1.00x |
-| Double Buffer (2-stage) | ~780 GB/s | 0.96x |
+| No Prefetch (baseline) | 392.82 GB/s | 1.00x |
+| 32 elements | 255.80 GB/s | 0.65x |
+| 64 elements | 673.57 GB/s | 1.72x |
+| 128 elements | 572.12 GB/s | 1.46x |
+| 256 elements | 492.88 GB/s | 1.25x |
+| 512 elements | 253.49 GB/s | 0.65x |
+| Double Buffer (2-stage) | 378.94 GB/s | 0.96x |
 
 **Key Finding**:
-- Software prefetch provides marginal improvement (~1-2%)
-- Optimal prefetch distance: 128 elements (hides memory latency)
-- Double-buffering overhead may outweigh benefits for simple kernels
+- 软件预取效果显著: 64 元素距离达到 1.72x 加速
+- 32 和 512 元素距离反而降低性能
+- Double-buffering 在简单 kernel 上开销大于收益
 
 ## 图表生成
 

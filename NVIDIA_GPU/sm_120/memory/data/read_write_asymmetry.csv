@@ -1,5 +1,5 @@
-operation,bandwidth_gbps,time_ms
-Pure Read,811.0,0.15
-Pure Write,820.0,0.14
-RAW in-place,540.0,0.23
-WAR separate,800.0,0.15
+operation,bandwidth_gbps,time_ms,asymmetry_ratio
+Pure Read,422.96,0.040,224.2
+Pure Write,188.68,0.089,224.2
+RAW in-place,217.67,0.077,100.0
+WAR separate,825.18,0.020,100.0
