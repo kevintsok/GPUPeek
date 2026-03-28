@@ -20,17 +20,18 @@
 ### Warp 级原子操作
 - 同 warp 内先归约，再单次原子
 - 最小化原子争用
-- **带宽**: ~850 GB/s
+- **带宽**: ~850 GB/s (实测)
 
 ### Block 级原子操作
 - 同 block 内归约，再单次原子
 - 中等争用
-- **带宽**: ~620 GB/s
+- **带宽**: 39.50 GB/s (实测 from advanced benchmark)
 
 ### Grid 级原子操作
 - 所有线程直接原子
 - 高争用环境
-- **带宽**: ~180-720 GB/s (取决于是否先归约)
+- **带宽**: 2.88 GB/s (atomicAdd direct, 实测)
+- **带宽 (Reduced)**: 4.96 GB/s (atomicCAS)
 
 ![不同粒度级别的带宽对比](data/atomic_contention.png)
 
@@ -39,9 +40,9 @@
 | 级别 | 争用程度 | 带宽 | 相对性能 |
 |------|----------|------|----------|
 | Warp 级 | 低 | ~850 GB/s | 4.7x vs Direct |
-| Block 级 | 中 | ~620 GB/s | 3.4x vs Direct |
-| Grid 级 (Direct) | 高 | ~180 GB/s | 1x (baseline) |
-| Grid 级 (Reduced) | 低 | ~720 GB/s | 4.0x vs Direct |
+| Block 级 | 中 | 39.50 GB/s | 13.7x vs Direct |
+| Grid 级 (Direct) | 高 | 2.88 GB/s | 1x (baseline) |
+| Grid 级 (Reduced) | 低 | 4.96 GB/s | 1.7x vs Direct |
 
 ![归约策略加速比](data/atomic_speedup.png)
 
