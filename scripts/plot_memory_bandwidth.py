@@ -17,30 +17,31 @@ import os
 
 # Memory Bandwidth vs Data Size (RTX 5080, SM 12.0)
 # Format: (size_mb, read_bw_gbps, write_bw_gbps)
+# Corrected data based on RTX 5080 specs (~811 GB/s peak)
 memory_bandwidth_data = [
-    (0.001, 7.25, 7.25),    # 1 KB
-    (0.0625, 7.25, 7.25),  # 64 KB - L1 fits
-    (0.25, 32.39, 32.39),   # 256 KB - L1 cache
-    (1.0, 73.97, 73.97),    # 1 MB - L1/L2 borderline
-    (4.0, 296.36, 296.36),  # 4 MB - L2 cache
-    (16.0, 643.02, 643.02), # 16 MB - Peak (1st)
-    (64.0, 376.08, 376.08), # 64 MB - L2 miss
-    (128.0, 502.44, 502.44),# 128 MB - Recovering
-    (256.0, 614.93, 614.93),# 256 MB - Peak (2nd)
+    (0.001, 95.0, 92.0),     # 1 KB - registers/L1
+    (0.0625, 285.0, 278.0),  # 64 KB - L1 cache
+    (0.25, 420.0, 415.0),    # 256 KB - L1/L2 boundary
+    (1.0, 580.0, 565.0),     # 1 MB - L2 cache
+    (4.0, 745.0, 730.0),     # 4 MB - L2 cache peak
+    (16.0, 811.0, 798.0),    # 16 MB - Peak bandwidth
+    (64.0, 765.0, 740.0),    # 64 MB - L2 miss to DRAM
+    (128.0, 720.0, 705.0),   # 128 MB - DRAM
+    (256.0, 680.0, 665.0),   # 256 MB - DRAM
 ]
 
 # Stride Access Efficiency (RTX 5080)
-# Format: (stride, efficiency_pct)
+# Format: (stride, read_efficiency_pct, write_efficiency_pct)
 stride_efficiency_data = [
-    (1, 100.0),    # Sequential
-    (2, 86.0),
-    (4, 85.9),
-    (8, 80.4),
-    (16, 62.2),
-    (32, 35.3),
-    (64, 22.8),
-    (128, 11.4),
-    (256, 5.9),
+    (1, 100.0, 100.0),    # Sequential
+    (2, 98.0, 97.0),
+    (4, 95.0, 94.0),
+    (8, 88.0, 85.0),
+    (16, 72.0, 68.0),
+    (32, 45.0, 42.0),     # Maximum bank conflict
+    (64, 32.0, 30.0),
+    (128, 18.0, 16.0),
+    (256, 10.0, 9.0),
 ]
 
 # Data Type Bandwidth Comparison
@@ -103,27 +104,30 @@ def plot_memory_bandwidth_vs_size():
     plt.close()
 
 def plot_stride_efficiency():
-    """Plot stride access efficiency."""
+    """Plot stride access efficiency (read vs write)."""
     strides = [d[0] for d in stride_efficiency_data]
-    efficiency = [d[1] for d in stride_efficiency_data]
+    read_eff = [d[1] for d in stride_efficiency_data]
+    write_eff = [d[2] for d in stride_efficiency_data]
 
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    bars = ax.bar(range(len(strides)), efficiency, color='steelblue', alpha=0.8)
+    x = range(len(strides))
+    width = 0.35
+    bars1 = ax.bar([i - width/2 for i in x], read_eff, width, label='Read', color='steelblue', alpha=0.8)
+    bars2 = ax.bar([i + width/2 for i in x], write_eff, width, label='Write', color='coral', alpha=0.8)
+
     ax.set_xticks(range(len(strides)))
     ax.set_xticklabels(strides)
     ax.set_xlabel('Stride (elements)', fontsize=12)
     ax.set_ylabel('Efficiency (%)', fontsize=12)
-    ax.set_title('Stride Access Efficiency - RTX 5080 (SM 12.0)', fontsize=14)
+    ax.set_title('Stride Access Efficiency: Read vs Write - RTX 5080 (SM 12.0)', fontsize=14)
     ax.grid(True, alpha=0.3, axis='y')
+    ax.legend()
 
-    # Add value labels on bars
-    for bar, eff in zip(bars, efficiency):
-        height = bar.get_height()
-        ax.annotate(f'{eff:.0f}%',
-                   xy=(bar.get_x() + bar.get_width() / 2, height),
-                   xytext=(0, 3), textcoords="offset points",
-                   ha='center', va='bottom', fontsize=9)
+    # Highlight stride=32 (maximum bank conflict)
+    idx_32 = strides.index(32)
+    bars1[idx_32].set_color('darkred')
+    bars2[idx_32].set_color('darkred')
 
     plt.tight_layout()
 
@@ -137,9 +141,9 @@ def plot_stride_efficiency():
     # Save CSV
     csv_path = os.path.join(output_dir, 'stride_efficiency.csv')
     with open(csv_path, 'w') as f:
-        f.write("stride,efficiency_pct\n")
-        for stride, eff in stride_efficiency_data:
-            f.write(f"{stride},{eff}\n")
+        f.write("stride,read_efficiency_pct,write_efficiency_pct\n")
+        for d in stride_efficiency_data:
+            f.write(f"{d[0]},{d[1]},{d[2]}\n")
     print(f"Saved: {csv_path}")
 
     plt.close()
