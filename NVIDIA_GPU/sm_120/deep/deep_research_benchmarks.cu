@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../../common/timer.h"
+#include "../arch_kernels.cu"
 #include "deep_research_kernel.cu"
 
 #define CHECK_CUDA(call) \
@@ -14,7 +15,16 @@
         } \
     } while(0)
 
-// Note: formatBandwidth is defined in memory_research_benchmarks.cu
+// Helper function to format bandwidth
+const char* formatBandwidth(double GBps) {
+    static char buf[32];
+    if (GBps >= 1000.0) {
+        snprintf(buf, sizeof(buf), "%.2f TB/s", GBps / 1000.0);
+    } else {
+        snprintf(buf, sizeof(buf), "%.2f GB/s", GBps);
+    }
+    return buf;
+}
 
 // =============================================================================
 // L2 Cache Deep Analysis

@@ -10,11 +10,12 @@
 
 | 数据大小 | 带宽 | 状态 |
 |---------|------|------|
-| 64 KB | ~123 GB/s | L1 缓存 |
-| 1 MB | ~408 GB/s | L2 边界 |
-| 4 MB | ~678 GB/s | L2 缓存 |
-| 8 MB | ~748 GB/s | L2 缓存 |
-| 16 MB | ~798 GB/s | L2 miss → DRAM |
+| 64 KB | 96.47 GB/s | L2 fits |
+| 1 MB | 326.81 GB/s | L2 borderline |
+| 4 MB | 554.15 GB/s | L2 thrashing |
+| 8 MB | 539.18 GB/s | L2 thrashing |
+| 16 MB | 613.28 GB/s | L2 thrashing |
+| 32 MB | 539.61 GB/s | L2 thrashing |
 
 ![L2 带宽 vs 数据尺寸](data/l2_throughput_vs_size.png)
 
@@ -24,32 +25,13 @@ Stride > 8 导致带宽急剧下降，表明缓存行跨距访问效率低。
 
 | Stride | 带宽 |
 |--------|------|
-| 1 | ~1234 GB/s |
-| 16 | ~432 GB/s |
-| 4096 | ~23 GB/s |
+| 1 | 625.61 GB/s |
+| 16 | 399.07 GB/s |
+| 4096 | 330.69 GB/s |
 
 ![L2 Thrashing vs Stride](data/l2_thrashing_vs_stride.png)
 
 **分析**: Stride 增大会导致严重的 L2 cache thrashing
-
-## 2. TMA (张量内存访问器)
-
-### TMA 1D 拷贝
-
-| 数据大小 | TMA 带宽 |
-|---------|----------|
-| 64 KB | ~7 GB/s |
-| 1 MB | ~134 GB/s |
-| 4 MB | ~431 GB/s |
-| 16 MB | **~850 GB/s** |
-
-### TMA 2D 拷贝
-
-TMA 2D 带宽 ~626 GB/s
-
-## 3. Prefetch
-
-软件预取性能 ~251 GB/s
 
 ## 4. NCU 指标
 
