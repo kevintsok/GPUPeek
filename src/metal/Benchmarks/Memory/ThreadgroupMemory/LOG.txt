@@ -1,0 +1,25 @@
+=== Threadgroup Memory Characteristics Benchmark ===
+
+Device Query:
+- Device Name: Apple M2
+- Max Threadgroup Memory: 32768 bytes (32.0 KB)
+- Max Threads Per Threadgroup: 1024
+- Has Unified Memory: true
+
+=== Bank Conflict Impact (Real Measurements) ===
+No Conflict:     0.34 GOPS
+With Conflict:   0.20 GOPS
+Conflict Cost:   1.7x
+
+=== Threadgroup Memory Access Patterns ===
+Shared Seq (no conflict): 0.526 GOPS
+Shared Strided (conflict): 0.256 GOPS
+Shared Fill+Sum: 0.282 GOPS
+
+=== Performance Ratio ===
+Sequential vs Strided: 0.526/0.256 = 2.05x (strided is 2x slower)
+
+=== Bandwidth Measurement ===
+Note: GOPS = Giga Operations Per Second
+Threadgroup memory bandwidth is much higher than global memory
+but limited by threadgroup barrier synchronization overhead
