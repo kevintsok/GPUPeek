@@ -83,9 +83,9 @@ Elements: 1048576 (4.00 MB)
 
 | Test | Method | Time (ms) | 实际实现 |
 |------|--------|-----------|---------|
-| Test 1 | Redux ADD (sequential loop) | 7.367 | `for (i=warp_start+1; i<warp_end; i++) val += input[i]` |
-| Test 2 | Redux MIN (sequential loop) | 2.496 | `for (i=warp_start+1; i<warp_end; i++) val = min(val, input[i])` |
-| Test 3 | Redux MAX (sequential loop) | 2.288 | `for (i=warp_start+1; i<warp_end; i++) val = max(val, input[i])` |
+| Test 1 | Redux ADD (sequential loop) | 3.124 | `for (i=warp_start+1; i<warp_end; i++) val += input[i]` |
+| Test 2 | Redux MIN (sequential loop) | 2.017 | `for (i=warp_start+1; i<warp_end; i++) val = min(val, input[i])` |
+| Test 3 | Redux MAX (sequential loop) | 1.925 | `for (i=warp_start+1; i<warp_end; i++) val = max(val, input[i])` |
 
 **真正的 redux.sync 测试见下方 True Redux.sync Intrinsic Tests**
 
@@ -93,22 +93,22 @@ Elements: 1048576 (4.00 MB)
 
 | Test | Method | Time (ms) | 实际实现 |
 |------|--------|-----------|---------|
-| Test 4 | Redux AND (sequential loop) | 2.736 | Sequential for-loop |
-| Test 5 | Redux OR (sequential loop) | 2.661 | Sequential for-loop |
-| Test 6 | Redux XOR (sequential loop) | 2.620 | Sequential for-loop |
+| Test 4 | Redux AND (sequential loop) | 1.817 | Sequential for-loop |
+| Test 5 | Redux OR (sequential loop) | 2.241 | Sequential for-loop |
+| Test 6 | Redux XOR (sequential loop) | 1.981 | Sequential for-loop |
 
 ### True Redux.sync Intrinsic Tests (INT, 100 iterations)
 
 | Test | Method | Time (ms) | Notes |
 |------|--------|-----------|-------|
-| Redux ADD | Shuffle Reduction (baseline) | 1.771 | 5次shuffle循环 |
-| Redux ADD | Butterfly Reduction | 1.798 | 5次异或shuffle |
-| **TRUE redux.sync.add (int)** | `__reduce_add_sync()` | 1.516 | 真正的 RRED 指令 |
-| **TRUE redux.sync.min (int)** | `__reduce_min_sync()` | 1.459 | 真正的 RRED 指令 |
-| **TRUE redux.sync.max (int)** | `__reduce_max_sync()` | 1.806 | 真正的 RRED 指令 |
-| **TRUE redux.sync.and** | `__reduce_and_sync()` | 10.162 | 真正的 RRED 指令 |
-| **TRUE redux.sync.or** | `__reduce_or_sync()` | 12.144 | 真正的 RRED 指令 |
-| **TRUE redux.sync.xor** | `__reduce_xor_sync()` | 1.534 | 真正的 RRED 指令 |
+| Redux ADD | Shuffle Reduction (baseline) | 1.544 | 5次shuffle循环 |
+| Redux ADD | Butterfly Reduction | 1.122 | 5次异或shuffle |
+| **TRUE redux.sync.add (int)** | `__reduce_add_sync()` | 1.859 | 真正的 RRED 指令 |
+| **TRUE redux.sync.min (int)** | `__reduce_min_sync()` | 0.994 | 真正的 RRED 指令 |
+| **TRUE redux.sync.max (int)** | `__reduce_max_sync()` | 1.012 | 真正的 RRED 指令 |
+| **TRUE redux.sync.and** | `__reduce_and_sync()` | 0.940 | 真正的 RRED 指令 |
+| **TRUE redux.sync.or** | `__reduce_or_sync()` | 1.179 | 真正的 RRED 指令 |
+| **TRUE redux.sync.xor** | `__reduce_xor_sync()` | 1.045 | 真正的 RRED 指令 |
 
 ![归约方法对比](data/reduction_methods.png)
 
@@ -118,20 +118,20 @@ Elements: 1048576 (4.00 MB)
 
 | Test | Method | Time (ms) | Result |
 |------|--------|-----------|--------|
-| Redux + Atomic | Redux + Atomic Add | 0.212 | Global sum: 1048576.00 (correct) |
+| Redux + Atomic | Redux + Atomic Add | 0.102 | Global sum: 1048576.00 (correct) |
 
 ## 6. Warp Vote 操作
 
 | 操作 | 函数 | 延迟 (100 iterations) |
 |------|------|------------------------|
-| ANY | `__any_sync()` | 1.529 ms |
-| ALL | `__all_sync()` | 1.849 ms |
+| ANY | `__any_sync()` | 0.901 ms |
+| ALL | `__all_sync()` | 0.866 ms |
 
 ## 7. Match Operations
 
-| 操作 | 函数 | 描述 |
+| 操作 | 函数 | 延迟 |
 |------|------|------|
-| Match | `matchSyncKernel` | 统计 warp 内相同值的线程数 |
+| Match | `matchSyncKernel` | 0.095 ms |
 
 ## 8. 关键洞察
 
