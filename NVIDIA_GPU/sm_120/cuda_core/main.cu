@@ -1,6 +1,7 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "cuda_core_benchmarks.cu"
 
 #define CHECK_CUDA(call) \
     do { \

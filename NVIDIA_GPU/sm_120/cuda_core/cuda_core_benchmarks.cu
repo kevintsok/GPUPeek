@@ -1,8 +1,10 @@
 #include <cuda_runtime.h>
+#include <cuda_bf16.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "../../common/timer.h"
+#include "../arch_kernels.cu"
 #include "cuda_core_kernels.cu"
 
 #define CHECK_CUDA(call) \
@@ -14,7 +16,16 @@
         } \
     } while(0)
 
-extern const char* formatBandwidth(double GBps);
+// Helper function to format bandwidth
+const char* formatBandwidth(double GBps) {
+    static char buf[32];
+    if (GBps >= 1000.0) {
+        snprintf(buf, sizeof(buf), "%.2f TB/s", GBps / 1000.0);
+    } else {
+        snprintf(buf, sizeof(buf), "%.2f GB/s", GBps);
+    }
+    return buf;
+}
 
 // Helper function to format GFLOPS
 const char* formatGFLOPS(double gflops) {
