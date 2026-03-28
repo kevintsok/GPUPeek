@@ -10,12 +10,12 @@
 
 | 数据大小 | 带宽 | 状态 |
 |---------|------|------|
-| 64 KB | 102.74 GB/s | L2 fits |
-| 1 MB | 354.85 GB/s | L2 borderline |
-| 4 MB | 511.35 GB/s | L2 thrashing |
-| 8 MB | 578.21 GB/s | L2 thrashing |
-| 16 MB | 648.17 GB/s | L2 thrashing |
-| 32 MB | 564.99 GB/s | L2 thrashing |
+| 64 KB | 136.66 GB/s | L2 fits |
+| 1 MB | 367.34 GB/s | L2 borderline |
+| 4 MB | 677.53 GB/s | L2 thrashing |
+| 8 MB | 740.78 GB/s | L2 thrashing |
+| 16 MB | 772.16 GB/s | L2 thrashing |
+| 32 MB | 772.16 GB/s | L2 thrashing |
 
 ![L2 带宽 vs 数据尺寸](data/l2_throughput_vs_size.png)
 
@@ -25,15 +25,15 @@ Stride > 8 导致带宽急剧下降，表明缓存行跨距访问效率低。
 
 | Stride | 带宽 |
 |--------|------|
-| 1 | 643.67 GB/s |
-| 2 | 676.75 GB/s |
-| 4 | 631.22 GB/s |
-| 8 | 409.35 GB/s |
-| 16 | 402.12 GB/s |
-| 64 | 197.60 GB/s |
-| 256 | 224.76 GB/s |
-| 1024 | 236.30 GB/s |
-| 4096 | 333.56 GB/s |
+| 1 | 739.74 GB/s |
+| 2 | 605.92 GB/s |
+| 4 | 566.30 GB/s |
+| 8 | 420.93 GB/s |
+| 16 | 403.85 GB/s |
+| 64 | 203.34 GB/s |
+| 256 | 226.21 GB/s |
+| 1024 | 199.26 GB/s |
+| 4096 | 380.82 GB/s |
 
 ![L2 Thrashing vs Stride](data/l2_thrashing_vs_stride.png)
 
