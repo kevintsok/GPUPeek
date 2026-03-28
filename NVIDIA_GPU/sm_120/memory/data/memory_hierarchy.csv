@@ -1,0 +1,9 @@
+access_pattern,bandwidth_gbps,time_ms
+Global Direct Read,795.64,0.021
+Global Direct Write,688.96,0.024
+Shared Memory R/W,1540.00,0.022
+L2 Streaming (stride=1),596.85,0.028
+L2 Streaming (stride=32),781.55,0.021
+L2 Streaming (stride=512),854.49,0.020
+__ldg Bypass,734.73,0.023
+L1 Preference,752.87,0.022
