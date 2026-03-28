@@ -100,8 +100,8 @@
 
 | 分支模式 | 带宽 | 开销 |
 |----------|------|------|
-| 无分歧 | 581.92 GB/s | 基准 |
-| 高分歧 | 764.59 GB/s | -23.9% (更快) |
+| 无分歧 | 567.52 GB/s | 基准 |
+| 高分歧 | 795.51 GB/s | -28.7% (反向加速) |
 
 **实测发现**: 高分歧情况下反而更快，这与测试 kernel 的具体实现相关。
 
@@ -116,12 +116,12 @@
 
 | 粒度 | 带宽 | 描述 |
 |------|------|------|
-| Global atomic | 3.12 GB/s | 所有线程竞争同一地址 |
-| Block reduction + atomic | 284.71 GB/s | Block 内归约后单次 atomic |
-| atomicCAS | 9.93 GB/s | Compare-And-Swap |
+| Global atomic | 2.88 GB/s | 所有线程竞争同一地址 |
+| Block reduction + atomic | 39.50 GB/s | Block 内归约后单次 atomic |
+| atomicCAS | 4.96 GB/s | Compare-And-Swap |
 
 ### 优化策略
-- Block-level reduction 减少 atomic 竞争 (3-5x 提升)
+- Block-level reduction 减少 atomic 竞争 (13.7x 提升)
 - 使用 warp-level shuffle 代替 atomic
 - 分散热点数据到不同 atomic 位置
 
