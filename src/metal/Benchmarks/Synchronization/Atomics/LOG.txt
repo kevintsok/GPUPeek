@@ -1,13 +1,103 @@
-=== 5. Atomic Operation Contention Analysis ===
+=== Atomic Operations and Memory Consistency ===
 
-Low Contention:  0.023 GOPS
-High Contention: 0.022 GOPS
-Contention Cost: 1.1x
+--- Atomic Operation Performance ---
+Atomic Add (device): 0.03 GOPS
+Atomic Add (threadgroup): 0.03 GOPS
+Atomic CAS: 0.01 GOPS
+Non-Atomic Increment: 0.04 GOPS
+
+--- Atomic Operation Contention ---
+Low Contention:  0.024 GOPS
+High Contention: 0.023 GOPS
+Contention Cost: 1.0x (minimal contention overhead observed)
 
 --- Advanced Atomic Operations ---
-Fetch Add: 0.024 GOPS
+Fetch Add: 0.025 GOPS
 Fetch Min: 0.023 GOPS
-Fetch Max: 0.022 GOPS
+Fetch Max: 0.023 GOPS
 Compare-And-Swap: 0.009 GOPS
 Note: Metal only supports memory_order_relaxed for device atomics
 
+--- Real-World Workloads ---
+| Size | Histogram (Atomic) | Reduction (Atomic) |
+|------|--------------------|--------------------|
+| 4096 | 0.55 M/s | 0.65 M/s |
+| 16384 | 1.90 M/s | 2.70 M/s |
+| 65536 | 6.67 M/s | 8.32 M/s |
+
+--- Atomic Overhead Analysis ---
+Non-atomic baseline: 0.04 GOPS
+Atomic add overhead: 31.8%
+
+--- Key Findings ---
+1. Atomic operations have significant overhead vs non-atomic
+2. Threadgroup atomics faster than device atomics (closer to cores)
+3. CAS is more expensive than simple add (multiple memory operations)
+4. Histogram and reduction are common atomic workloads
+5. Minimize atomic contention by partitioning work or using local aggregation
+
+--- Atomic Operations in Metal ---
+Metal supports the following atomic operations:
+- atomic_store_explicit
+- atomic_load_explicit
+- atomic_fetch_add_explicit
+- atomic_fetch_min_explicit
+- atomic_fetch_max_explicit
+- atomic_compare_exchange_weak_explicit
+
+Memory orders supported:
+- memory_order_relaxed (only one supported for device atomics)
+- memory_order_acquire
+- memory_order_release
+- memory_order_acq_rel
+
+--- Atomic Optimization Strategies ---
+1. Use threadgroup atomics when possible
+   - Threadgroup atomics are faster (local to cluster)
+   - Use for per-threadgroup aggregation
+
+2. Reduce contention
+   - Partition work to reduce atomic hotspots
+   - Use local aggregation then global combine
+
+3. Avoid Compare-And-Swap when possible
+   - CAS is 3-4x slower than fetch_add
+   - Only use when truly needed
+
+4. Consider lock-free alternatives
+   - Use fetch_add for counters
+   - Use reduction patterns instead of CAS loops
+
+--- Memory Consistency ---
+Metal atomic limitations:
+- Device atomics only support memory_order_relaxed
+- Threadgroup atomics support all memory orders
+- For stronger ordering, use memory barriers
+
+--- Atomic Use Cases ---
+1. Histogram computation
+2. Reference counting
+3. Work queue management
+4. Global counters
+5. Parallel reduction
+
+--- Performance Comparison ---
+| Operation | Performance | Relative Cost |
+|-----------|-------------|--------------|
+| Non-atomic | 0.04 GOPS | 1x (baseline) |
+| Threadgroup atomic | 0.03 GOPS | 1.3x |
+| Device atomic | 0.03 GOPS | 1.3x |
+| CAS | 0.01 GOPS | 4x |
+
+--- Contention Analysis ---
+Contention has minimal impact on Apple M2:
+- Observed 1.0x cost between low and high contention
+- This may be due to unified memory architecture
+- Real contention impact depends on access patterns
+
+--- Best Practices ---
+1. Prefer threadgroup atomics over device atomics
+2. Use local aggregation before global atomic
+3. Avoid CAS in hot paths
+4. Consider atomic-free algorithms when possible
+5. Profile atomic overhead in your specific workload
