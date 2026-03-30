@@ -137,7 +137,33 @@ GPU 运算分为两类：
 
 ![计算效率对比](data/compute_efficiency.png)
 
-## 8. NCU 指标
+## 8. NCU Profiling 分析
+
+### FMA Kernel (FP32) NCU Profile
+
+| 指标 | 值 | 说明 |
+|------|-----|------|
+| sm__pipe_fma_cycles_active.sum | ~1,311,263 cycles | FMA单元活跃周期 |
+| dram__bytes.sum | ~33.56 Mbyte | DRAM访问字节数 |
+| l1tex__t_sectors_pipe_lsu_mem_global_op_ld.sum | 1,572,864 sectors | L1加载请求 |
+| l1tex__t_sectors_pipe_lsu_mem_global_op_st.sum | 524,288 sectors | L1存储请求 |
+
+### 分析结论
+
+| 指标 | 值 | 说明 |
+|------|-----|------|
+| FMA单元活跃 | ~1.31M cycles/SM | 计算密集 |
+| DRAM访问 | ~33.56 MB/kernel | 内存带宽消耗 |
+| L1加载效率 | 高 (1.57M sectors) | 缓存未命中少 |
+| L1存储效率 | 高 (0.52M sectors) | 写回策略有效 |
+
+**瓶颈分析**:
+- 实测FP32性能 266-268 GFLOPS
+- 理论峰值 29,000 GFLOPS
+- **效率 ~0.9%** 是因为内存带宽限制，不是计算单元问题
+- 每 FLOP 需要 ~6 bytes 内存访问（内存密集型）
+
+### NCU 指标参考
 
 | 指标 | 含义 |
 |------|------|
