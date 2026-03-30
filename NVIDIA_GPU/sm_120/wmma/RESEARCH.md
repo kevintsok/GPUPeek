@@ -12,10 +12,10 @@ WMMA (Warp-level Matrix Multiply-Accumulate) 是 NVIDIA 标准的 Tensor Core AP
 
 | 参数 | 值 |
 |------|-----|
-| 实测峰值 | **20.3 TFLOPS** (2048³矩阵) |
+| 实测峰值 | **16.48 TFLOPS** (2048³矩阵) |
 | 理论峰值 | 89 TFLOPS |
-| 实测效率 | **22.8%** |
-| CUDA Core 加速比 | **9.2x** (vs FP16 CUDA Core) |
+| 实测效率 | **18.5%** |
+| CUDA Core 加速比 | **7.7x** (vs FP16 CUDA Core) |
 
 ### 性能计算验证
 
@@ -97,22 +97,22 @@ using namespace nvcuda::wmma;
 | 模式 | 吞吐 | 说明 |
 |------|------|------|
 | FP32 CUDA (单线程) | 0.088 TFLOPS (实测) | 单线程FP32 |
-| FP16 CUDA Core | **2.2 TFLOPS** (实测, 2048³) | CUDA核心运行FP16 |
-| FP16 WMMA (Tensor Core) | **20.3 TFLOPS** (实测, 2048³) | mma.sync实测 |
+| FP16 CUDA Core | **2.15 GFLOPS** (实测, 2048³) | CUDA核心运行FP16 |
+| FP16 WMMA (Tensor Core) | **16.48 TFLOPS** (实测, 2048³) | mma.sync实测 |
 | FP16 WMMA (理论峰值) | **89 TFLOPS** (理论值) | RTX 5080 Tensor Core |
 
 ### 实测 Tensor Core vs CUDA Core 性能对比
 
-| 矩阵大小 | WMMA Tensor Core | CUDA Core FP16 | Speedup |
-|---------|------------------|----------------|---------|
-| 256³ | 4.6 TFLOPS | 1.4 GFLOPS | 3.2x |
-| 512³ | 14.1 TFLOPS | 2.1 GFLOPS | 6.7x |
-| 768³ | 18.2 TFLOPS | 2.4 GFLOPS | 7.8x |
-| 1024³ | 15.3 TFLOPS | 2.2 GFLOPS | 6.8x |
-| 1536³ | 20.1 TFLOPS | 2.1 GFLOPS | 9.5x |
-| 2048³ | 20.3 TFLOPS | 2.2 GFLOPS | 9.2x |
+| 矩阵大小 | WMMA (TFLOPS) | CUDA (GFLOPS) | Speedup |
+|---------|---------------|---------------|---------|
+| 256³ | 4.60 | 1441 | 3.2x |
+| 512³ | 14.08 | 2101 | 6.7x |
+| 768³ | 18.23 | 2353 | 7.8x |
+| 1024³ | 15.32 | 2245 | 6.8x |
+| 1536³ | 20.09 | 2109 | 9.5x |
+| 2048³ | 16.48 | 2148 | **7.7x** |
 
-> **关键发现**: Tensor Core 相比 CUDA Core 加速 **6-10x**，但仅达到理论峰值 89 TFLOPS 的 **23%**。
+> **关键发现**: Tensor Core 相比 CUDA Core 加速 **7-10x**，但仅达到理论峰值 89 TFLOPS 的 **18.5%**。
 > 原因：kernel 启动开销、occupancy 限制、内存带宽瓶颈。
 
 ![WMMA vs CUDA Core 吞吐对比](data/throughput_comparison.png)
