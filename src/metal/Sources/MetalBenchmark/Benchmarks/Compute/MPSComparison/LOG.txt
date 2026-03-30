@@ -1,0 +1,58 @@
+=== MPS vs Custom Kernel Performance Comparison ===
+
+--- GEMM (Matrix Multiply) Comparison ---
+Custom Naive GEMM: 4.38 GFLOPS
+
+Note: Apple MPS provides MPSMatrixMultiplication for optimized GEMM.
+For Apple Silicon, use MPS for production GEMM operations.
+
+--- Image Convolution (Sobel Edge Detection) ---
+Custom Sobel (texture): 45.66 Mpixels/s
+MPS Sobel: 13.68 Mpixels/s
+MPS vs Custom: 0.30x (MPS is 3.3x SLOWER!)
+
+--- Speedup Analysis ---
+MPS vs Custom Sobel: 0.30x (MPS slower)
+
+--- Key Findings ---
+1. Custom Sobel with direct texture read: 45.66 Mpixels/s
+2. MPS Sobel: 13.68 Mpixels/s (slower than custom)
+3. Custom kernel outperformed MPS in this specific test
+4. Possible reasons for MPS slowdown:
+   - Different gradient magnitude calculation method
+   - Additional edge handling in MPS implementation
+   - Texture format mismatch (r32Float vs standard formats)
+   - MPS overhead for simple operations
+
+--- When Custom Kernels Win ---
+1. Simple operations with known access patterns
+2. When you need specific numerical behavior
+3. When MPS overhead exceeds its benefits
+4. For specialized or non-standard filters
+5. Edge detection on Apple M2 GPU
+
+--- When MPS Wins ---
+1. Complex operations (CNN convolutions)
+2. When hardware acceleration provides clear benefit
+3. Production code requiring reliability
+4. Larger-scale operations where overhead amortizes
+
+--- Analysis Details ---
+Custom Sobel:
+- Direct texture2d read with explicit gradient computation
+- Full control over filter coefficients
+- Simple nested loop implementation
+- 45.66 Mpixels/s on M2
+
+MPS Sobel:
+- Uses MPSImageSobel with hardware acceleration
+- Standard gradient magnitude calculation
+- May include additional processing
+- 13.68 Mpixels/s on M2
+
+--- Recommendation ---
+1. Always benchmark your specific use case
+2. Don't assume MPS is always faster
+3. For edge detection, custom may be sufficient
+4. For CNN convolutions, MPS likely faster
+5. Consider texture format compatibility with MPS
