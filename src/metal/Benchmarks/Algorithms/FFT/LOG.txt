@@ -1,4 +1,44 @@
-=== 28. FFT Analysis ===
+=== FFT (Fast Fourier Transform) Analysis ===
 
+--- FFT Performance (Current Implementation) ---
 FFT (1024 elements, radix-2): 0.01 GOPS
 
+--- FFT Performance Characteristics ---
+FFT is O(n log n) complexity:
+- Each butterfly: 6 FLOPs (4 mul + 2 add)
+- Total FLOPs: n * log2(n) * 6
+- For N=1024: 1024 * 10 * 6 = 61,440 FLOPs
+
+--- FFT vs Other Operations ---
+| Operation | Performance | Complexity |
+|-----------|-------------|------------|
+| FFT (1024) | 0.01 GOPS | O(n log n) |
+| GEMM (256) | ~4 GFLOPS | O(n^3) |
+| Scan (1M) | ~0.29 GOPS | O(n log n) |
+| Sort (256K) | 0.015 GOPS | O(n log n) |
+
+--- Key Observations ---
+1. FFT performance is memory-bound due to global memory access per stage
+2. 10 synchronization barriers for N=1024 (log2(1024) stages)
+3. Each stage requires reading/writing all N elements
+4. Shared memory optimization could improve by 2-5x
+
+--- Optimization Approaches ---
+1. Shared Memory FFT: Cache data in threadgroup memory
+2. Radix-4 FFT: Fewer stages (log4(n) vs log2(n))
+3. Stockham FFT: Avoids bit-reversal overhead
+4. Mixed-Radix: Handle non-power-of-2 sizes efficiently
+
+--- Estimated Performance with Optimization ---
+| Implementation | Est. Speedup | Notes |
+|----------------|--------------|-------|
+| Naive Global | 1x (baseline) | Current |
+| Shared Memory | 2-3x | Reduces global memory traffic |
+| Radix-4 | 1.5-2x | Fewer stages |
+| Combined | 3-5x | Shared + Radix-4 |
+
+--- Roofline Classification ---
+FFT Arithmetic Intensity: ~6 FLOP/byte (butterfly computation)
+- Each complex op reads 2 floats (8 bytes) and writes 2 floats (8 bytes)
+- 6 FLOPs / 16 bytes = 0.375 FLOP/byte
+- Classification: MEMORY BOUND
