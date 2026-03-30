@@ -1,7 +1,112 @@
-=== 10. Occupancy Analysis (Shared Memory Tradeoff) ===
+=== Occupancy and Warp Scheduling Analysis ===
 
-Low Occupancy (32 thr, 1KB):     0.05 GOPS
-Med Occupancy (128 thr, 256B):   0.05 GOPS
-High Occupancy (512 thr, 64B):   0.05 GOPS
-Best Occupancy: High with 0.05 GOPS
+--- Occupancy Impact (Threadgroup Size) ---
+| Threadgroup Size | Occupancy | Throughput |
+|-----------------|-----------|------------|
+| 32 | 3% | 10.02 M/s |
+| 64 | 6% | 10.50 M/s |
+| 128 | 12% | 10.30 M/s |
+| 256 | 25% | 10.35 M/s |
+| 512 | 50% | 10.28 M/s |
+| 1024 | 100% | 10.27 M/s |
 
+--- Occupancy Analysis (Shared Memory Tradeoff) ---
+Low Occupancy (32 thr, 1KB): 0.04 GOPS
+Med Occupancy (128 thr, 256B): 0.04 GOPS
+High Occupancy (512 thr, 64B): 0.04 GOPS
+Best Occupancy: Med with 0.04 GOPS
+
+--- Compute vs Memory Bound Performance ---
+| Size | Compute Bound | Memory Bound | Latency Hiding |
+|------|---------------|-------------|----------------|
+| 4096 | 0.53 | 0.72 | 0.73 |
+| 16384 | 2.01 | 2.85 | 2.90 |
+| 65536 | 4.81 | 9.95 | 9.83 |
+
+--- Warp Efficiency Analysis ---
+Compute-bound kernels benefit less from high occupancy
+Memory-bound kernels need high occupancy to hide latency
+Latency hiding works best with balanced compute/memory
+
+--- Threadgroup Size vs SIMD Efficiency ---
+Threadgroup Size | SIMD Groups | Efficiency
+----------------|-------------|----------
+32 threads | 1 SIMD | Optimal (1 warp)
+64 threads | 2 SIMDs | Optimal
+128 threads | 4 SIMDs | Optimal
+256 threads | 8 SIMDs | Optimal
+512 threads | 16 SIMDs | Optimal
+1024 threads | 32 SIMDs | Optimal
+
+--- Key Findings ---
+1. Compute-bound: high arithmetic intensity, less sensitive to occupancy
+2. Memory-bound: low arithmetic intensity, needs high occupancy for latency hiding
+3. Threadgroup size affects occupancy and performance
+4. Optimal occupancy depends on kernel characteristics
+5. Apple M2: 8 EUs, warp size 32, max threads per EU ~1024
+
+--- Occupancy vs Performance ---
+- Low occupancy (32 threads): 10.02 M/s
+- Medium occupancy (128 threads): 10.30-10.50 M/s
+- High occupancy (1024 threads): 10.27 M/s
+
+Note: Performance is relatively stable across occupancy levels on Apple M2
+
+--- Maximum Threadgroup Size Effect ---
+Threadgroup | Grid Size | Bandwidth
+---------------------------------------------
+64 | 16777216 | 1.79 GB/s
+128 | 16777216 | 1.79 GB/s
+256 | 16777216 | 1.77 GB/s
+512 | 16777216 | 1.79 GB/s
+1024 | 16777216 | 1.77 GB/s
+
+--- Memory Bandwidth vs Occupancy ---
+Burst Write (16 elements/thread): 7.19 GB/s
+Max Read (1024 threads): 1.04 GB/s
+Blit Copy Engine: 1.03 GB/s
+
+--- Apple M2 Architecture ---
+- GPU Family: Apple 7
+- EUs (Execution Units): 8
+- SIMD Width: 32 threads (warp equivalent)
+- Max Threads per EU: ~1024
+- Threadgroup Memory: 32 KB
+
+--- Occupancy Calculation ---
+Occupancy = (Threads per Threadgroup / Max Threads per EU) * (Threadgroups / Max Threadgroups)
+
+For Apple M2:
+- Max threads per EU: 1024
+- Max threadgroups per EU: Limited by register pressure
+
+--- Optimization Strategies ---
+1. For memory-bound kernels: Higher occupancy helps hide latency
+2. For compute-bound kernels: Occupancy less critical
+3. Use 256-512 threads as default (good balance)
+4. Shared memory size affects max occupancy
+5. Profile to find optimal threadgroup size
+
+--- Trade-off Analysis ---
+More threads per threadgroup:
+- ✅ Higher occupancy
+- ✅ Better latency hiding
+- ❌ Less shared memory per thread
+- ❌ More register pressure
+
+Fewer threads per threadgroup:
+- ✅ More shared memory per thread
+- ✅ Less register pressure
+- ❌ Lower occupancy
+- ❌ Less latency hiding
+
+--- When Occupancy Matters ---
+✅ Matters (memory-bound):
+- Sequential memory access
+- Global memory reads/writes
+- Atomic operations
+
+❌ Less matters (compute-bound):
+- FMA chains
+- Register-only computation
+- SIMD operations

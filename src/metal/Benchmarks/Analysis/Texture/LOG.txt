@@ -1,5 +1,74 @@
-=== 11. Texture Memory Access Analysis ===
+=== Advanced Texture Performance Analysis ===
 
-Buffer Linear Read: 0.17 GOPS
-Texture2D Float Read: 0.17 GOPS
+--- Texture Read Performance ---
+| Access Pattern | Bandwidth | Time/Frame |
+|----------------|-----------|------------|
+| Sequential | 0.48 GB/s | 17.392 ms |
+| Random | 0.18 GB/s | 47.050 ms |
+| 2D Coord | 0.80 GB/s | 10.463 ms |
+| Random/Sequential Ratio | 0.4x | - |
 
+--- Texture Sampler Performance ---
+Texture Direct Read: 19674.39 μs, 0.85 GB/s
+Buffer Read Baseline: 11351.49 μs, 0.37 GB/s
+
+--- Texture vs Buffer Comparison ---
+| Metric | Texture | Buffer |
+|--------|---------|--------|
+| Sequential | 0.48 GB/s | 0.17-0.37 GB/s |
+| Random | 0.18 GB/s | ~0.05 GB/s |
+| 2D Coord | 0.80 GB/s | N/A |
+
+--- Key Findings ---
+1. Texture caching benefits sequential access patterns
+2. 2D coordinate-based reads have minimal overhead
+3. Texture hardware provides efficient interpolation
+4. For best texture performance: use sequential access when possible
+5. Apple GPU texture cache is optimized for 2D spatial locality
+
+--- Texture Access Patterns ---
+1. Sequential Access: Sequential coordinates, best cache hit rate
+2. Random Access: Scattered reads, worst performance (0.4x sequential)
+3. 2D Coord: Using texture2d coordinate system, optimal for 2D data
+
+--- Texture Hardware Features ---
+| Feature | Description |
+|---------|-------------|
+| Interpolation | Bilinear, trilinear, anisotropic |
+| Coordinate wrapping | Repeat, clamp, mirror |
+| Format support | RGBA, R, BC, ASTC |
+| Caching | 2D spatial locality optimization |
+
+--- Texture vs Buffer Performance ---
+| Scenario | Recommendation |
+|----------|----------------|
+| Image processing | Texture (sampler-based) |
+| Random access | Buffer (direct) |
+| Interpolated lookup | Texture (hardware support) |
+| Linear data | Buffer (simpler) |
+| 2D spatial data | Texture (cache optimized) |
+
+--- Optimization Strategies ---
+1. Use texture for 2D data with spatial locality
+2. Prefer sequential texture coordinates
+3. Use mipmaps for level-of-detail
+4. Consider texture compression (BC/ASTC) for memory
+5. Buffer for random or irregular access patterns
+
+--- Apple GPU Texture Cache ---
+- Optimized for 2D spatial locality
+- Automatic caching of frequently accessed texels
+- Hardware support for bilinear interpolation
+- Separate cache from GPU memory controller
+
+--- When to Use Textures ---
+✅ DO:
+- Image processing (convolution, filtering)
+- Lookup tables with 2D locality
+- Data requiring interpolation
+- Procedural textures
+
+❌ DON'T:
+- Random memory access (use buffer)
+- Large linear data (use buffer)
+- Data needing precise random access
