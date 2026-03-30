@@ -1,0 +1,25 @@
+=== 55. Tensor Core Emulation (WMMA) ===
+
+--- WMMA Performance Comparison ---
+| Size | Naive GFLOPS | Tiled GFLOPS | SIMD GFLOPS | FP16 Tiled GFLOPS |
+|------|--------------|--------------|-------------|-------------------|
+| 128 | 0.41 | 0.69 | 0.53 | 0.58 |
+| 256 | 0.43 | 3.46 | 2.48 | 3.76 |
+| 512 | 0.40 | 7.42 | 6.46 | 9.74 |
+
+--- Key Insights ---
+1. Tiled WMMA exploits shared memory for better data reuse
+2. SIMD block multiplication leverages 32-thread SIMD groups
+3. FP16 reduces memory bandwidth by 2x
+4. True tensor cores (NVIDIA/AMD) provide 8-16x speedup over WMMA emulation
+5. Apple GPUs lack native tensor cores - WMMA is software emulation
+
+--- Analysis ---
+- Naive GEMM: 0.40-0.43 GFLOPS (baseline)
+- Tiled GEMM: 0.69-7.42 GFLOPS (up to 18x improvement)
+- FP16 Tiled: 0.58-9.74 GFLOPS (best performance)
+
+Performance scaling with matrix size:
+- Small (128x128): Minimal benefit from tiling
+- Medium (256x256): Tiling provides 8x speedup
+- Large (512x512): Tiling provides 18x speedup
