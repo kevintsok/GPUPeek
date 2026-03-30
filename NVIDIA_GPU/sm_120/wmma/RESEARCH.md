@@ -95,11 +95,24 @@ using namespace nvcuda::wmma;
 
 ## 6. WMMA vs CUDA Core 吞吐对比
 
-| 模式 | 吞吐 |
-|------|------|
-| FP32 CUDA (单线程) | 0.088 TFLOPS (实测) |
-| FP16 WMMA (单 Warp) | **待测** (需修复benchmark) |
-| FP16 WMMA (理论峰值) | **89 TFLOPS** (理论值) |
+| 模式 | 吞吐 | 说明 |
+|------|------|------|
+| FP32 CUDA (单线程) | 0.088 TFLOPS (实测) | 单线程FP32 |
+| FP16 CUDA Core | **2.5 TFLOPS** (实测, 2048³) | CUDA核心运行FP16 |
+| FP16 WMMA (单 Warp) | **待测** (mma.sync需修复) | 需正确配置 |
+| FP16 WMMA (理论峰值) | **89 TFLOPS** (理论值) | RTX 5080 Tensor Core |
+
+### 实测 CUDA Core FP16 矩阵乘法性能
+
+| 矩阵大小 | 时间 (ms) | 性能 (GFLOPS) |
+|---------|-----------|---------------|
+| 256³ | 0.037 | 902 |
+| 512³ | 0.153 | 1760 |
+| 1024³ | 0.901 | 2382 |
+| 2048³ | 6.881 | 2497 |
+
+> ⚠️ 注意：以上是 **CUDA Core FP16** 性能，不是 Tensor Core 性能。
+> Tensor Core 需要使用 `mma.sync` PTX 指令才能达到 89 TFLOPS 理论峰值。
 
 ![WMMA vs CUDA Core 吞吐对比](data/throughput_comparison.png)
 
