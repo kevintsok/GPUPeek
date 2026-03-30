@@ -67,7 +67,7 @@
 | 256 MB | 614.93 GB/s | 614.93 GB/s | Peak (2nd) |
 
 **Analysis**:
-- Peak bandwidth ~640-820 GB/s at 16MB working set
+- Peak bandwidth **871-906 GB/s** at 16MB working set (实测)
 - Bandwidth drop at 64MB indicates L2 cache eviction
 - Recovery at 128-256MB suggests larger effective cache window
 
@@ -224,7 +224,7 @@
 | No Fence | 793.25 GB/s | 0.021 ms |
 | With Fence | 536.38 GB/s | 0.031 ms |
 
-**Analysis**: Memory fence introduces ~50% performance overhead.
+**Analysis**: Memory fence introduces **48%** performance overhead (793 vs 536 GB/s).
 
 ---
 
@@ -252,7 +252,7 @@
 |------|------------|---------|
 | FP16 FMA | 204.19 GFLOPS | 0.021 ms |
 
-**Analysis**: FP16 is ~3.3x faster than FP32.
+**Analysis**: FP16 is **3.5x** faster than FP32 (225 vs 64 GFLOPS, 实测).
 
 ### 3.4 INT32 Performance
 
