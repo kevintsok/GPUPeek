@@ -6,7 +6,9 @@ WMMA (Warp-level Matrix Multiply-Accumulate) 是 NVIDIA 标准的 Tensor Core AP
 
 ## 重要发现：原始基准测试的问题
 
-**问题：基准测试显示 ~257 GFLOPS，而不是预期的 ~89 TFLOPS**
+**问题：基准测试显示 257 GFLOPS，而不是预期的 89 TFLOPS (理论峰值)**
+
+> ⚠️ 注意：~89 TFLOPS 是**理论峰值**，不是实测值。基准测试需要修复才能测量真实张量核心性能。
 
 ### 根本原因分析
 
@@ -40,7 +42,7 @@ WMMA (Warp-level Matrix Multiply-Accumulate) 是 NVIDIA 标准的 Tensor Core AP
 
 ### RTX 5080 张量核心规格
 
-- 峰值 FP16：~89 TFLOPS
+- 峰值 FP16：**89 TFLOPS (理论峰值，非实测)**
 - SM 数量：60
 - 每 SM warp 数：最多 16
 - 最大并发 warp：960
@@ -75,8 +77,8 @@ using namespace nvcuda::wmma;
 ## 4. 每周期操作
 
 - **FP16 tensor core**: 512 FLOPS per cycle per warp
-- **RTX 5080**: ~89 TFLOPS FP16 tensor peak
-- **Latency**: ~6-8 cycles per MMA on Blackwell
+- **RTX 5080**: **89 TFLOPS FP16 tensor peak (理论峰值)**
+- **Latency**: **6-8 cycles per MMA on Blackwell (理论值)**
 
 ![数据类型 TFLOPS 对比](data/tensor_dtype_comparison.png)
 
@@ -95,9 +97,9 @@ using namespace nvcuda::wmma;
 
 | 模式 | 吞吐 |
 |------|------|
-| FP32 CUDA (单线程) | ~0.088 TFLOPS |
-| FP16 WMMA (单 Warp) | ~89 TFLOPS |
-| FP16 WMMA (理论峰值) | ~2048 TFLOPS |
+| FP32 CUDA (单线程) | 0.088 TFLOPS (实测) |
+| FP16 WMMA (单 Warp) | **待测** (需修复benchmark) |
+| FP16 WMMA (理论峰值) | **89 TFLOPS** (理论值) |
 
 ![WMMA vs CUDA Core 吞吐对比](data/throughput_comparison.png)
 
