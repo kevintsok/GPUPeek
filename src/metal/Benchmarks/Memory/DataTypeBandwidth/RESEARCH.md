@@ -72,15 +72,24 @@ Apple M2 uses unified memory architecture where:
 
 ## Research Results
 
-### Expected Bandwidth by Data Type
+### Measured Bandwidth by Data Type (1M elements)
 
-| Type | Read Bandwidth | Write Bandwidth |
-|------|---------------|-----------------|
-| Float4 | ~4-8 GB/s | ~3-6 GB/s |
-| Float2 | ~2-4 GB/s | ~2-3 GB/s |
-| Float1 | ~1-2 GB/s | ~1-2 GB/s |
-| Half4 | ~4-8 GB/s | ~3-6 GB/s |
-| UInt8x4 | ~4-8 GB/s | N/A |
+| Type | Size | Read Bandwidth | Relative to Float1 |
+|------|------|---------------|-------------------|
+| Float4 | 16B | **42.92 GB/s** | **3.78x** |
+| Float2 | 8B | 22.71 GB/s | 2.00x |
+| Float1 | 4B | 11.37 GB/s | 1.00x (baseline) |
+| Half4 | 8B | **25.47 GB/s** | **3.96x** |
+| Half1 | 2B | 6.43 GB/s | 1.00x |
+| UInt8x4 | 4B | 11.51 GB/s | 4.15x |
+| UInt8x1 | 1B | 2.78 GB/s | 1.00x |
+
+### Measured Write Bandwidth
+
+| Type | Size | Write Bandwidth | Relative to Float1 |
+|------|------|-----------------|-------------------|
+| Float4 | 16B | 19.53 GB/s | 2.50x |
+| Float1 | 4B | 7.80 GB/s | 1.00x |
 
 ### Access Pattern Impact
 
@@ -90,6 +99,14 @@ Apple M2 uses unified memory architecture where:
 | Strided (2) | ~0.5x | 50% cache line waste |
 | Strided (4) | ~0.25x | 75% cache line waste |
 | Random | ~0.1x | No locality |
+
+### Key Findings
+
+1. **Vectorization provides 3-4x bandwidth improvement**: Float4 achieves 42.92 GB/s vs 11.37 GB/s for Float1 (3.78x speedup)
+2. **Half precision is highly efficient**: Half4 achieves 25.47 GB/s, nearly matching Float2 (22.71 GB/s) despite half the data
+3. **Int8 vectorization is effective**: UInt8x4 achieves 11.51 GB/s, 4.15x faster than scalar UInt8x1
+4. **Bandwidth scales with data size**: Larger buffers achieve higher bandwidth (10x difference between 64K and 1M elements)
+5. **Write bandwidth is lower than read**: Float4 write achieves 19.53 GB/s vs 42.92 GB/s read
 
 ## Optimization Strategies
 
