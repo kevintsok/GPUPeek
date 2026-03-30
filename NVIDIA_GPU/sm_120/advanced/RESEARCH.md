@@ -141,7 +141,29 @@
 - Memory Bound: 增加计算密度或使用更好的缓存
 - Compute Bound: 减少计算量或使用更低精度
 
-## 7. NCU 指标
+## 7. NCU Profiling 分析
+
+### Constant Memory Stride Kernel NCU Profile
+
+| 指标 | 值 | 说明 |
+|------|-----|------|
+| dram__bytes.sum | ~4 KB - 14.5 MB | DRAM访问字节数（变化大）|
+| sm__pipe_fma_cycles_active.sum | ~5,542,000 cycles | FMA单元活跃周期 |
+
+### 分析结论
+
+| 指标 | 值 | 说明 |
+|------|-----|------|
+| DRAM访问 | ~4 KB - 14.5 MB | 变化范围大(缓存命中vs未命中) |
+| FMA活跃 | ~5.54M cycles/SM | 高计算密度 |
+| Stride变化 | 影响大 | 大stride导致更多DRAM访问 |
+
+**瓶颈分析**:
+- 实测内存带宽: ~248-800 GB/s (不同stride)
+- Constant Memory 缓存命中时带宽: ~1.29 TB/s
+- Stride 增大导致缓存效率下降
+
+### NCU 指标参考
 
 | 指标 | 含义 |
 |------|------|
