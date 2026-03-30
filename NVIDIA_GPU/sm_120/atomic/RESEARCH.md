@@ -63,7 +63,29 @@ Effective_BW ≈ Base_BW × (32 / Num_Threads_Contending)
 3. **选择合适的 atomic 类型**: atomicAdd 最快，atomicCAS 最慢
 4. **考虑数据布局**: 将热点数据分散到不同 atomic 位置
 
-## 6. NCU 指标
+## 6. NCU Profiling 分析
+
+### Atomic Operation (atomicOperationAdd) NCU Profile
+
+| 指标 | 值 | 说明 |
+|------|-----|------|
+| dram__bytes.sum | ~60-92 Mbyte | DRAM访问字节数 |
+| sm__pipe_fma_cycles_active.sum | ~791,000-815,000 cycles | FMA单元活跃周期 |
+
+### 分析结论
+
+| 指标 | 值 | 说明 |
+|------|-----|------|
+| DRAM访问 | ~73 MB/kernel (avg) | 内存带宽消耗 |
+| FMA活跃 | ~800K cycles/SM | 计算量较低 |
+| 原子操作 | atomicAdd | 简单整数加法 |
+
+**瓶颈分析**:
+- 原子操作性能主要受 **内存带宽** 和 **原子争用** 影响
+- 实测带宽 ~78.78 GB/s (warp-level)
+- 高争用时带宽下降到 ~2.88 GB/s (grid-level direct)
+
+### NCU 指标参考
 
 | 指标 | 含义 |
 |------|------|
