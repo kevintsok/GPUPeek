@@ -55,11 +55,11 @@ cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
 cmake --build . --config Release
 ./gpupeek_memory
 
-# Build wmma module
+# Build wmma module (Tensor Core benchmark)
 cd ../wmma && mkdir -p build && cd build
 cmake .. -DCMAKE_CUDA_ARCHITECTURES=90
 cmake --build . --config Release
-./gpupeek_wmma
+./wmma_final_benchmark  # Tensor Core performance benchmark
 ```
 
 ### Available Modules
@@ -100,17 +100,20 @@ cmake --build . --config Release
 ```bash
 # Run a specific module
 ./gpupeek_memory [elements]
-./gpupeek_wmma [elements]
+./wmma_final_benchmark    # Tensor Core benchmark (WMMA)
 
 # Example: Run memory research with 1M elements
 ./gpupeek_memory 1048576
+
+# Example: Run Tensor Core benchmark
+./wmma_final_benchmark
 ```
 
 ## NCU Profiling
 
 ```bash
-# Profile a module
-ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./gpupeek_wmma
+# Profile Tensor Core utilization
+ncu --set full --metrics sm__pipe_tensor_cycles_active.pct ./wmma_final_benchmark
 
 # Memory bandwidth analysis
 ncu --set full --metrics dram__bytes.sum ./gpupeek_memory
