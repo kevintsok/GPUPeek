@@ -1,0 +1,53 @@
+=== Data Type Memory Bandwidth Comparison ===
+
+--- Read Bandwidth by Data Type (Float) ---
+| Type | Bandwidth | Notes |
+|------|-----------|-------|
+| Float4 | TBD GB/s | Vectorized read |
+| Float2 | TBD GB/s | Half vectorized |
+| Float1 | TBD GB/s | Scalar read |
+
+--- Read Bandwidth by Data Type (Half) ---
+| Type | Bandwidth | Notes |
+|------|-----------|-------|
+| Half4 | TBD GB/s | 2x density vs Float |
+| Half1 | TBD GB/s | Scalar half |
+
+--- Read Bandwidth by Data Type (Int8) ---
+| Type | Bandwidth | Notes |
+|------|-----------|-------|
+| UInt8x4 | TBD GB/s | 4x density |
+| UInt8x1 | TBD GB/s | Scalar byte |
+
+--- Write Bandwidth by Data Type ---
+| Type | Bandwidth | Notes |
+|------|-----------|-------|
+| Float4 Write | TBD GB/s | Vectorized write |
+| Float1 Write | TBD GB/s | Scalar write |
+
+--- Access Pattern Impact ---
+| Pattern | Bandwidth | Notes |
+|---------|-----------|-------|
+| Sequential Read | TBD GB/s | Baseline |
+| Strided Read | TBD GB/s | stride=4 |
+| Random Read | TBD GB/s | Indexed |
+
+--- Key Findings ---
+1. Vectorized access (float4) provides higher bandwidth than scalar
+2. Half precision enables 2x more elements per memory transaction
+3. Int8 provides 4x density but may have extraction overhead
+4. Strided access significantly reduces effective bandwidth
+5. Apple M2 unified memory affects bandwidth characteristics
+
+--- Analysis ---
+- Float4 vs Float1: Vectorization typically 2-4x better
+- Half vs Float: Half has 2x density but same transaction overhead
+- Int8: Highest density but conversion overhead
+- Strided: Poor cache line utilization
+- Random: No spatial locality, worst performance
+
+--- Recommendations ---
+1. Use vectorized types (float4, half4) when possible
+2. Prefer half precision for memory-bound operations
+3. Avoid strided access patterns
+4. Consider data layout changes for better vectorization

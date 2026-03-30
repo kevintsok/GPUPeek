@@ -17056,7 +17056,6 @@ do { try testPrecisionAnalysis(device: device, queue: queue, library: library) }
 do { try testInstructionMix(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testSIMDGroupCommunication(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testShaderAndLaunchOverhead(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
-do { try TextureSamplerBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MPSComparisonBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try testAsynchronousOverlap(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testMultiQueueParallelism(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
