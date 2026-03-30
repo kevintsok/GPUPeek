@@ -1,0 +1,43 @@
+=== SoA vs AoS Data Layout Analysis ===
+
+--- Data Layout Performance Comparison (M/s = Million particles/sec) ---
+| Count | AoS (interleaved) | SoA (sequential) | Hybrid |
+|-------|-------------------|------------------|--------|
+| 1024 | 0.3 M/s | 0.2 M/s | 0.2 M/s |
+| 4096 | 0.8 M/s | 0.8 M/s | 0.8 M/s |
+| 16384 | 2.9 M/s | 2.8 M/s | 2.9 M/s |
+
+--- Analysis ---
+Unexpected Result: AoS and SoA perform similarly on Apple M2!
+
+Possible explanations:
+1. Apple M2 unified memory may hide AoS strided access penalty
+2. Cache line behavior differs from expected
+3. Compiler optimizations may be compensating
+4. Memory controller optimizes for both access patterns
+
+--- Key Findings ---
+1. Apple M2 shows minimal difference between AoS and SoA
+2. Performance scales linearly with particle count (O(n))
+3. All three layouts perform similarly
+4. This suggests Apple M2 memory system handles both patterns efficiently
+5. For Apple GPUs, data layout choice may be less critical than expected
+
+--- Implications ---
+- SoA still recommended for:
+  * Better cache line utilization when accessing single field
+  * Easier vectorization (float4 loads)
+  * Better compression (when fields have similar values)
+  * GPU memory access patterns that differ from CPU
+
+- AoS may be acceptable on Apple M2 for:
+  * Simpler code structure
+  * When objects are processed holistically
+  * When field access patterns are unpredictable
+
+--- Performance per Size ---
+1024 particles: ~0.2-0.3 M/s (baseline)
+4096 particles: ~0.8 M/s (4x scaling)
+16384 particles: ~2.8-2.9 M/s (3.5x scaling from 4K)
+
+Note: Scaling is sublinear due to memory bandwidth saturation

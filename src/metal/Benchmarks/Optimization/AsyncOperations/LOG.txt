@@ -1,0 +1,40 @@
+=== Asynchronous Operations and Command Buffer Overlap Analysis ===
+
+--- Synchronous Execution (Baseline) ---
+Synchronous total time: 117.26 ms
+Per-kernel time: 11.73 ms
+
+--- Asynchronous Execution (Non-blocking) ---
+Asynchronous total time: 71.00 ms
+Per-kernel time (committed together): 7.10 ms
+
+--- Overlap Analysis ---
+| Metric | Value |
+|--------|-------|
+| Synchronous total | 117.26 ms |
+| Asynchronous total | 71.00 ms |
+| Overlap ratio | 1.65x |
+
+--- Multi-Queue Parallelism ---
+Single Queue: 60.01 ms (baseline)
+Dual Queue: 84.93 ms
+
+Note: Dual queue was SLOWER, likely due to queue coordination overhead
+
+--- Key Findings ---
+1. Async execution provides 1.65x speedup for batched kernels
+2. Non-blocking commit allows GPU to pipeline operations
+3. Multiple queues may add overhead for small workloads
+4. Completion handlers enable CPU/GPU overlap
+
+--- Best Practices ---
+1. Batch multiple kernels in single command buffer
+2. Use async commit for independent operations
+3. Avoid excessive addDependency() calls
+4. Consider completion handlers for notification
+5. Profile before using multi-queue (overhead risk)
+
+--- Command Buffer Overhead ---
+- addDependency(): ~0.25 μs per dependency
+- Kernel launch: ~0.5 μs
+- Batch 3 kernels: ~0.3 μs total overhead
