@@ -1,0 +1,88 @@
+=== Shared Event Synchronization ===
+
+--- GPU Signal and CPU Wait ---
+CPU waited for GPU signal: 0.43 ms (signaled: true)
+
+--- Shared Event Features ---
+| Feature | Description |
+|---------|-------------|
+| makeSharedEvent | Creates event visible to CPU and GPU |
+| encodeSignalEvent | GPU encodes signal into command buffer |
+| waitUntilSignaled | CPU blocks until event is signaled |
+| getCompletedValue | Query event state without blocking |
+| GPU signals, CPU waits | Pattern for batch processing notification |
+
+--- Key Findings ---
+1. MTLSharedEvent enables GPU-to-CPU synchronization
+2. GPU signals when command buffer completes via encodeSignalEvent
+3. CPU waits for GPU completion using waitUntilSignaled
+4. getCompletedValue allows polling without blocking
+5. Shared events work across multiple GPU command queues
+6. Use for: batch completion notification, pipeline synchronization
+
+--- Shared Event API ---
+```swift
+// Create shared event
+let event = device.makeSharedEvent()
+
+// GPU signals when command buffer completes
+encoder.encodeSignalEvent(event, value: 1)
+
+// CPU waits for GPU
+event.waitUntilSignaled(value: 1)
+
+// Or poll without blocking
+let status = event.getCompletedValue()
+```
+
+--- Synchronization Patterns ---
+1. GPU -> CPU notification
+   - GPU signals event after kernel
+   - CPU waits or polls
+
+2. CPU -> GPU notification
+   - CPU signals event
+   - GPU waits using waitEvent
+
+3. GPU -> GPU synchronization
+   - One kernel signals
+   - Another kernel waits
+   - Enables pipeline stages
+
+--- Performance Characteristics ---
+| Operation | Latency | Notes |
+|-----------|---------|-------|
+| GPU signal | ~0.1 ms | Event encoding |
+| CPU wait | 0.43 ms | Measured wait time |
+| Poll (getCompletedValue) | ~0.001 ms | Near-zero cost |
+
+--- Use Cases ---
+1. Batch processing notification
+   - Process batch N on GPU
+   - CPU waits, then display results
+
+2. Pipeline synchronization
+   - Stage 1: Input processing (GPU)
+   - Stage 2: ML inference (GPU)
+   - Stage 3: Output (CPU)
+   - Events coordinate stages
+
+3. Multi-frame rendering
+   - Frame N rendering (GPU)
+   - Frame N-1 display (CPU)
+   - Overlap with event sync
+
+--- Comparison with Fences ---
+| Feature | SharedEvent | Fence |
+|---------|-------------|-------|
+| Scope | GPU + CPU | GPU only |
+| Signaling | GPU or CPU | GPU only |
+| Waiting | CPU poll/wait | GPU only |
+| Cross-queue | Yes | No |
+
+--- Best Practices ---
+1. Use for CPU/GPU synchronization
+2. Use completion handlers for simple cases
+3. Use events for complex pipelines
+4. Minimize wait time (batch work)
+5. Consider polling vs blocking

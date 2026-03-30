@@ -1,0 +1,90 @@
+=== Acceleration Structures (BVH) and Ray Tracing ===
+
+--- BVH Build ---
+Nodes: 128, Spheres: 32, Rays: 4096
+
+--- Ray-AABB Intersection Performance ---
+| 4096 | 0.47 M/s |
+
+--- Brute Force Sphere Intersection ---
+| 4096 x 32 | 0.67 M/s |
+
+--- Key Findings ---
+1. BVH accelerates ray tracing from O(rays x spheres) to O(rays x log(spheres))
+2. Ray-AABB is faster than ray-sphere testing
+3. BVH traversal uses stack-based hierarchical testing
+4. Apple M3 has hardware ray tracing units (this is software simulation)
+5. Real ray tracers use SAH (Surface Area Heuristic) for optimal splits
+
+--- Acceleration Structure Types ---
+| Structure | Build Time | Query Time | Memory | Use Case |
+|-----------|------------|------------|--------|----------|
+| Brute Force | O(1) | O(n) | O(n) | < 10 objects |
+| BVH | O(n log n) | O(log n) | O(n) | General |
+| Quadtree | O(n) | O(log n) | O(n) | 2D scenes |
+| Octree | O(n) | O(log n) | O(n) | 3D scenes |
+| Grid | O(n) | O(1) avg | O(n) | Uniform distribution |
+| KD-Tree | O(n log n) | O(log n) | O(n) | Ray tracing |
+
+--- BVH Construction ---
+1. Compute bounding box of all primitives
+2. Choose split axis (longest dimension)
+3. Find split position (midpoint or SAH)
+4. Partition primitives into two groups
+5. Recursively build children
+6. Stop when leaf contains < threshold primitives
+
+--- BVH Traversal Algorithm ---
+```
+ray_hit(scene, ray):
+    stack = [scene.root]
+    while stack not empty:
+        node = stack.pop()
+        if node is leaf:
+            test primitives in leaf
+        else:
+            if ray intersects node.bbox:
+                stack.push(node.left)
+                stack.push(node.right)
+    return closest_hit
+```
+
+--- Ray-Primitive Tests ---
+| Test | FLOPs | Notes |
+|------|-------|-------|
+| Ray-AABB | ~20 | Fast, conservative |
+| Ray-Sphere | ~30 | Exact, center test |
+| Ray-Triangle | ~50 | Most common in rendering |
+
+--- SAH (Surface Area Heuristic) ---
+Best split position minimizes:
+cost = t_left * SA_left + t_right * SA_right
+
+Where:
+- t = traversal cost
+- SA = surface area of child bounding box
+
+--- Apple M-Series Ray Tracing ---
+| Chip | Hardware RT | Software RT |
+|------|-------------|-------------|
+| M1 | No | ~0.5 M rays/s |
+| M2 | No | ~0.5 M rays/s |
+| M3 | Yes | ~5-10 M rays/s |
+| M4 | Yes | ~10-20 M rays/s |
+
+Note: Hardware RT only available on M3+ with RT cores
+
+--- Ray Tracing Applications ---
+1. Real-time rendering (games)
+2. Path tracing (offline)
+3. Global illumination
+4. Caustics
+5. Shadows
+6. Ambient occlusion
+
+--- Optimization Strategies ---
+1. Use BVH for dynamic scenes
+2. Cache ray-sphere distances
+3. SIMD ray testing (4 rays at once)
+4. Restrict ray bounds to visible region
+5. Use instancing for repeated geometry

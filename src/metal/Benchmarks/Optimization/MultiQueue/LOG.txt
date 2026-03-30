@@ -1,0 +1,68 @@
+=== Multi-Queue GPU Parallelism ===
+
+--- Single Queue (Baseline) ---
+Single queue total: 62.87 ms
+
+--- Dual Queue (Parallel) ---
+Dual queue total: 82.88 ms
+
+--- Parallelism Analysis ---
+| Configuration | Time | Speedup |
+|--------------|------|---------|
+| Single Queue | 62.87 ms | 1.00x |
+| Dual Queue | 82.88 ms | 0.76x |
+
+--- Key Findings ---
+1. Multiple queues enable parallel kernel execution on Apple GPU
+2. Dual queue shows 0.76x speedup vs single (SLOWER!)
+3. GPU can overlap independent kernel executions
+4. Queue synchronization ensures data dependencies
+5. Use separate queues for independent workload batches
+
+--- Why Multi-Queue Can Be Slower ---
+1. Queue coordination overhead
+2. Resource contention between queues
+3. Memory bandwidth saturation
+4. Context switching cost
+5. Synchronization barriers between queues
+
+--- When Multi-Queue Helps ---
+1. Independent workload batches
+2. Multiple command buffer types (compute + blit)
+3. Async operations on different data
+4. CPU/GPU work overlap
+
+--- When Single Queue is Better ---
+1. Dependent kernels (sequential)
+2. Small workloads (overhead dominates)
+3. Memory bandwidth limited
+4. Simple pipelines
+
+--- Apple Metal Multi-Queue Patterns ---
+1. Compute + Blit separation
+   let computeQueue = device.makeCommandQueue()
+   let blitQueue = device.makeCommandQueue()
+
+2. Parallel batch processing
+   for batch in batches {
+       queueA.append(batch.compute())
+       queueB.append(batch.postprocess())
+   }
+
+3. Async compute + sync
+   computeQueue.async { /* independent work */ }
+   mainQueue.sync { /* depend on result */ }
+
+--- Queue Types in Metal ---
+| Queue Type | Purpose | Use Case |
+|------------|---------|----------|
+| Command Queue | General compute | All GPU work |
+| Blit Queue | Memory transfer | Copy operations |
+| Parallel Command Queue | Multiple encoders | Complex rendering |
+
+--- Performance Optimization ---
+1. Profile before using multi-queue
+2. Minimize queue synchronization
+3. Batch independent work
+4. Use completion handlers
+5. Consider single queue + async
