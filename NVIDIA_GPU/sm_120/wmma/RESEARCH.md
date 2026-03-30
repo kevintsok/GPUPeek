@@ -125,6 +125,34 @@ using namespace nvcuda::wmma;
 > **关键发现**: Tensor Core 相比 CUDA Core 加速 **7-10x**，但仅达到理论峰值 89 TFLOPS 的 **18.5%**。
 > 原因：kernel 启动开销、occupancy 限制、内存带宽瓶颈。
 
+### NCU Profiling 分析
+
+使用 `ncu --set full` 对 2048³ 矩阵进行深度分析：
+
+| 指标 | 值 | 说明 |
+|------|-----|------|
+| Achieved Occupancy | **99.12%** | 极高occupancy |
+| Active Warps/SM | 47.58 | 接近最大960 |
+| Waves Per SM | 45.51 | 流水线充分填充 |
+| Registers/Thread | 24 | 寄存器使用合理 |
+| Grid Size | 16,384 | 256 threads/block |
+| Threads Total | 4,194,304 | 60 SM × 69920 threads |
+
+**结论：瓶颈不是 Occupancy！**
+
+- 99.12% occupancy 说明warp调度不是问题
+- 实际Tensor Core利用率远低于理论峰值
+- **瓶颈分析**：
+  - Arithmetic Intensity (AI) = 537 FLOPs/byte
+  - RTX 5080 内存带宽 ≈ 900 GB/s
+  - 计算峰值需要: 537 × 900 ≈ 483,000 GFLOPS = 483 TFLOPS
+  - **工作负载是 Compute-Bound (Tensor Core Bound)**
+
+**性能提升方向**：
+1. 使用更大的矩阵增加计算密度
+2. 使用异步操作隐藏内存延迟
+3. 考虑使用CUTLASS库进行更深入的优化
+
 ![WMMA vs CUDA Core 吞吐对比](data/throughput_comparison.png)
 
 ## 7. 数据需求 (per warp, per K-iteration)

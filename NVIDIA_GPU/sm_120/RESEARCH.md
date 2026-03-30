@@ -308,6 +308,27 @@ WMMA is the standard CUDA API for Tensor Cores (Section 9.7.14).
 > **实测效率**: 最高 22.6% (1536³)
 > **CUDA Core 加速**: 7.7x
 
+#### 4.1.3 NCU Profiling Analysis (2048³ Matrix)
+
+| Metric | Value | Analysis |
+|--------|-------|----------|
+| Achieved Occupancy | **99.12%** | Not an occupancy bottleneck |
+| Active Warps/SM | 47.58 | Near maximum capacity |
+| Waves Per SM | 45.51 | Pipeline well filled |
+| Registers/Thread | 24 | Reasonable register usage |
+| Grid Size | 16,384 | 256 threads/block |
+| Threads Total | 4,194,304 | 60 SM × 69,920 threads |
+
+**Bottleneck Analysis**:
+- **Arithmetic Intensity (AI)** = 537 FLOPs/byte
+- **Memory bandwidth required** for compute-bound: AI × BW = 537 × 900 ≈ 483,000 GFLOPS
+- **Conclusion**: Workload is **Compute-Bound (Tensor Core Bound)**, NOT memory-bound
+
+**Performance Improvement Directions**:
+1. Use larger matrices to increase compute density
+2. Use asynchronous operations to hide memory latency
+3. Consider CUTLASS library for deeper optimization
+
 ### 4.2 MMA (New Warp-level MMA)
 
 Standard MMA instructions (Section 9.7.14.5).
