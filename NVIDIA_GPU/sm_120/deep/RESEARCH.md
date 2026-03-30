@@ -39,7 +39,30 @@ Stride > 8 导致带宽急剧下降，表明缓存行跨距访问效率低。
 
 **分析**: Stride 增大会导致严重的 L2 cache thrashing
 
-## 4. NCU 指标
+## 4. NCU Profiling 分析
+
+### FMA Throughput Kernel (FP16) NCU Profile
+
+| 指标 | 值 | 说明 |
+|------|-----|------|
+| dram__bytes.sum | ~25-35 Mbyte | DRAM访问字节数 |
+| l1tex__t_sectors_pipe_lsu_mem_global_op_ld.sum | 786,432 sectors | L1加载请求 |
+| sm__pipe_fma_cycles_active.sum | ~1,573,500 cycles | FMA单元活跃周期 |
+
+### 分析结论
+
+| 指标 | 值 | 说明 |
+|------|-----|------|
+| DRAM访问 | ~25-35 MB/kernel | 内存带宽消耗 |
+| L1加载 | 786,432 sectors | 恒定的加载请求量 |
+| FMA活跃 | ~1.57M cycles/SM | 高计算密度 |
+
+**L2 缓存瓶颈分析**:
+- 实测 L2 带宽: 677-772 GB/s (4-32MB 工作集)
+- L2 thrashing 导致带宽下降 (~740 GB/s peak)
+- Stride > 8 时缓存效率急剧下降
+
+### NCU 指标参考
 
 | 指标 | 含义 |
 |------|------|
