@@ -19,25 +19,35 @@ WMMA (Warp-level Matrix Multiply-Accumulate) 是 NVIDIA 标准的 Tensor Core AP
 
 ### 性能计算验证
 
+**原始问题（已修复）**：
 ```
 理论计算：
 256 warps × 512 FLOPS/cycle × 1.9 GHz ≈ 247 GFLOPS
 
-实际测量：257 GFLOPS ✓
+实际测量（旧）：257 GFLOPS
 
 结论：这是 CUDA 核心性能，不是张量核心性能！
+```
+
+**修复后实测**：
+```
+矩阵大小：2048x2048x2048
+WMMA Tensor Core：16.48 TFLOPS
+CUDA Core FP16：2.15 GFLOPS
+加速比：7.7x
 ```
 
 ### 修复方案
 
 1. **更大的矩阵**：2048x2048, 4096x4096
-2. **每块多个warp**：4 warp/block (128 threads)
+2. **每块多个warp**：4 warp/block (128 threads) 提高occupancy
 3. **正确的网格维度**：`dim3 gridDim(M/16, N/16)`
+4. **使用正确的 WMMA fragment 布局**
 
 ### 新增文件
 
-- `wmma_performance_kernel.cu` - 高性能内核（4 warp/block）
-- `wmma_performance_benchmarks.cu` - 性能基准测试
+- `wmma_final_benchmark.cu` - 正确的 Tensor Core benchmark
+- `wmma_tensor_core_ptx.cu` - PTX inline 版本
 
 ### RTX 5080 张量核心规格
 

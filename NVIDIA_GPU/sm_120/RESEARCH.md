@@ -292,17 +292,21 @@ WMMA is the standard CUDA API for Tensor Cores (Section 9.7.14).
 | m16n8k256 | Yes | - | - | - | Yes | - |
 | m16n16k16 | Yes | Yes | Yes | Yes | Yes | - |
 
-#### 4.1.2 WMMA FP16 Benchmark Results
+#### 4.1.2 WMMA FP16 Benchmark Results (已修正)
 
-| Metric | Value |
-|--------|-------|
-| Matrix Size | M=256, N=256, K=256 |
-| Shape | m16n16k16 |
-| Grid | 16x16 |
-| Block | 32 (1 warp) |
-| Time | 0.130 ms/iteration |
-| **Performance** | **257.41 GFLOPS** |
-| Verification | sum=4103416.75 (non-zero=correct) |
+| 矩阵大小 | WMMA Tensor Core | CUDA Core FP16 | Speedup |
+|---------|------------------|----------------|---------|
+| 256³ | 4.60 TFLOPS | 1.44 GFLOPS | 3.2x |
+| 512³ | 14.08 TFLOPS | 2.10 GFLOPS | 6.7x |
+| 768³ | 18.23 TFLOPS | 2.35 GFLOPS | 7.8x |
+| 1024³ | 15.32 TFLOPS | 2.25 GFLOPS | 6.8x |
+| 1536³ | 20.09 TFLOPS | 2.11 GFLOPS | 9.5x |
+| 2048³ | **16.48 TFLOPS** | 2.15 GFLOPS | **7.7x** |
+
+> **实测峰值**: 20.09 TFLOPS (1536³) 或 16.48 TFLOPS (2048³)
+> **理论峰值**: 89 TFLOPS FP16 on RTX 5080
+> **实测效率**: 最高 22.6% (1536³)
+> **CUDA Core 加速**: 7.7x
 
 ### 4.2 MMA (New Warp-level MMA)
 
