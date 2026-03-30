@@ -1,6 +1,68 @@
-=== 7. Constant Memory Broadcast Analysis ===
+=== Constant Memory Broadcast Analysis ===
 
-Constant Broadcast (same value): 0.06 GOPS
-Constant Scattered (diff values): 0.06 GOPS
-Constant Cache Efficiency: 1.1x
+--- Constant Memory Performance ---
+Constant Broadcast (same value): 0.09 GOPS
+Constant Scattered (diff values): 0.10 GOPS
+Constant Cache Efficiency: 1.0x
 
+--- Constant Memory Characteristics ---
+| Feature | Description |
+|---------|-------------|
+| Broadcast | All threads read same value |
+| Cache | Optimized for uniform access |
+| Storage | Small, fixed-size memory region |
+| Access | Read-only for all threads |
+
+--- Key Findings ---
+1. Constant memory is optimized for broadcast patterns
+2. All threads reading same address is efficient
+3. Cache efficiency is similar for broadcast and scattered
+4. Apple M2 constant memory performs similarly regardless of access pattern
+
+--- Broadcast vs Scattered Performance ---
+| Access Pattern | Performance | Description |
+|---------------|-------------|-------------|
+| Broadcast (same value) | 0.09 GOPS | All threads read same address |
+| Scattered (different values) | 0.10 GOPS | Each thread reads different address |
+
+Note: Apple M2 shows similar performance for both patterns
+
+--- Constant Memory vs Global Memory ---
+| Aspect | Constant | Global |
+|--------|----------|--------|
+| Broadcast | Fast | Slow |
+| Scattered | Similar | Fast |
+| Cache behavior | Cached | Not cached |
+| Update | Read-only | Read/Write |
+
+--- Optimization Strategies ---
+1. Use constant memory for read-only data accessed by all threads
+2. Broadcast large data structures when all threads need same value
+3. Avoid scattered access patterns if possible
+4. Use constant memory for lookup tables
+
+--- When Constant Memory Helps ---
+1. Lookup tables (trig functions, etc.)
+2. Configuration constants
+3. Coefficients shared across all threads
+4. Small read-only data structures
+
+--- Apple Metal Constant Memory ---
+Metal doesn't have explicit "constant memory" like CUDA
+Instead:
+- Use constant buffer for read-only data
+- Use device memory with careful access patterns
+- Leverage texture sampling for broadcast patterns
+
+--- Cache Efficiency Analysis ---
+Constant Cache Efficiency: 1.0x
+This means:
+- Apple M2 handles both patterns equally
+- No significant advantage for broadcast on M2
+- Unlike discrete GPUs where broadcast is much faster
+
+--- Practical Recommendations ---
+1. Don't assume broadcast is faster on Apple M2
+2. Use constant memory for read-only data anyway (clarity)
+3. Profile to verify performance assumptions
+4. Consider texture sampling for broadcast with interpolation
