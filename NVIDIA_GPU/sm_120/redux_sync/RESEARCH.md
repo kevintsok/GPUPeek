@@ -175,13 +175,36 @@ __global__ void reduxSyncAddIntKernel(const int* input, int* output, size_t N) {
 
 **重要**: `__reduce_*_sync()` intrinsic 仅支持 int/unsigned int 类型，不支持 float！
 
-## 10. 进一步研究建议
+## 10. NCU Profiling 分析
+
+### Block Reduce Redux Kernel NCU Profile
+
+| 指标 | 值 | 说明 |
+|------|-----|------|
+| dram__bytes.sum | ~4.20-5.08 Mbyte | DRAM访问字节数 |
+| sm__pipe_fma_cycles_active.sum | ~443,290-443,473 cycles | FMA单元活跃周期 |
+
+### 分析结论
+
+| 指标 | 值 | 说明 |
+|------|-----|------|
+| DRAM访问 | ~4.2 MB/kernel | 归约操作内存访问少 |
+| FMA活跃 | ~443K cycles/SM | 计算量适中 |
+| Block Size | 256 threads | Warp级并行 |
+
+**瓶颈分析**:
+- Redux.sync 是硬件加速的单指令warp归约
+- 实测性能: ADD ~7.4ms, MIN/MAX/AND/OR/XOR ~2-2.3ms
+- Shuffle基准对比: ~1ms (100 iterations)
+- Redux.sync 主要优势是减少指令数和延迟
+
+## 11. 进一步研究建议
 
 - 使用 NCU 分析真实的 redux.sync 指令数
 - 对比不同 block size 对归约效率的影响
 - 分析 warp 分歧对 redux.sync 的影响
 
-## 11. 图表生成
+## 12. 图表生成
 
 运行以下脚本生成可视化图表:
 
