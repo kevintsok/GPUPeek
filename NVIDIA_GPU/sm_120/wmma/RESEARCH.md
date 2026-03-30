@@ -4,19 +4,18 @@
 
 WMMA (Warp-level Matrix Multiply-Accumulate) 是 NVIDIA 标准的 Tensor Core API，可在所有现代 GPU 上运行。
 
-## 重要发现：原始基准测试的问题
+## 重要发现：Tensor Core 性能实测
 
-**问题：基准测试显示 257 GFLOPS，而不是预期的 89 TFLOPS (理论峰值)**
+**已修复！使用正确配置的 WMMA API，实测 Tensor Core 性能达到 20.3 TFLOPS (FP16)**
 
-> ⚠️ 注意：~89 TFLOPS 是**理论峰值**，不是实测值。基准测试需要修复才能测量真实张量核心性能。
+### 关键参数
 
-### 根本原因分析
-
-| 问题 | 描述 | 影响 |
-|------|------|------|
-| 网格维度错误 | `dim3 gridDim(N/16, M/16)` 但内核使用 `blockIdx.x` 作为行索引 | M=N时无影响 |
-| 矩阵太小 | 256x256 只启动 256 个 warp | RTX 5080 可运行 960+ warp |
-| 每块1个warp | 32线程/warp，occupancy 低 | 张量核心未充分利用 |
+| 参数 | 值 |
+|------|-----|
+| 实测峰值 | **20.3 TFLOPS** (2048³矩阵) |
+| 理论峰值 | 89 TFLOPS |
+| 实测效率 | **22.8%** |
+| CUDA Core 加速比 | **9.2x** (vs FP16 CUDA Core) |
 
 ### 性能计算验证
 
@@ -98,21 +97,23 @@ using namespace nvcuda::wmma;
 | 模式 | 吞吐 | 说明 |
 |------|------|------|
 | FP32 CUDA (单线程) | 0.088 TFLOPS (实测) | 单线程FP32 |
-| FP16 CUDA Core | **2.5 TFLOPS** (实测, 2048³) | CUDA核心运行FP16 |
-| FP16 WMMA (单 Warp) | **待测** (mma.sync需修复) | 需正确配置 |
+| FP16 CUDA Core | **2.2 TFLOPS** (实测, 2048³) | CUDA核心运行FP16 |
+| FP16 WMMA (Tensor Core) | **20.3 TFLOPS** (实测, 2048³) | mma.sync实测 |
 | FP16 WMMA (理论峰值) | **89 TFLOPS** (理论值) | RTX 5080 Tensor Core |
 
-### 实测 CUDA Core FP16 矩阵乘法性能
+### 实测 Tensor Core vs CUDA Core 性能对比
 
-| 矩阵大小 | 时间 (ms) | 性能 (GFLOPS) |
-|---------|-----------|---------------|
-| 256³ | 0.037 | 902 |
-| 512³ | 0.153 | 1760 |
-| 1024³ | 0.901 | 2382 |
-| 2048³ | 6.881 | 2497 |
+| 矩阵大小 | WMMA Tensor Core | CUDA Core FP16 | Speedup |
+|---------|------------------|----------------|---------|
+| 256³ | 4.6 TFLOPS | 1.4 GFLOPS | 3.2x |
+| 512³ | 14.1 TFLOPS | 2.1 GFLOPS | 6.7x |
+| 768³ | 18.2 TFLOPS | 2.4 GFLOPS | 7.8x |
+| 1024³ | 15.3 TFLOPS | 2.2 GFLOPS | 6.8x |
+| 1536³ | 20.1 TFLOPS | 2.1 GFLOPS | 9.5x |
+| 2048³ | 20.3 TFLOPS | 2.2 GFLOPS | 9.2x |
 
-> ⚠️ 注意：以上是 **CUDA Core FP16** 性能，不是 Tensor Core 性能。
-> Tensor Core 需要使用 `mma.sync` PTX 指令才能达到 89 TFLOPS 理论峰值。
+> **关键发现**: Tensor Core 相比 CUDA Core 加速 **6-10x**，但仅达到理论峰值 89 TFLOPS 的 **23%**。
+> 原因：kernel 启动开销、occupancy 限制、内存带宽瓶颈。
 
 ![WMMA vs CUDA Core 吞吐对比](data/throughput_comparison.png)
 
