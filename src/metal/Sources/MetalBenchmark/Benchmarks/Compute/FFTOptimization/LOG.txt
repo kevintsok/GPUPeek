@@ -1,0 +1,45 @@
+=== FFT Optimization Deep Dive ===
+
+--- Naive Radix-2 (Global Memory) ---
+N=256: 0.0013 GFLOPS
+N=512: 0.0026 GFLOPS
+N=1024: 0.0049 GFLOPS
+N=2048: 0.0073 GFLOPS
+N=4096: 0.0095 GFLOPS
+
+--- Shared Memory Radix-2 ---
+N=256: 0.0016 GFLOPS
+N=512: 0.0032 GFLOPS
+N=1024: 0.0055 GFLOPS
+N=2048: 0.0083 GFLOPS
+N=4096: 0.0114 GFLOPS
+
+--- Radix-4 ---
+N=256: 0.0012 GFLOPS
+N=1024: 0.0043 GFLOPS
+N=4096: 0.0104 GFLOPS
+N=16384: 0.0077 GFLOPS
+
+--- Speedup (Shared vs Naive) ---
+N=256: 1.19x
+N=512: 1.20x
+N=1024: 1.14x
+N=2048: 1.14x
+N=4096: 1.20x
+
+--- Size Scaling Analysis ---
+Naive: 16x size -> 7.21x perf (theoretical: 24.00x)
+Shared: 16x size -> 7.24x perf (theoretical: 24.00x)
+
+--- Single Stage Analysis ---
+Stage 0, N=1024: 5.616 ms
+Stage 0, N=4096: 5.535 ms
+Stage 0, N=16384: 5.384 ms
+
+--- Key Findings ---
+1. Shared memory FFT provides ~1.14-1.20x speedup over naive global memory FFT
+2. Performance scales sublinearly with size (7.2x for 16x size increase vs theoretical 24x)
+3. Single stage analysis shows ~5.5ms per stage regardless of size
+4. Apple M2 unified memory is already quite efficient, limiting shared memory benefits
+5. Radix-4 shows similar performance to Radix-2 in practice
+6. FFT on Apple M2 is memory-bound due to unified memory architecture
