@@ -17060,6 +17060,7 @@ do { try MPSComparisonBenchmark(device: device, queue: queue).run() } catch { pr
 do { try FFTOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try DataTypeBandwidthBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try BlitEngineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try NBodyOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try testAsynchronousOverlap(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testMultiQueueParallelism(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testSharedEventSynchronization(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }

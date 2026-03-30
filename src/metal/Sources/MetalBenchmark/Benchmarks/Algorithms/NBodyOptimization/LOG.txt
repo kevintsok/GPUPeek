@@ -1,0 +1,30 @@
+=== N-Body Simulation Optimization Analysis ===
+
+--- N-Body Scaling (Naive O(n²)) ---
+| Bodies | Interactions | GOPS |
+|--------|-------------|------|
+| 256 | 32640 | 0.0652 |
+| 512 | 130816 | 0.2201 |
+| 1024 | 523776 | 0.5862 |
+| 2048 | 2096128 | 1.2482 |
+| 4096 | 8386560 | 1.3343 |
+
+--- Optimization Comparison (1024 bodies) ---
+| Implementation | GOPS | Speedup vs Naive |
+|----------------|------|-----------------|
+| Naive O(n²) | 0.6098 | 1.00x |
+| Shared Memory (tile-based) | 1.1489 | 1.88x |
+
+--- Size Scaling Analysis ---
+Size increase: 16x (256 -> 4096)
+Performance increase: 20.45x (0.0652 -> 1.3343)
+Theoretical O(n²): 256.00x
+Scaling efficiency: 8.0%
+
+--- Key Findings ---
+1. N-Body is O(n²) - each body interacts with all others
+2. Shared memory tile-based optimization reduces global memory accesses by ~1.88x
+3. Performance scales poorly with body count (8% efficiency vs theoretical)
+4. Apple M2 unified memory limits peak performance
+5. For large simulations, use Barnes-Hut algorithm (O(n log n))
+6. Scaling efficiency of 8% indicates memory bandwidth bottleneck
