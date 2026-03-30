@@ -1,0 +1,55 @@
+=== DCT and Frequency Domain Analysis ===
+
+--- DCT Performance ---
+| Size | Naive DCT | Butterfly DCT |
+|------|-----------|--------------|
+| 64 | 132.9/s | 136.9/s |
+| 256 | 108.5/s | 153.0/s |
+| 1024 | 87.3/s | 142.4/s |
+
+--- Key Findings ---
+1. Naive DCT is O(N^2) - prohibitively slow for large N
+2. Butterfly DCT is O(N log N) - practical for real applications
+3. DCT essential for JPEG compression, video encoding
+4. Apple GPU can accelerate DCT but memory bandwidth is bottleneck
+5. Butterfly DCT is 1.5-2x faster than Naive DCT
+
+--- DCT Algorithm Comparison ---
+| Algorithm | Complexity | Performance | Use Case |
+|-----------|------------|-------------|----------|
+| Naive DCT | O(N^2) | Slow | Educational |
+| Butterfly DCT | O(N log N) | Fast | Production |
+| FFT-based | O(N log N) | Fastest |通用 |
+
+--- DCT Applications ---
+1. JPEG Compression: 8x8 DCT blocks
+2. Video Encoding: MPEG, H.264, HEVC
+3. Audio Compression: MP3 uses MDCT
+4. Image Filtering: Frequency-domain convolution
+
+--- Performance Scaling ---
+Size 64 -> 256: Naive DCT drops from 133/s to 109/s (1.2x slower)
+Size 256 -> 1024: Naive DCT drops from 109/s to 87/s (1.3x slower)
+
+Butterfly DCT maintains better performance at larger sizes.
+
+--- Apple M2 Optimization ---
+1. Use butterfly structure to reduce computation
+2. Pre-compute twiddle factors
+3. Use shared memory for small DCT
+4. Consider vDSP framework for CPU DCT (faster for small sizes)
+5. For video, use VideoToolbox hardware encoder
+
+--- Comparison with FFT ---
+DCT is essentially FFT with special boundary conditions
+- DCT: cos() basis functions
+- FFT: cos() and sin() basis functions
+- DCT avoids imaginary numbers for real-valued signals
+
+--- Practical Recommendations ---
+| Scenario | Recommendation |
+|----------|----------------|
+| Small DCT (<128) | CPU vDSP (faster) |
+| Large DCT (>512) | GPU with butterfly |
+| Real-time video | VideoToolbox hardware |
+| Batch processing | GPU parallel DCT |

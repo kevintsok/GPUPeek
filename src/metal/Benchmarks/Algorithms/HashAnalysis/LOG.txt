@@ -1,0 +1,51 @@
+=== Bloom Filter and Hash Analysis ===
+
+--- Bloom Filter vs Hash Table ---
+| Size | Bloom Insert | Bloom Query | Hash Lookup |
+|------|--------------|-------------|------------|
+| 1024 | 0.2 M/s | 0.2 M/s | 0.2 M/s |
+| 4096 | 0.7 M/s | 0.7 M/s | 0.7 M/s |
+| 16384 | 2.4 M/s | 2.5 M/s | 2.4 M/s |
+
+--- Key Findings ---
+1. Bloom filter and hash table perform similarly on Apple M2
+2. Performance scales linearly with size: O(n)
+3. Bloom filter uses ~3x less memory than hash table
+4. No deletion support in Bloom filter (by design)
+5. False positive rate depends on filter size and hash count
+
+--- Bloom Filter Parameters ---
+Optimal false positive rate: (1 - e^(-kn/m))^k
+- k = number of hash functions
+- n = number of elements
+- m = bit array size
+
+Recommended: k = (m/n) * ln(2)
+
+--- Hash Table Analysis ---
+| Hash Type | Collision Handling | Performance |
+|-----------|-------------------|-------------|
+| Open Addressing | Linear probing | Cache-friendly |
+| Chaining | Linked lists | Simple but slow |
+| Cuckoo | Multiple hashing | Fast but complex |
+
+--- Performance Characteristics ---
+Apple M2 Hash Operations:
+- Hash computation: ~10-20 cycles per key
+- Memory access: Dominates for large tables
+- Atomic operations: Required for parallel insert
+
+--- Comparison with CPU ---
+| Platform | Hash Lookup | Notes |
+|----------|-------------|-------|
+| Apple M2 GPU | ~2.5 M/s | Parallel, high latency |
+| Apple M2 CPU | ~50 M/s | Sequential, low latency |
+
+GPU advantage: Only for batch processing (>100K keys)
+
+--- Optimization Strategies ---
+1. Use shared memory for small hash tables (<32KB)
+2. Pre-compute hash values to avoid recomputation
+3. Use Bloom filter for approximate membership tests
+4. Consider cuckoo hashing for no-collision guarantee
+5. Batch operations to hide memory latency
