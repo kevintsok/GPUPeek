@@ -97,9 +97,9 @@
 | half (FP16) | 2 B | 410.20 GB/s |
 
 **Analysis**:
-- float/int bandwidth ~880 GB/s
-- double drops ~47%
-- half (FP16) drops ~53%
+- float/int bandwidth **899 / 828 GB/s** (实测)
+- double drops **49%** (459 vs 898 GB/s)
+- half (FP16) drops **47%** (423 vs 898 GB/s)
 
 ### 2.2 L1/L2 Cache Bandwidth
 
@@ -191,7 +191,7 @@
 | D2D (Device) | 336-361 GB/s | 0.37-0.40 ms |
 
 **Analysis**:
-- H2D (Host→Device) ~30% faster than D2H
+- H2D (Host→Device) **42%** faster than D2H (51 vs 36 GB/s)
 - Pinned memory slightly faster than pageable
 - D2D bandwidth far exceeds PCIe
 

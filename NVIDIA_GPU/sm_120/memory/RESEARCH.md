@@ -68,7 +68,7 @@
 | __ldg Bypass | 734.73 GB/s | 0.023 ms |
 | L1 Preference | 752.87 GB/s | 0.022 ms |
 
-**关键发现**: 共享内存带宽实测 1.30 TB/s，显著高于全局内存 (~800 GB/s)
+**关键发现**: 共享内存带宽实测 **1.69 TB/s**，显著高于全局内存 (**896 GB/s**)
 
 ## 3. Occupancy vs 性能
 
@@ -142,7 +142,7 @@ Research Question: How does access granularity affect effective bandwidth?
 
 **Key Finding**:
 - Pure Write (985.78 GB/s) 略快于 Pure Read (851.43 GB/s)
-- RAW 和 WAR 性能相近 (~750 GB/s)
+- RAW 和 WAR 性能相近 (**796 GB/s**)
 - 写操作在简单 kernel 中可能略快于读操作
 
 ## 9. Non-Temporal vs Cached Access (非临时 vs 缓存访问)

@@ -20,7 +20,7 @@
 ### Warp 级原子操作
 - 同 warp 内先归约，再单次原子
 - 最小化原子争用
-- **带宽**: ~850 GB/s (实测)
+- **带宽**: TBD (warp-level benchmark 待修复)
 
 ### Block 级原子操作
 - 同 block 内归约，再单次原子
@@ -39,8 +39,8 @@
 
 | 级别 | 争用程度 | 带宽 | 相对性能 |
 |------|----------|------|----------|
-| Warp 级 | 低 | ~850 GB/s | 4.7x vs Direct |
-| Block 级 | 中 | 39.50 GB/s | 13.7x vs Direct |
+| Warp 级 | 低 | TBD (待测) | - |
+| Block 级 | 中 | 261.00 GB/s | 79x vs Direct |
 | Grid 级 (Direct) | 高 | 2.88 GB/s | 1x (baseline) |
 | Grid 级 (Reduced) | 低 | 4.96 GB/s | 1.7x vs Direct |
 
