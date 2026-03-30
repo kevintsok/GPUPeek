@@ -1,0 +1,45 @@
+=== Indirect Command Generation and Argument Buffers ===
+
+--- Argument Buffer Performance ---
+Testing GPU-driven command generation patterns
+
+--- Predicate Filtering (GPU-driven selection) ---
+| Size | Throughput |
+|------|------------|
+| 256 | 0.04 M/s |
+| 1024 | 0.17 M/s |
+| 4096 | 0.63 M/s |
+| 16384 | 2.57 M/s |
+
+--- Key Findings ---
+1. Indirect command generation allows GPU to drive dispatch decisions
+2. Argument buffers enable batched processing with variable sizes
+3. Predicate filtering uses GPU-generated flags for selection
+4. These patterns reduce CPU-GPU synchronization overhead
+5. Useful for visibility culling, occlusion queries, dynamic scenes
+
+--- Argument Buffer Patterns ---
+1. Variable-length batch processing
+2. GPU-driven dispatch decisions
+3. Predicate-based work selection
+4. Dynamic resource allocation
+
+--- Performance Characteristics ---
+| Pattern | Benefit | Cost |
+|---------|---------|------|
+| Indirect Dispatch | GPU decides work | Extra indirection |
+| Argument Buffer | Batched params | Memory overhead |
+| Predicate Select | Work reduction | Predicate eval |
+
+--- Use Cases ---
+1. Visibility culling: GPU determines visible objects
+2. Occlusion queries: GPU counts occluded fragments
+3. Dynamic scenes: Variable object counts per frame
+4. Level-of-detail: GPU selects LOD based on distance
+
+--- Comparison with Direct Dispatch ---
+| Dispatch Type | Flexibility | Performance | Complexity |
+|---------------|-------------|-------------|------------|
+| Direct | Fixed | Higher | Lower |
+| Indirect | Dynamic | Lower | Higher |
+| Predicate | Selective | Medium | Medium |

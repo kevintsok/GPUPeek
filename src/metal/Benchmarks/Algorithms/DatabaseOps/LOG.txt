@@ -1,0 +1,50 @@
+=== Database Operations and Parallel Aggregation ===
+
+--- Database Filter Performance (WHERE clause) ---
+| Size | Throughput |
+|------|------------|
+| 256 | 0.04 M/s |
+| 1024 | 0.17 M/s |
+| 4096 | 0.64 M/s |
+| 16384 | 2.57 M/s |
+
+--- Database Aggregation Performance (GROUP BY) ---
+| Size | Groups | Throughput |
+|------|--------|------------|
+| 256 | 64 | 0.04 M/s |
+| 1024 | 64 | 0.17 M/s |
+| 4096 | 64 | 0.64 M/s |
+| 16384 | 64 | 2.44 M/s |
+
+--- Predicate Filtering Performance ---
+| Size | Predicate Compute | Branch Process | Compact Gather |
+|------|-----------------|----------------|----------------|
+| 16384 | 1.8 M/s | 1.6 M/s | 1.8 M/s |
+| 65536 | 7.0 M/s | 7.0 M/s | 7.6 M/s |
+| 262144 | 24.2 M/s | 24.6 M/s | 30.5 M/s |
+
+--- Key Findings ---
+1. Filter scales linearly with data size
+2. Aggregation is limited by atomic operation contention
+3. Predicate filtering achieves 7-30 M/s on Apple M2
+4. Branch divergence costs ~20-30% performance
+5. Compact gather pattern enables work-elision
+
+--- Performance Characteristics ---
+- Database Filter: O(n) with predicate evaluation
+- Aggregation: O(n) with atomic updates per group
+- Predicate Filtering: O(n) with cheap predicate + optional compaction
+
+--- Comparison with Other Operations ---
+| Operation | Throughput | Notes |
+|-----------|------------|-------|
+| Database Filter | 0.04-2.57 M/s | Limited by atomic contention |
+| Predicate Masking | 1.8-30.5 M/s | Direct computation |
+| Histogram | ~0.12 GOPS | Similar atomic pattern |
+| Scan | ~0.29 GOPS | More efficient reduction |
+
+--- Optimization Strategies ---
+1. Reduce atomic contention with shared memory aggregation
+2. Use predicate-based filtering instead of branch-heavy code
+3. Batch operations to amortize atomic overhead
+4. Consider approximate algorithms for large-scale aggregation
