@@ -1,0 +1,43 @@
+=== Blit Engine and Async Copy Analysis ===
+
+--- Buffer Copy Performance (BlitEngine) ---
+64KB: 0.03 GB/s
+256KB: 0.09 GB/s
+1MB: 0.32 GB/s
+4MB: 0.83 GB/s
+16MB: 1.41 GB/s
+
+--- Asynchronous Copy (Non-blocking) ---
+64KB: 0.06 GB/s
+256KB: 0.30 GB/s
+1MB: 1.18 GB/s
+4MB: 2.28 GB/s
+16MB: 2.11 GB/s
+
+--- Synchronous Copy (Blocking) ---
+64KB: 0.00 GB/s
+256KB: 0.05 GB/s
+1MB: 0.15 GB/s
+4MB: 0.41 GB/s
+16MB: 0.70 GB/s
+
+--- Fill Operation Performance ---
+64KB: 0.01 GB/s
+256KB: 0.05 GB/s
+1MB: 0.18 GB/s
+4MB: 0.52 GB/s
+16MB: 1.24 GB/s
+
+--- Batch Copy (4 operations per command buffer) ---
+64KB: 0.05 GB/s
+256KB: 0.16 GB/s
+1MB: 0.48 GB/s
+4MB: 0.91 GB/s
+16MB: 0.93 GB/s
+
+--- Key Findings ---
+1. BlitEngine provides optimized GPU copy operations
+2. Asynchronous copy allows CPU/GPU overlap
+3. Fill operations are efficient for initialization
+4. Batching multiple copies can improve throughput
+5. Apple M2 unified memory affects copy performance
