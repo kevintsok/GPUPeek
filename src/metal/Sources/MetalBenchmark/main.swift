@@ -17097,6 +17097,7 @@ do { try ANEWarmupBenchmark(device: device, queue: queue).run() } catch { print(
 do { try ANEStreamingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMultiModelBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEInstructionThroughputBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANETensorCoreBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try FFTBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MemoryPoolBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try RenderPipelineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
