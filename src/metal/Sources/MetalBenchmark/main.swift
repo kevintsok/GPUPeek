@@ -17084,6 +17084,7 @@ do { try ANENormalizationBenchmark(device: device, queue: queue).run() } catch {
 do { try ANEElementWiseBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPoolingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESoftmaxBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEConvolutionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MemoryPoolBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try RenderPipelineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try TextureOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
