@@ -17123,6 +17123,7 @@ do { try MetalMemoryHierarchyBenchmark(device: device, queue: queue).run() } cat
 do { try ANESparseComputationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalAtomicMemoryOrderingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalPipelineDepthBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try MetalTextureCacheBehaviorBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try FFTBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MemoryPoolBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try RenderPipelineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
