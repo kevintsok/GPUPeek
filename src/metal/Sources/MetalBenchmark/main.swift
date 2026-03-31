@@ -17094,6 +17094,7 @@ do { try FFTBenchmark(device: device, queue: queue).run() } catch { print("Error
 do { try MemoryPoolBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try RenderPipelineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try TextureOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try FragmentDepthBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 // do { try ANEOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try SharedMemoryAccessBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try SIMDGroupPrimitivesBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
