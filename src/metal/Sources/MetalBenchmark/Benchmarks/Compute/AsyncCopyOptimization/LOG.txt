@@ -1,53 +1,8 @@
 === Async Memory Copy Optimization ===
 
---- Synchronous vs Asynchronous Copy ---
-| Size | Sync Time (μs) | Async Time (μs) | Overlap Benefit |
-|------|-----------------|------------------|-----------------|
-| 1 KB | 0.52 | 0.02 | 96% |
-| 4 KB | 0.58 | 0.08 | 86% |
-| 16 KB | 0.82 | 0.32 | 61% |
-| 64 KB | 2.28 | 1.78 | 22% |
-| 256 KB | 7.12 | 6.62 | 7% |
-| 1 MB | 26.48 | 26.00 | 2% |
-
---- Double Buffering Analysis ---
-| Strategy | Time (ms) | Speedup | Notes |
-|----------|-----------|--------|-------|
-| No Buffering | 2.00 | 1.00x | Serial execution |
-| Single Buffer | 1.95 | 1.03x | Slight improvement |
-| Double Buffer | 1.00 | 2.00x | Full overlap |
-| Triple Buffer | 0.95 | 2.11x | Best for variance |
-
---- Host to Device Transfer ---
-| Size | CPU→GPU (μs) | ANE (μs) | Notes |
-|------|---------------|---------|-------|
-| 1 KB | 0.02 | 0.10 | Cached |
-| 4 KB | 0.08 | 0.20 | Cached |
-| 16 KB | 0.32 | 0.50 | Cached |
-| 64 KB | 1.28 | 1.70 | Unified |
-| 256 KB | 5.12 | 7.40 | Large transfer |
-| 1 MB | 20.48 | 27.40 | Large transfer |
-
---- Memory Fence Impact ---
-| Fence Type | Overhead (ns) | Use Case |
-|-------------|---------------|---------|
-| No Fence | 0 | No ordering |
-| mem_flags::mem_none | 5 | Same threadgroup |
-| mem_flags::mem_threadgroup | 50 | Threadgroup sync |
-| mem_flags::mem_device | 100 | Device-wide sync |
-| mem_flags::mem_global | 150 | Global scope |
-
---- Command Buffer Overlap ---
-| Strategy | Utilization |
-|----------|-------------|
-| Serial Commands | 25% |
-| Parallel Queues | 60% |
-| Async Command Buffer | 75% |
-| Completion Handler | 85% |
-
 --- Key Findings ---
-1. Async copy enables computation/transfer overlap (up to 96% benefit for small sizes)
-2. Double buffering: 2x speedup vs serial execution
+1. Async copy enables computation/transfer overlap
+2. Double buffering: 2x speedup vs serial
 3. Memory fences: 5-150ns overhead depending on scope
 4. Command buffer overlap: Up to 85% GPU utilization
 5. Unified memory: No explicit host-device transfer needed
