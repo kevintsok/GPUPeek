@@ -1,0 +1,38 @@
+=== Memory Transaction Efficiency Analysis ===
+
+--- Basic Read/Write Bandwidth ---
+| Size | Write (GB/s) | Read (GB/s) | ReadWrite (GB/s) |
+|------|--------------|-------------|------------------|
+| 64K | 2.494 | 3.153 | 6.985 |
+| 256K | 10.117 | 12.925 | 20.482 |
+| 1024K | 32.490 | 51.902 | 67.154 |
+| 4096K | 72.261 | 206.572 | 123.233 |
+
+--- Access Pattern Analysis ---
+| Pattern | Bandwidth (GB/s) | Relative to Sequential |
+|---------|------------------|----------------------|
+| Sequential | 16.332 | 1.00x |
+| Strided x4 | 17.088 | 0.96x |
+| Strided x16 | 17.081 | 0.96x |
+| Temporal (16x read same) | 16.098 | 1.01x |
+
+--- Read-Write Patterns ---
+| Pattern | Bandwidth (GB/s) |
+|---------|------------------|
+| Write-Read | 1.671 |
+| Read-Modify-Write | 1.547 |
+| Bidirectional | 24.122 |
+
+--- Atomic Operations ---
+Atomic increment: 0.168 GB/s effective
+
+--- Read/Write Efficiency ---
+Read/Write ratio: 2.86x (Read is faster than write on unified memory)
+
+--- Key Findings ---
+1. Read is 2.86x faster than write on Apple M2 unified memory
+2. Spatial locality shows minimal benefit on unified memory (sequential vs strided ~1x)
+3. Temporal locality shows NO benefit - unified memory doesn't cache as expected
+4. Read-modify-write patterns are extremely slow (1.5 GB/s vs 200+ GB/s for pure ops)
+5. Atomic operations have massive overhead (0.168 GB/s vs 200+ GB/s for reads)
+6. Bidirectional (parallel read+write) achieves 24 GB/s
