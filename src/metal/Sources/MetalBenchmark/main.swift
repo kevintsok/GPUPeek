@@ -17121,6 +17121,7 @@ do { try MetalThreadgroupSIMDBenchmark(device: device, queue: queue).run() } cat
 do { try ANEHardwareCountersBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalMemoryHierarchyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESparseComputationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEBatchProcessingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalAtomicMemoryOrderingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalPipelineDepthBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalTextureCacheBehaviorBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
