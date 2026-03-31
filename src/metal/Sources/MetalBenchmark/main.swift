@@ -17096,6 +17096,7 @@ do { try RenderPipelineBenchmark(device: device, queue: queue).run() } catch { p
 do { try TextureOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 // do { try ANEOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try SharedMemoryAccessBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try SIMDGroupPrimitivesBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try SimdGroupBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMemoryLatencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try GPUFamilyComparisonBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
