@@ -17079,6 +17079,7 @@ do { try ANEDispatchOptimizationBenchmark(device: device, queue: queue).run() } 
 do { try ANENumericalStabilityBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEHardwareUtilizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERecurrentBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEEmbeddingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MemoryPoolBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try RenderPipelineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try TextureOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
