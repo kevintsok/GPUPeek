@@ -17074,6 +17074,7 @@ do { try CoreMLVsMetalBenchmark(device: device, queue: queue).run() } catch { pr
 do { try ANEPowerConsumptionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEQuantizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANELayerAnalysisBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANELayerFusionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEOperationChainingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEDispatchOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANENumericalStabilityBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
