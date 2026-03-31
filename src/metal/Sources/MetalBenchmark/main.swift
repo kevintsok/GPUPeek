@@ -17120,6 +17120,7 @@ do { try ANECompilerOptimizationBenchmark(device: device, queue: queue).run() } 
 do { try MetalThreadgroupSIMDBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEHardwareCountersBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalMemoryHierarchyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANESparseComputationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try FFTBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MemoryPoolBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try RenderPipelineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
