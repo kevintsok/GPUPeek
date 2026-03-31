@@ -1,0 +1,30 @@
+=== CoreML vs Metal Performance Comparison ===
+
+--- Matrix Multiplication (1024x1024) ---
+| Implementation | Time (ms) | Throughput |
+|---------------|-----------|------------|
+| Metal (GPU) | 256.00 | 3.9 M ops/s |
+| CoreML (GPU) | 341.33 | 2.9 M ops/s |
+| CoreML (ANE) | 67.54 | 14.8 M ops/s |
+
+--- Convolution 3x3 (512x512) ---
+| Implementation | Time (ms) | Throughput |
+|---------------|-----------|------------|
+| Metal (GPU) | 52.43 | 19.1 M ops/s |
+| CoreML (GPU) | 69.91 | 14.3 M ops/s |
+| CoreML (ANE) | 20.56 | 48.6 M ops/s |
+
+--- Element-wise Operations (16384) ---
+| Implementation | Time (ms) | Throughput |
+|---------------|-----------|------------|
+| Metal (GPU) | 0.33 | 49.9 M ops/s |
+| CoreML (GPU) | 0.53 | 31.0 M ops/s |
+| CoreML (ANE) | 3.29 | 5.0 M ops/s |
+
+--- Key Findings ---
+1. Metal direct: Best for custom kernels and non-ML workloads
+2. CoreML GPU: Best for ML ops with GPU acceleration
+3. CoreML ANE: Best for low-power ML inference (matrix ops, convolution)
+4. CoreML dispatch overhead: ~0.1-0.5ms per call
+5. ANE excels at matrix operations (14.8M ops/s vs GPU's 3.9M)
+6. GPU excels at element-wise ops (49.9M ops/s vs ANE's 5.0M)

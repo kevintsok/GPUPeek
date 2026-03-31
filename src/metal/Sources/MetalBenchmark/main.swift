@@ -17067,6 +17067,7 @@ do { try InstructionThroughputBenchmark(device: device, queue: queue).run() } ca
 do { try OccupancyOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANELatencyComparisonBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEBatchEfficiencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try CoreMLVsMetalBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try testAsynchronousOverlap(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testMultiQueueParallelism(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testSharedEventSynchronization(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
