@@ -140,6 +140,12 @@
     "swiftmodule": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEModelInferenceBenchmark~partial.swiftmodule",
     "swift-dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEModelInferenceBenchmark.swiftdeps"
   },
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMultiCoreScaling/ANEMultiCoreScalingBenchmark.swift": {
+    "dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEMultiCoreScalingBenchmark.d",
+    "object": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEMultiCoreScalingBenchmark.swift.o",
+    "swiftmodule": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEMultiCoreScalingBenchmark~partial.swiftmodule",
+    "swift-dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEMultiCoreScalingBenchmark.swiftdeps"
+  },
   "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMultiModelConcurrency/ANEMultiModelBenchmark.swift": {
     "dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEMultiModelBenchmark.d",
     "object": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEMultiModelBenchmark.swift.o",
