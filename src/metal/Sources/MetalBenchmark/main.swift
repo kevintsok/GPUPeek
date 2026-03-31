@@ -17100,6 +17100,7 @@ do { try ANEInstructionThroughputBenchmark(device: device, queue: queue).run() }
 do { try ANETensorCoreBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANENumericalPrecisionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEHyperparameterBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEContinuousSchedulingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try FFTBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MemoryPoolBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try RenderPipelineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
