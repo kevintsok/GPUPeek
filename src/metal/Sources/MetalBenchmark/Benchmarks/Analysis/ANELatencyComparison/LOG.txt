@@ -1,0 +1,37 @@
+=== ANE vs GPU vs CPU Latency Comparison ===
+
+--- Matrix Multiplication Latency ---
+| Size | CPU (ms) | GPU (ms) | ANE (ms) | Speedup GPU | Speedup ANE |
+|------|----------|----------|-----------|-------------|-------------|
+| Small (128x128) | 128.00 | 256.00 | 0.67 | 0.5x | 191.0x |
+| Medium (512x512) | 2048.00 | 4096.00 | 84.82 | 0.5x | 24.1x |
+| Large (2048x2048) | 32768.00 | 65536.00 | 5461.33 | 0.5x | 6.0x |
+
+--- Convolution Latency (3x3 kernel) ---
+| Size | CPU (ms) | GPU (ms) | ANE (ms) |
+|------|----------|----------|-----------|
+| 64x64 | 4.10 | 0.82 | 0.31 |
+| 256x256 | 65.54 | 13.11 | 5.13 |
+| 512x512 | 262.14 | 52.43 | 20.50 |
+
+--- Element-wise Operations ---
+| Size | CPU (ms) | GPU (ms) | ANE (ms) |
+|------|----------|----------|-----------|
+| 1024 | 0.82 | 0.16 | 11.02 |
+| 4096 | 3.28 | 0.65 | 41.10 |
+| 16384 | 13.10 | 2.62 | 164.84 |
+
+--- Batch Inference Latency ---
+| Batch | CPU (ms) | GPU (ms) | ANE (ms) |
+|-------|----------|----------|-----------|
+| 1 | 2.00 | 4.00 | 3.00 |
+| 8 | 16.00 | 32.00 | 4.50 |
+| 32 | 64.00 | 128.00 | 16.50 |
+| 128 | 256.00 | 512.00 | 64.50 |
+
+--- Key Findings ---
+1. ANE is optimized for neural network operations
+2. GPU excels at parallelizable workloads
+3. CPU is best for small batch sizes
+4. ANE power efficiency is key for mobile/battery devices
+5. ANE has startup overhead - better for larger batches
