@@ -17156,6 +17156,7 @@ do { try FragmentDepthBenchmark(device: device, queue: queue).run() } catch { pr
 // do { try ANEOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try SharedMemoryAccessBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try BankConflictAnalysisBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try KernelLaunchOverheadBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try SIMDGroupPrimitivesBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try SimdGroupBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MemoryFenceBarrierBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
