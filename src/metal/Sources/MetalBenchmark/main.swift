@@ -17090,6 +17090,7 @@ do { try ANEShapeBenchmark(device: device, queue: queue).run() } catch { print("
 do { try ANEEndToEndBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESparseQuantizedBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMemoryAccessBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEMemoryAccessPatternsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERooflineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEOperatorFusionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEDynamicShapeBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
