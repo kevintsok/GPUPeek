@@ -17088,6 +17088,7 @@ do { try ANEConvolutionBenchmark(device: device, queue: queue).run() } catch { p
 do { try ANEResidualBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEShapeBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEEndToEndBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANESparseQuantizedBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try FFTBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MemoryPoolBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try RenderPipelineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
