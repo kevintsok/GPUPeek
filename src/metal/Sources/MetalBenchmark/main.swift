@@ -17124,6 +17124,7 @@ do { try ANESparseComputationBenchmark(device: device, queue: queue).run() } cat
 do { try ANEBatchProcessingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEvsGPUInferenceBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEQuantizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEOperationFusionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalAtomicMemoryOrderingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalPipelineDepthBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalTextureCacheBehaviorBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
