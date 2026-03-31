@@ -17075,6 +17075,7 @@ do { try ANEPowerConsumptionBenchmark(device: device, queue: queue).run() } catc
 do { try ANEQuantizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANELayerAnalysisBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEOperationChainingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEDispatchOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try RenderPipelineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 // do { try ANEOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try SharedMemoryAccessBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
