@@ -152,6 +152,12 @@
     "swiftmodule": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEResidualBenchmark~partial.swiftmodule",
     "swift-dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEResidualBenchmark.swiftdeps"
   },
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERooflineAnalysis/ANERooflineBenchmark.swift": {
+    "dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANERooflineBenchmark.d",
+    "object": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANERooflineBenchmark.swift.o",
+    "swiftmodule": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANERooflineBenchmark~partial.swiftmodule",
+    "swift-dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANERooflineBenchmark.swiftdeps"
+  },
   "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEShapeOperations/ANEShapeBenchmark.swift": {
     "dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEShapeBenchmark.d",
     "object": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEShapeBenchmark.swift.o",
