@@ -17131,6 +17131,7 @@ do { try ANECoreMLOptimizationBenchmark(device: device, queue: queue).run() } ca
 do { try ANEDynamicNeuralEngineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPrecisionAnalysisBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEThroughputAnalysisBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEModelPerformanceProfilingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEHardwareArchitectureBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalAtomicMemoryOrderingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalPipelineDepthBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
