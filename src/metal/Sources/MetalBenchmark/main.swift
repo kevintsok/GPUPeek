@@ -17115,6 +17115,7 @@ do { try ANEProfilingBottlenecksBenchmark(device: device, queue: queue).run() } 
 do { try ANEIOPipelineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPowerStateThermalBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEQoSSchedulingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEMemoryCoalescingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try FFTBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MemoryPoolBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try RenderPipelineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
