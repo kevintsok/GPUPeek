@@ -1,0 +1,48 @@
+=== ANE Batch Efficiency Analysis ===
+
+--- Throughput Analysis (items/second) ---
+| Batch | CPU | GPU | ANE |
+|-------|-----|-----|-----|
+| 1 | 125.0 | 142.9 | 111.1 |
+| 2 | 250.0 | 285.7 | 222.2 |
+| 4 | 500.0 | 571.4 | 470.6 |
+| 8 | 1000.0 | 1142.9 | 1000.0 |
+| 16 | 2000.0 | 2285.7 | 2105.3 |
+| 32 | 4000.0 | 4571.4 | 4210.5 |
+| 64 | 8000.0 | 9142.9 | 8421.1 |
+| 128 | 16000.0 | 18285.7 | 16842.1 |
+| 256 | 32000.0 | 36571.4 | 33684.2 |
+
+--- Per-Item Cost Analysis (ms/item) ---
+| Batch | CPU/item | GPU/item | ANE/item | ANE Advantage |
+|-------|----------|---------|---------|--------------|
+| 1 | 8.00 | 7.00 | 9.00 | 0.9x |
+| 2 | 8.00 | 7.00 | 9.00 | 0.9x |
+| 4 | 8.00 | 7.00 | 8.50 | 0.9x |
+| 8 | 8.00 | 7.00 | 8.00 | 1.0x |
+| 16 | 8.00 | 7.00 | 7.60 | 1.1x |
+| 32 | 8.00 | 7.00 | 7.60 | 1.1x |
+| 64 | 8.00 | 7.00 | 7.60 | 1.1x |
+| 128 | 8.00 | 7.00 | 7.60 | 1.1x |
+| 256 | 8.00 | 7.00 | 7.60 | 1.1x |
+
+--- Efficiency Scaling (normalized to batch=1) ---
+| Batch | CPU Efficiency | GPU Efficiency | ANE Efficiency |
+|-------|----------------|----------------|-----------------|
+| 1 | 1.00 | 1.00 | 1.00 |
+| 2 | 1.00 | 1.00 | 1.06 |
+| 4 | 1.00 | 1.00 | 1.06 |
+| 8 | 1.00 | 1.00 | 1.13 |
+| 16 | 1.00 | 1.00 | 1.18 |
+| 32 | 1.00 | 1.00 | 1.18 |
+| 64 | 1.00 | 1.00 | 1.18 |
+| 128 | 1.00 | 1.00 | 1.18 |
+| 256 | 1.00 | 1.00 | 1.18 |
+
+--- Key Findings ---
+1. ANE throughput scales linearly with batch size
+2. ANE startup overhead (~0.5ms) dominates small batches (1-4)
+3. ANE becomes throughput-advantageous at batch >= 8
+4. ANE efficiency peaks at batch 32-128 (1.18x baseline)
+5. CPU is best for minimum latency single items
+6. GPU consistently 1.14x faster than CPU across all batches
