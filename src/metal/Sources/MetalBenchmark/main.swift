@@ -17140,6 +17140,7 @@ do { try ANEAlgorithmComplexityAnalysisBenchmark(device: device, queue: queue).r
 do { try ANENumericalStabilityAnalysisBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEDataFlowAnalysisBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEHardwareArchitectureBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEExecutionUnitBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalAtomicMemoryOrderingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalPipelineDepthBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalTextureCacheBehaviorBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
