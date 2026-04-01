@@ -17199,6 +17199,7 @@ do { try KernelLaunchOverheadBenchmark(device: device, queue: queue).run() } cat
 do { try CommandBufferParallelismBenchmark(device: device, commandQueue: queue).run() } catch { print("Error: \(error)") }
 do { try SIMDGroupPrimitivesBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try SimdGroupBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try MetalSIMDGroupReductionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MemoryFenceBarrierBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try AtomicMemoryOrderingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMemoryLatencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
