@@ -17063,6 +17063,7 @@ do { try GEMMOptimizationBenchmark(device: device, queue: queue).run() } catch {
 do { try SparseMatrixBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try DataTypeBandwidthBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try BlitEngineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try MetalBufferAliasingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try NBodyOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ReductionOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalPrefixSumStreamCompactionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
