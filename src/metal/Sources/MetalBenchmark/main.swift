@@ -17073,6 +17073,7 @@ do { try ArgumentBufferBenchmark(device: device, queue: queue).run() } catch { p
 do { try ANELatencyComparisonBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEThroughputScalingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEFlashAttentionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEPruningBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANECommandBufferParallelismBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANETailLatencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESchedulerEfficiencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
