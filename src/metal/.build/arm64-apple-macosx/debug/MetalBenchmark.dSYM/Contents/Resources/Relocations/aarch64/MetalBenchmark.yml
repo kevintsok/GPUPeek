@@ -2178,7 +2178,7 @@ relocations:
   - { offset: 0x12DE7B, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark020BankConflictAnalysisB0V24measureTransposedMappingSd_SityF', symObjAddr: 0x821C, symBinAddr: 0x10016D90C, symSize: 0x80C }
   - { offset: 0x12E139, size: 0x8, addend: 0x0, symName: _MTLSizeMake, symObjAddr: 0x81B4, symBinAddr: 0x10016D8A4, symSize: 0x34 }
   - { offset: 0x12E147, size: 0x8, addend: 0x0, symName: _MTLSizeMake, symObjAddr: 0x81B4, symBinAddr: 0x10016D8A4, symSize: 0x34 }
-  - { offset: 0x12E1F4, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark11gemmShadersSSvp', symObjAddr: 0x103D8, symBinAddr: 0x1004AEF20, symSize: 0x0 }
+  - { offset: 0x12E1F4, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark11gemmShadersSSvp', symObjAddr: 0x103D8, symBinAddr: 0x1004B2F20, symSize: 0x0 }
   - { offset: 0x12E202, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark11gemmShaders_WZ', symObjAddr: 0x0, symBinAddr: 0x10016E800, symSize: 0x40 }
   - { offset: 0x12E21C, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark11gemmShadersSSvau', symObjAddr: 0x40, symBinAddr: 0x10016E840, symSize: 0x50 }
   - { offset: 0x12E2E8, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark013MPSComparisonB0VWOh', symObjAddr: 0x18C, symBinAddr: 0x10016E98C, symSize: 0x34 }
@@ -2311,7 +2311,7 @@ relocations:
   - { offset: 0x131E83, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark08CoreMLVsaB0V13ComputeTargetOSHAASH9hashValueSivgTW', symObjAddr: 0x9330, symBinAddr: 0x1001847FC, symSize: 0x18 }
   - { offset: 0x131E97, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark08CoreMLVsaB0V13ComputeTargetOSHAASH4hash4intoys6HasherVz_tFTW', symObjAddr: 0x9348, symBinAddr: 0x100184814, symSize: 0x18 }
   - { offset: 0x132025, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24dataTypeBandwidthShaders_WZ', symObjAddr: 0x0, symBinAddr: 0x10018541C, symSize: 0x40 }
-  - { offset: 0x132049, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24dataTypeBandwidthShadersSSvp', symObjAddr: 0x16F58, symBinAddr: 0x1004AEF30, symSize: 0x0 }
+  - { offset: 0x132049, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24dataTypeBandwidthShadersSSvp', symObjAddr: 0x16F58, symBinAddr: 0x1004B2F30, symSize: 0x0 }
   - { offset: 0x132057, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24dataTypeBandwidthShaders_WZ', symObjAddr: 0x0, symBinAddr: 0x10018541C, symSize: 0x40 }
   - { offset: 0x132071, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24dataTypeBandwidthShadersSSvau', symObjAddr: 0x40, symBinAddr: 0x10018545C, symSize: 0x50 }
   - { offset: 0x1321A4, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark017DataTypeBandwidthB0VWOh', symObjAddr: 0x18C, symBinAddr: 0x1001855A8, symSize: 0x34 }
@@ -2358,7 +2358,7 @@ relocations:
   - { offset: 0x133851, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark12FFTBenchmarkV22analyzePrecisionImpactyyF', symObjAddr: 0x3914, symBinAddr: 0x100191948, symSize: 0x71C }
   - { offset: 0x1338E2, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark12FFTBenchmarkV11saveResultsyyF', symObjAddr: 0x4030, symBinAddr: 0x100192064, symSize: 0x1C4 }
   - { offset: 0x133A74, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark13fftOptShaders_WZ', symObjAddr: 0x0, symBinAddr: 0x1001926E0, symSize: 0x40 }
-  - { offset: 0x133A98, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark13fftOptShadersSSvp', symObjAddr: 0x176A8, symBinAddr: 0x1004AEF40, symSize: 0x0 }
+  - { offset: 0x133A98, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark13fftOptShadersSSvp', symObjAddr: 0x176A8, symBinAddr: 0x1004B2F40, symSize: 0x0 }
   - { offset: 0x133AA6, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark13fftOptShaders_WZ', symObjAddr: 0x0, symBinAddr: 0x1001926E0, symSize: 0x40 }
   - { offset: 0x133AC0, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark13fftOptShadersSSvau', symObjAddr: 0x40, symBinAddr: 0x100192720, symSize: 0x50 }
   - { offset: 0x133C36, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark015FFTOptimizationB0VWOh', symObjAddr: 0x18C, symBinAddr: 0x10019286C, symSize: 0x34 }
@@ -2485,7 +2485,7 @@ relocations:
   - { offset: 0x13744C, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark015GraphAlgorithmsB0V13measureCPUBFS8vertices5edgesSdSi_SitF', symObjAddr: 0x303C, symBinAddr: 0x1001A9DF8, symSize: 0x8F4 }
   - { offset: 0x137622, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark015GraphAlgorithmsB0V18measureGPUPageRank8vertices10iterationsSdSi_SitF', symObjAddr: 0x3980, symBinAddr: 0x1001AA6EC, symSize: 0x10A8 }
   - { offset: 0x137A8D, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark28instructionThroughputShaders_WZ', symObjAddr: 0x0, symBinAddr: 0x1001ABD04, symSize: 0x40 }
-  - { offset: 0x137AB1, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark28instructionThroughputShadersSSvp', symObjAddr: 0x169E8, symBinAddr: 0x1004AEF50, symSize: 0x0 }
+  - { offset: 0x137AB1, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark28instructionThroughputShadersSSvp', symObjAddr: 0x169E8, symBinAddr: 0x1004B2F50, symSize: 0x0 }
   - { offset: 0x137ABF, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark28instructionThroughputShaders_WZ', symObjAddr: 0x0, symBinAddr: 0x1001ABD04, symSize: 0x40 }
   - { offset: 0x137AD9, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark28instructionThroughputShadersSSvau', symObjAddr: 0x40, symBinAddr: 0x1001ABD44, symSize: 0x50 }
   - { offset: 0x137BF7, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021InstructionThroughputB0VWOh', symObjAddr: 0x18C, symBinAddr: 0x1001ABE90, symSize: 0x34 }
@@ -2600,7 +2600,7 @@ relocations:
   - { offset: 0x13AE0B, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark010MemoryPoolB0V22analyzeAllocationSizesyyF', symObjAddr: 0x2EB0, symBinAddr: 0x1001C54CC, symSize: 0x7C8 }
   - { offset: 0x13AE9C, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark010MemoryPoolB0V11saveResultsyyF', symObjAddr: 0x3678, symBinAddr: 0x1001C5C94, symSize: 0x1C4 }
   - { offset: 0x13B03A, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24memoryTransactionShaders_WZ', symObjAddr: 0x0, symBinAddr: 0x1001C6310, symSize: 0x40 }
-  - { offset: 0x13B05E, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24memoryTransactionShadersSSvp', symObjAddr: 0x1BDC0, symBinAddr: 0x1004AEF60, symSize: 0x0 }
+  - { offset: 0x13B05E, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24memoryTransactionShadersSSvp', symObjAddr: 0x1BDC0, symBinAddr: 0x1004B2F60, symSize: 0x0 }
   - { offset: 0x13B06C, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24memoryTransactionShaders_WZ', symObjAddr: 0x0, symBinAddr: 0x1001C6310, symSize: 0x40 }
   - { offset: 0x13B086, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24memoryTransactionShadersSSvau', symObjAddr: 0x40, symBinAddr: 0x1001C6350, symSize: 0x50 }
   - { offset: 0x13B2CE, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark017MemoryTransactionB0VWOh', symObjAddr: 0x18C, symBinAddr: 0x1001C649C, symSize: 0x34 }
@@ -2806,7 +2806,7 @@ relocations:
   - { offset: 0x1411E1, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark0A24ThreadgroupSIMDBenchmarkV23benchmarkWarpEfficiencyyyF', symObjAddr: 0x2C50, symBinAddr: 0x1001EEF6C, symSize: 0x674 }
   - { offset: 0x141262, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark0A24ThreadgroupSIMDBenchmarkV11saveResultsyyF', symObjAddr: 0x32C4, symBinAddr: 0x1001EF5E0, symSize: 0x1C4 }
   - { offset: 0x141400, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark12nbodyShaders_WZ', symObjAddr: 0x0, symBinAddr: 0x1001EFC5C, symSize: 0x40 }
-  - { offset: 0x141424, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark12nbodyShadersSSvp', symObjAddr: 0x11C08, symBinAddr: 0x1004AEF70, symSize: 0x0 }
+  - { offset: 0x141424, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark12nbodyShadersSSvp', symObjAddr: 0x11C08, symBinAddr: 0x1004B2F70, symSize: 0x0 }
   - { offset: 0x141432, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark12nbodyShaders_WZ', symObjAddr: 0x0, symBinAddr: 0x1001EFC5C, symSize: 0x40 }
   - { offset: 0x14144C, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark12nbodyShadersSSvau', symObjAddr: 0x40, symBinAddr: 0x1001EFC9C, symSize: 0x50 }
   - { offset: 0x14155D, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark017NBodyOptimizationB0VWOh', symObjAddr: 0x18C, symBinAddr: 0x1001EFDE8, symSize: 0x34 }
@@ -2853,7 +2853,7 @@ relocations:
   - { offset: 0x142E2F, size: 0x8, addend: 0x0, symName: _MTLSizeMake, symObjAddr: 0x47D4, symBinAddr: 0x1001F8D24, symSize: 0x34 }
   - { offset: 0x142E3D, size: 0x8, addend: 0x0, symName: _MTLSizeMake, symObjAddr: 0x47D4, symBinAddr: 0x1001F8D24, symSize: 0x34 }
   - { offset: 0x142EC2, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16occupancyShaders_WZ', symObjAddr: 0x0, symBinAddr: 0x1001F96F4, symSize: 0x40 }
-  - { offset: 0x142EE6, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16occupancyShadersSSvp', symObjAddr: 0x128F8, symBinAddr: 0x1004AEF80, symSize: 0x0 }
+  - { offset: 0x142EE6, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16occupancyShadersSSvp', symObjAddr: 0x128F8, symBinAddr: 0x1004B2F80, symSize: 0x0 }
   - { offset: 0x142EF4, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16occupancyShaders_WZ', symObjAddr: 0x0, symBinAddr: 0x1001F96F4, symSize: 0x40 }
   - { offset: 0x142F0E, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16occupancyShadersSSvau', symObjAddr: 0x40, symBinAddr: 0x1001F9734, symSize: 0x50 }
   - { offset: 0x142FE9, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021OccupancyOptimizationB0VWOh', symObjAddr: 0x18C, symBinAddr: 0x1001F9880, symSize: 0x34 }
@@ -2902,7 +2902,7 @@ relocations:
   - { offset: 0x144DFE, size: 0x8, addend: 0x0, symName: _MTLSizeMake, symObjAddr: 0x5F10, symBinAddr: 0x100204980, symSize: 0x34 }
   - { offset: 0x144E0C, size: 0x8, addend: 0x0, symName: _MTLSizeMake, symObjAddr: 0x5F10, symBinAddr: 0x100204980, symSize: 0x34 }
   - { offset: 0x144E91, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16reductionShaders_WZ', symObjAddr: 0x0, symBinAddr: 0x1002062FC, symSize: 0x40 }
-  - { offset: 0x144EB5, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16reductionShadersSSvp', symObjAddr: 0x16FA8, symBinAddr: 0x1004AEF90, symSize: 0x0 }
+  - { offset: 0x144EB5, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16reductionShadersSSvp', symObjAddr: 0x16FA8, symBinAddr: 0x1004B2F90, symSize: 0x0 }
   - { offset: 0x144EC3, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16reductionShaders_WZ', symObjAddr: 0x0, symBinAddr: 0x1002062FC, symSize: 0x40 }
   - { offset: 0x144EDD, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16reductionShadersSSvau', symObjAddr: 0x40, symBinAddr: 0x10020633C, symSize: 0x50 }
   - { offset: 0x1450F7, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ReductionOptimizationB0VWOh', symObjAddr: 0x18C, symBinAddr: 0x100206488, symSize: 0x34 }
@@ -3118,7 +3118,7 @@ relocations:
   - { offset: 0x14B533, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark019TextureOptimizationB0V18analyzeTilingModesyyF', symObjAddr: 0x3388, symBinAddr: 0x10022EE88, symSize: 0x748 }
   - { offset: 0x14B5C4, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark019TextureOptimizationB0V11saveResultsyyF', symObjAddr: 0x3AD0, symBinAddr: 0x10022F5D0, symSize: 0x1C4 }
   - { offset: 0x14B77A, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark21textureSamplerShaders_WZ', symObjAddr: 0x0, symBinAddr: 0x10022FD74, symSize: 0x40 }
-  - { offset: 0x14B79E, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark21textureSamplerShadersSSvp', symObjAddr: 0xFE80, symBinAddr: 0x1004AEFA0, symSize: 0x0 }
+  - { offset: 0x14B79E, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark21textureSamplerShadersSSvp', symObjAddr: 0xFE80, symBinAddr: 0x1004B2FA0, symSize: 0x0 }
   - { offset: 0x14B7AC, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark21textureSamplerShaders_WZ', symObjAddr: 0x0, symBinAddr: 0x10022FD74, symSize: 0x40 }
   - { offset: 0x14B7C6, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark21textureSamplerShadersSSvau', symObjAddr: 0x40, symBinAddr: 0x10022FDB4, symSize: 0x50 }
   - { offset: 0x14B855, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark014TextureSamplerB0VWOh', symObjAddr: 0x18C, symBinAddr: 0x10022FF00, symSize: 0x34 }
@@ -3170,116 +3170,143 @@ relocations:
   - { offset: 0x14C22C, size: 0x8, addend: 0x0, symName: '_$sSo15MTLTextureUsageVSYSCSY8rawValuexSg03RawD0Qz_tcfCTW', symObjAddr: 0x3A94, symBinAddr: 0x100233328, symSize: 0x3C }
   - { offset: 0x14C240, size: 0x8, addend: 0x0, symName: '_$sSo15MTLTextureUsageVSYSCSY8rawValue03RawD0QzvgTW', symObjAddr: 0x3AD0, symBinAddr: 0x100233364, symSize: 0x2C }
   - { offset: 0x14C254, size: 0x8, addend: 0x0, symName: '_$sSo15MTLTextureUsageV8rawValueSuvg', symObjAddr: 0x3D60, symBinAddr: 0x1002335F4, symSize: 0x4 }
-  - { offset: 0x14C3FC, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16deepShaderSourceSSvp', symObjAddr: 0x28B1E8, symBinAddr: 0x1004AEFB0, symSize: 0x0 }
-  - { offset: 0x14C417, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark12shaderSourceSSvp', symObjAddr: 0x28B1F8, symBinAddr: 0x1004AEFC0, symSize: 0x0 }
-  - { offset: 0x14C432, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark7librarySo10MTLLibrary_pvp', symObjAddr: 0x28B208, symBinAddr: 0x1004AEFD0, symSize: 0x0 }
-  - { offset: 0x14C440, size: 0x8, addend: 0x0, symName: _MetalBenchmark_main, symObjAddr: 0x0, symBinAddr: 0x1002335F8, symSize: 0x17CD8 }
-  - { offset: 0x14D477, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark15printDeviceInfo6deviceySo9MTLDevice_p_tF', symObjAddr: 0x17D70, symBinAddr: 0x10024B2D0, symSize: 0x864 }
-  - { offset: 0x14D4A7, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark20testMatmulFP16vsFP326device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x185FC, symBinAddr: 0x10024BB34, symSize: 0x3190 }
-  - { offset: 0x14DC7E, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark20testVectorFP16vsFP326device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1B78C, symBinAddr: 0x10024ECC4, symSize: 0x1AE4 }
-  - { offset: 0x14E0AA, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark25testConversionPerformance6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1D270, symBinAddr: 0x1002507A8, symSize: 0x1514 }
-  - { offset: 0x14E3EB, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24testReductionPerformance6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1E784, symBinAddr: 0x100251CBC, symSize: 0x1870 }
-  - { offset: 0x14E768, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark19testDeepGPUResearch6device5queueySo9MTLDevice_p_So15MTLCommandQueue_ptKF', symObjAddr: 0x1FFF4, symBinAddr: 0x10025352C, symSize: 0xF7B48 }
-  - { offset: 0x1573C5, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark23testDeepMemoryBandwidth6device5queueySo9MTLDevice_p_So15MTLCommandQueue_ptKF', symObjAddr: 0x117B3C, symBinAddr: 0x10034B074, symSize: 0x8370 }
-  - { offset: 0x1580EF, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark28testHighPerformanceBandwidth6device5queueySo9MTLDevice_p_So15MTLCommandQueue_ptKF', symObjAddr: 0x11FEAC, symBinAddr: 0x1003533E4, symSize: 0x50AC }
-  - { offset: 0x158867, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24testComputeBoundAnalysis6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x124F58, symBinAddr: 0x100358490, symSize: 0xBE4 }
-  - { offset: 0x1588BD, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark20testCacheTLBAnalysis6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x125B3C, symBinAddr: 0x100359074, symSize: 0x3928 }
-  - { offset: 0x158ECB, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark26testSIMDEfficiencyAnalysis6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x129464, symBinAddr: 0x10035C99C, symSize: 0x1878 }
-  - { offset: 0x158F21, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark27testSynchronizationAnalysis6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x12ACDC, symBinAddr: 0x10035E214, symSize: 0x1410 }
-  - { offset: 0x158F77, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24testOptimizationCookbook6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x12C0EC, symBinAddr: 0x10035F624, symSize: 0xD30 }
-  - { offset: 0x158FCD, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24testRealWorldCaseStudies6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x12CE1C, symBinAddr: 0x100360354, symSize: 0xB4C }
-  - { offset: 0x159023, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark32testAlgorithmPerformanceDatabase6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x12D968, symBinAddr: 0x100360EA0, symSize: 0x2FB4 }
-  - { offset: 0x159079, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark30testAdvancedTexturePerformance6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x13091C, symBinAddr: 0x100363E54, symSize: 0x2CDC }
-  - { offset: 0x159443, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark30testAdvancedTexturePerformance6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKFySWXEfU_', symObjAddr: 0x19A240, symBinAddr: 0x1003CD018, symSize: 0x1C8 }
-  - { offset: 0x1594B2, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark27testQuantizationPerformance6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1335F8, symBinAddr: 0x100366B30, symSize: 0x26A0 }
-  - { offset: 0x159ABB, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark22testDataLayoutAnalysis6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x135C98, symBinAddr: 0x1003691D0, symSize: 0x2AB0 }
-  - { offset: 0x15A1EC, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark22testDualBufferPipeline6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x138748, symBinAddr: 0x10036BC80, symSize: 0x2F14 }
-  - { offset: 0x15A7F5, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark23testTensorCoreEmulation6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x13B65C, symBinAddr: 0x10036EB94, symSize: 0x2B14 }
-  - { offset: 0x15AEEA, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark20testPredicateMasking6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x13E170, symBinAddr: 0x1003716A8, symSize: 0x2254 }
-  - { offset: 0x15B34F, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark19testImageProcessing6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1403C4, symBinAddr: 0x1003738FC, symSize: 0x37F8 }
-  - { offset: 0x15B990, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark25testInstructionThroughput6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x143BBC, symBinAddr: 0x1003770F4, symSize: 0x3B88 }
-  - { offset: 0x15C0A6, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark15testDCTAnalysis6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x147744, symBinAddr: 0x10037AC7C, symSize: 0x1CA8 }
-  - { offset: 0x15C403, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark15testBloomFilter6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1493EC, symBinAddr: 0x10037C924, symSize: 0x2738 }
-  - { offset: 0x15C914, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark17testPriorityQueue6device5queue7libraryySo9MTLDevice_p_So010MTLCommandE0_pSo10MTLLibrary_ptKF', symObjAddr: 0x14BB24, symBinAddr: 0x10037F05C, symSize: 0x2BD0 }
-  - { offset: 0x15CF5E, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16testParallelScan6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x14E6F4, symBinAddr: 0x100381C2C, symSize: 0x2574 }
-  - { offset: 0x15D459, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark19testGraphAlgorithms6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x150C68, symBinAddr: 0x1003841A0, symSize: 0x38BC }
-  - { offset: 0x15DE12, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16testSparseMatrix6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x154524, symBinAddr: 0x100387A5C, symSize: 0x20B4 }
-  - { offset: 0x15E2B5, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark21testSortingAlgorithms6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1565D8, symBinAddr: 0x100389B10, symSize: 0x328C }
-  - { offset: 0x15E8F4, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark14testMonteCarlo6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x159864, symBinAddr: 0x10038CD9C, symSize: 0x2A20 }
-  - { offset: 0x15EDB7, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark18testFFTConvolution6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x15C284, symBinAddr: 0x10038F7BC, symSize: 0x16D8 }
-  - { offset: 0x15F03C, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark15testDatabaseOps6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x15D95C, symBinAddr: 0x100390E94, symSize: 0x2CBC }
-  - { offset: 0x15F5E1, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark26testAccelerationStructures6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x160618, symBinAddr: 0x100393B50, symSize: 0x2DE0 }
-  - { offset: 0x15FABF, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark26testAccelerationStructures6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF8buildBVHL_7nodeIdx4minB4maxB10sphereListySu_s5SIMD3VySfGAPSays6UInt32VGtF', symObjAddr: 0x19A5A0, symBinAddr: 0x1003CD350, symSize: 0xE74 }
-  - { offset: 0x15FDE4, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark26testAccelerationStructures6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKFs6UInt32VAJXEfU_', symObjAddr: 0x19B414, symBinAddr: 0x1003CE1C4, symSize: 0x20 }
-  - { offset: 0x15FE1D, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark29testIndirectCommandGeneration6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1633F8, symBinAddr: 0x100396930, symSize: 0x3864 }
-  - { offset: 0x160512, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark19testDoubleBuffering6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x166C5C, symBinAddr: 0x10039A194, symSize: 0x4344 }
-  - { offset: 0x160CD9, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark20testThreadDivergence6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x16AFA0, symBinAddr: 0x10039E4D8, symSize: 0x43FC }
-  - { offset: 0x16164E, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark17testCacheBehavior6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x16F39C, symBinAddr: 0x1003A28D4, symSize: 0x4AE4 }
-  - { offset: 0x161F66, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark20testAtomicOperations6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x173E80, symBinAddr: 0x1003A73B8, symSize: 0x524C }
-  - { offset: 0x1629E5, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark22testMemoryTransactions6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1790CC, symBinAddr: 0x1003AC604, symSize: 0x5720 }
-  - { offset: 0x163430, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark18testWarpScheduling6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x17E7EC, symBinAddr: 0x1003B1D24, symSize: 0x3554 }
-  - { offset: 0x163A93, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark21testPrecisionAnalysis6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x181D40, symBinAddr: 0x1003B5278, symSize: 0x4E1C }
-  - { offset: 0x16435C, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark18testInstructionMix6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x186B5C, symBinAddr: 0x1003BA094, symSize: 0x37CC }
-  - { offset: 0x1648EF, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark18testInstructionMix6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKFSbSS_S3dt_tXEfU_', symObjAddr: 0x19BD20, symBinAddr: 0x1003CE2FC, symSize: 0xB8 }
-  - { offset: 0x164921, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark18testInstructionMix6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKFSdSS_S3dt_tXEfU0_', symObjAddr: 0x19BE44, symBinAddr: 0x1003CE420, symSize: 0x78 }
-  - { offset: 0x16495A, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark26testSIMDGroupCommunication6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x18A328, symBinAddr: 0x1003BD860, symSize: 0x3598 }
-  - { offset: 0x164D81, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark27testShaderAndLaunchOverhead6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x18D8C0, symBinAddr: 0x1003C0DF8, symSize: 0x4504 }
-  - { offset: 0x165307, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark27testShaderAndLaunchOverhead6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKFS2d_SdtYbcfu_', symObjAddr: 0x19C2D8, symBinAddr: 0x1003CE7F8, symSize: 0x2C }
-  - { offset: 0x165343, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark27testShaderAndLaunchOverhead6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKFS2d_SdtYbcfu0_', symObjAddr: 0x19C370, symBinAddr: 0x1003CE824, symSize: 0x2C }
-  - { offset: 0x165386, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark019ANEPowerConsumptionB0VWOs', symObjAddr: 0x191DC4, symBinAddr: 0x1003C52FC, symSize: 0x3C }
-  - { offset: 0x16539A, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark23testAsynchronousOverlap6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x191E00, symBinAddr: 0x1003C5338, symSize: 0x257C }
-  - { offset: 0x165673, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark25testMultiQueueParallelism6device5queue7libraryySo9MTLDevice_p_So010MTLCommandE0_pSo10MTLLibrary_ptKF', symObjAddr: 0x19437C, symBinAddr: 0x1003C78B4, symSize: 0x227C }
-  - { offset: 0x165934, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark30testSharedEventSynchronization6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1965F8, symBinAddr: 0x1003C9B30, symSize: 0x1998 }
-  - { offset: 0x165B2A, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16testFinalSummary6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x197F90, symBinAddr: 0x1003CB4C8, symSize: 0xAB0 }
-  - { offset: 0x165B80, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark12getTimeNanoss6UInt64VyF', symObjAddr: 0x198D84, symBinAddr: 0x1003CBF78, symSize: 0x1B4 }
-  - { offset: 0x165BF0, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark17getElapsedSeconds5start3endSds6UInt64V_AFtF', symObjAddr: 0x198F38, symBinAddr: 0x1003CC12C, symSize: 0x14C }
-  - { offset: 0x165C9C, size: 0x8, addend: 0x0, symName: '_$ss6UInt16VABs17FixedWidthIntegersWl', symObjAddr: 0x199084, symBinAddr: 0x1003CC278, symSize: 0x64 }
-  - { offset: 0x165CB0, size: 0x8, addend: 0x0, symName: '_$ss6UInt16VABSUsWl', symObjAddr: 0x1990E8, symBinAddr: 0x1003CC2DC, symSize: 0x64 }
-  - { offset: 0x165CC4, size: 0x8, addend: 0x0, symName: '_$sSo20MTLTextureDescriptorCMa', symObjAddr: 0x19930C, symBinAddr: 0x1003CC340, symSize: 0x60 }
-  - { offset: 0x165CD8, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark11FloatToHalfys6UInt16VSfF', symObjAddr: 0x19936C, symBinAddr: 0x1003CC3A0, symSize: 0x494 }
-  - { offset: 0x165E24, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark11HalfToFloatySfs6UInt16VF', symObjAddr: 0x199800, symBinAddr: 0x1003CC834, symSize: 0x2CC }
-  - { offset: 0x165EFC, size: 0x8, addend: 0x0, symName: '_$ss5Int64VABs17FixedWidthIntegersWl', symObjAddr: 0x199BF8, symBinAddr: 0x1003CCB2C, symSize: 0x64 }
-  - { offset: 0x165F10, size: 0x8, addend: 0x0, symName: '_$ss5Int64VABSZsWl', symObjAddr: 0x199C5C, symBinAddr: 0x1003CCB90, symSize: 0x64 }
-  - { offset: 0x165F24, size: 0x8, addend: 0x0, symName: '_$ss5Int64VABSzsWl', symObjAddr: 0x199CC0, symBinAddr: 0x1003CCBF4, symSize: 0x64 }
-  - { offset: 0x165F38, size: 0x8, addend: 0x0, symName: '_$sSo7MTLSizeaMa', symObjAddr: 0x199D24, symBinAddr: 0x1003CCC58, symSize: 0x94 }
-  - { offset: 0x165F4C, size: 0x8, addend: 0x0, symName: '_$sSS14MetalBenchmarkE8padStartySSSiF', symObjAddr: 0x199EB0, symBinAddr: 0x1003CCCEC, symSize: 0x120 }
-  - { offset: 0x165FA2, size: 0x8, addend: 0x0, symName: '_$sSo15MTLArchitectureCMa', symObjAddr: 0x19A034, symBinAddr: 0x1003CCE0C, symSize: 0x60 }
-  - { offset: 0x165FB6, size: 0x8, addend: 0x0, symName: '_$sSo15MTLArchitectureCSo8NSObjectCs23CustomStringConvertible10FoundationWl', symObjAddr: 0x19A094, symBinAddr: 0x1003CCE6C, symSize: 0x6C }
-  - { offset: 0x165FCA, size: 0x8, addend: 0x0, symName: '_$ss10ArraySliceVySiGAByxGSlsWl', symObjAddr: 0x19A118, symBinAddr: 0x1003CCEF0, symSize: 0x6C }
-  - { offset: 0x165FDE, size: 0x8, addend: 0x0, symName: '_$ss16IndexingIteratorVys10ArraySliceVySiGGWOh', symObjAddr: 0x19A184, symBinAddr: 0x1003CCF5C, symSize: 0x28 }
-  - { offset: 0x165FF2, size: 0x8, addend: 0x0, symName: '_$sSaySi_S2StGSayxGSlsWl', symObjAddr: 0x19A1AC, symBinAddr: 0x1003CCF84, symSize: 0x6C }
-  - { offset: 0x166006, size: 0x8, addend: 0x0, symName: '_$ss16IndexingIteratorVySaySi_S2StGGWOh', symObjAddr: 0x19A218, symBinAddr: 0x1003CCFF0, symSize: 0x28 }
-  - { offset: 0x16601A, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark30testAdvancedTexturePerformance6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKFySWXEfU_TA', symObjAddr: 0x19A408, symBinAddr: 0x1003CD1E0, symSize: 0x28 }
-  - { offset: 0x16602E, size: 0x8, addend: 0x0, symName: '_$sSaySo23MTLComputePipelineState_p_SStGSayxGSlsWl', symObjAddr: 0x19A458, symBinAddr: 0x1003CD208, symSize: 0x6C }
-  - { offset: 0x166042, size: 0x8, addend: 0x0, symName: '_$ss16IndexingIteratorVySaySo23MTLComputePipelineState_p_SStGGWOh', symObjAddr: 0x19A4C4, symBinAddr: 0x1003CD274, symSize: 0x28 }
-  - { offset: 0x166056, size: 0x8, addend: 0x0, symName: '_$sSaySS_S2ftGWOh', symObjAddr: 0x19A4EC, symBinAddr: 0x1003CD29C, symSize: 0x28 }
-  - { offset: 0x16606A, size: 0x8, addend: 0x0, symName: '_$sSo17MTLCompileOptionsCMa', symObjAddr: 0x19A514, symBinAddr: 0x1003CD2C4, symSize: 0x60 }
-  - { offset: 0x16607E, size: 0x8, addend: 0x0, symName: '_$sSnys6UInt32VGSnyxGSlsSxRzSZ6StrideRpzrlWl', symObjAddr: 0x19BB4C, symBinAddr: 0x1003CE1E4, symSize: 0x84 }
-  - { offset: 0x166092, size: 0x8, addend: 0x0, symName: '_$sSaySS_So23MTLComputePipelineState_pSitGSayxGSlsWl', symObjAddr: 0x19BBD0, symBinAddr: 0x1003CE268, symSize: 0x6C }
-  - { offset: 0x1660A6, size: 0x8, addend: 0x0, symName: '_$ss16IndexingIteratorVySaySS_So23MTLComputePipelineState_pSitGGWOh', symObjAddr: 0x19BC3C, symBinAddr: 0x1003CE2D4, symSize: 0x28 }
-  - { offset: 0x1660BA, size: 0x8, addend: 0x0, symName: '_$sSaySS_S3dtGSayxGSTsWl', symObjAddr: 0x19BDD8, symBinAddr: 0x1003CE3B4, symSize: 0x6C }
-  - { offset: 0x1660CE, size: 0x8, addend: 0x0, symName: '_$sSS_S3dtSgWOh', symObjAddr: 0x19C0E8, symBinAddr: 0x1003CE6C4, symSize: 0x28 }
-  - { offset: 0x1660E2, size: 0x8, addend: 0x0, symName: '_$sSo10MTLLibrary_pSgWOh', symObjAddr: 0x19C138, symBinAddr: 0x1003CE6EC, symSize: 0x28 }
-  - { offset: 0x1660F6, size: 0x8, addend: 0x0, symName: '_$sSaySS_SSSitGSayxGSlsWl', symObjAddr: 0x19C1B0, symBinAddr: 0x1003CE764, symSize: 0x6C }
-  - { offset: 0x16610A, size: 0x8, addend: 0x0, symName: '_$ss16IndexingIteratorVySaySS_SSSitGGWOh', symObjAddr: 0x19C21C, symBinAddr: 0x1003CE7D0, symSize: 0x28 }
-  - { offset: 0x16611E, size: 0x8, addend: 0x0, symName: '_$ss6UInt16VABSzsWl', symObjAddr: 0x19C520, symBinAddr: 0x1003CE850, symSize: 0x64 }
-  - { offset: 0x166132, size: 0x8, addend: 0x0, symName: '_$sS2uSzsWl', symObjAddr: 0x19C584, symBinAddr: 0x1003CE8B4, symSize: 0x64 }
-  - { offset: 0x166146, size: 0x8, addend: 0x0, symName: '_$sS2uSUsWl', symObjAddr: 0x19C64C, symBinAddr: 0x1003CE918, symSize: 0x64 }
-  - { offset: 0x16615A, size: 0x8, addend: 0x0, symName: '_$sSo7MTLSizeawet', symObjAddr: 0x19C6F0, symBinAddr: 0x1003CE97C, symSize: 0xE0 }
-  - { offset: 0x16616E, size: 0x8, addend: 0x0, symName: '_$sSo7MTLSizeawst', symObjAddr: 0x19C7D0, symBinAddr: 0x1003CEA5C, symSize: 0x1AC }
-  - { offset: 0x166182, size: 0x8, addend: 0x0, symName: '_$sSo15MTLTextureUsageVs9OptionSetSCSYWb', symObjAddr: 0x19CE3C, symBinAddr: 0x1003CEC48, symSize: 0x14 }
-  - { offset: 0x166196, size: 0x8, addend: 0x0, symName: '_$sSo15MTLTextureUsageVs9OptionSetSCs0D7AlgebraPWb', symObjAddr: 0x19CEBC, symBinAddr: 0x1003CEC5C, symSize: 0x14 }
-  - { offset: 0x1661AA, size: 0x8, addend: 0x0, symName: '_$sSo15MTLTextureUsageVs10SetAlgebraSCSQWb', symObjAddr: 0x19CED0, symBinAddr: 0x1003CEC70, symSize: 0x14 }
-  - { offset: 0x1661BE, size: 0x8, addend: 0x0, symName: '_$sSo15MTLTextureUsageVs10SetAlgebraSCs25ExpressibleByArrayLiteralPWb', symObjAddr: 0x19CF50, symBinAddr: 0x1003CEC84, symSize: 0x14 }
-  - { offset: 0x1661D2, size: 0x8, addend: 0x0, symName: '_$sxSgs5ErrorRd__Ri_d_0_r_0_lWOc', symObjAddr: 0x19D040, symBinAddr: 0x1003CEC98, symSize: 0xA4 }
-  - { offset: 0x1661F6, size: 0x8, addend: 0x0, symName: '_$sSlsE9dropFirsty11SubSequenceQzSiFfA_', symObjAddr: 0x19A100, symBinAddr: 0x1003CCED8, symSize: 0x18 }
-  - { offset: 0x166220, size: 0x8, addend: 0x0, symName: '_$sSq3mapyqd_0_Sgqd_0_xqd__YKXEqd__YKs5ErrorRd__Ri_d_0_r0_lF', symObjAddr: 0x19BEBC, symBinAddr: 0x1003CE498, symSize: 0x22C }
-  - { offset: 0x16626A, size: 0x8, addend: 0x0, symName: '_$sSv10storeBytes2of12toByteOffset2asyx_Sixmts15BitwiseCopyableRzlFfA0_', symObjAddr: 0x19C160, symBinAddr: 0x1003CE714, symSize: 0x14 }
-  - { offset: 0x166294, size: 0x8, addend: 0x0, symName: '_$sSv10storeBytes2of12toByteOffset2asyx_Sixmts15BitwiseCopyableRzlF', symObjAddr: 0x19C174, symBinAddr: 0x1003CE728, symSize: 0x3C }
-  - { offset: 0x16661C, size: 0x8, addend: 0x0, symName: '_$sSo20MTLTextureDescriptorCABycfC', symObjAddr: 0x199ACC, symBinAddr: 0x1003CCB00, symSize: 0x2C }
-  - { offset: 0x166637, size: 0x8, addend: 0x0, symName: '_$sSo17MTLCompileOptionsCABycfC', symObjAddr: 0x19A574, symBinAddr: 0x1003CD324, symSize: 0x2C }
-  - { offset: 0x16664B, size: 0x8, addend: 0x0, symName: '_$sSo20MTLTextureDescriptorCABycfcTO', symObjAddr: 0x19C97C, symBinAddr: 0x1003CEC08, symSize: 0x20 }
-  - { offset: 0x16665F, size: 0x8, addend: 0x0, symName: '_$sSo17MTLCompileOptionsCABycfcTO', symObjAddr: 0x19C9A0, symBinAddr: 0x1003CEC28, symSize: 0x20 }
-  - { offset: 0x1668FE, size: 0x8, addend: 0x0, symName: _MTLRegionMake2D, symObjAddr: 0x19D10C, symBinAddr: 0x1003CED3C, symSize: 0x4C }
-  - { offset: 0x16690C, size: 0x8, addend: 0x0, symName: _MTLRegionMake2D, symObjAddr: 0x19D10C, symBinAddr: 0x1003CED3C, symSize: 0x4C }
+  - { offset: 0x14C3D8, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0V6deviceSo9MTLDevice_pvg', symObjAddr: 0x0, symBinAddr: 0x1002335F8, symSize: 0x24 }
+  - { offset: 0x14C5B6, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0VWOh', symObjAddr: 0xFC, symBinAddr: 0x1002336F4, symSize: 0x34 }
+  - { offset: 0x14C5CA, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0VwCP', symObjAddr: 0x3C98, symBinAddr: 0x100236F44, symSize: 0x54 }
+  - { offset: 0x14C5DE, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0Vwxx', symObjAddr: 0x3CEC, symBinAddr: 0x100236F98, symSize: 0x30 }
+  - { offset: 0x14C5F2, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0Vwcp', symObjAddr: 0x3D1C, symBinAddr: 0x100236FC8, symSize: 0x54 }
+  - { offset: 0x14C606, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0Vwca', symObjAddr: 0x3D70, symBinAddr: 0x10023701C, symSize: 0x68 }
+  - { offset: 0x14C61A, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0Vwta', symObjAddr: 0x3DE4, symBinAddr: 0x100237084, symSize: 0x50 }
+  - { offset: 0x14C62E, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0Vwet', symObjAddr: 0x3E34, symBinAddr: 0x1002370D4, symSize: 0x144 }
+  - { offset: 0x14C642, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0Vwst', symObjAddr: 0x3F78, symBinAddr: 0x100237218, symSize: 0x1D0 }
+  - { offset: 0x14C656, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0VMa', symObjAddr: 0x4148, symBinAddr: 0x1002373E8, symSize: 0x14 }
+  - { offset: 0x14C69C, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0V6deviceSo9MTLDevice_pvg', symObjAddr: 0x0, symBinAddr: 0x1002335F8, symSize: 0x24 }
+  - { offset: 0x14C6B0, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0V5queueSo15MTLCommandQueue_pvg', symObjAddr: 0x24, symBinAddr: 0x10023361C, symSize: 0x28 }
+  - { offset: 0x14C6CB, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0V6device5queueACSo9MTLDevice_p_So15MTLCommandQueue_ptcfC', symObjAddr: 0x4C, symBinAddr: 0x100233644, symSize: 0xB0 }
+  - { offset: 0x14C753, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0V3runyyKF', symObjAddr: 0x130, symBinAddr: 0x100233728, symSize: 0x1224 }
+  - { offset: 0x14C777, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0V09benchmarkC11SizeScalingyyF', symObjAddr: 0x13EC, symBinAddr: 0x10023494C, symSize: 0x684 }
+  - { offset: 0x14C816, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0V24benchmarkOccupancyLevelsyyF', symObjAddr: 0x1A70, symBinAddr: 0x100234FD0, symSize: 0x63C }
+  - { offset: 0x14C897, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0V09benchmarkD7LatencyyyF', symObjAddr: 0x20AC, symBinAddr: 0x10023560C, symSize: 0x4E4 }
+  - { offset: 0x14C92E, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0V25benchmarkThreadDivergenceyyF', symObjAddr: 0x2590, symBinAddr: 0x100235AF0, symSize: 0x63C }
+  - { offset: 0x14C9AF, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0V29benchmarkWavefrontUtilizationyyF', symObjAddr: 0x2BCC, symBinAddr: 0x10023612C, symSize: 0x414 }
+  - { offset: 0x14CA27, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0V25benchmarkRegisterPressureyyF', symObjAddr: 0x2FE0, symBinAddr: 0x100236540, symSize: 0x4EC }
+  - { offset: 0x14CAA7, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0V11saveResultsyyF', symObjAddr: 0x34CC, symBinAddr: 0x100236A2C, symSize: 0x1C4 }
+  - { offset: 0x14CAF8, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0V07measureC4Size7threads04workF0SdSi_SitF', symObjAddr: 0x3944, symBinAddr: 0x100236BF0, symSize: 0xB4 }
+  - { offset: 0x14CB76, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0V22measureOccupancyImpact9occupancy14isComputeBoundS2d_SbtF', symObjAddr: 0x39F8, symBinAddr: 0x100236CA4, symSize: 0xB0 }
+  - { offset: 0x14CBF6, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0V07measureD7Latency8workSize6isColdSdSi_SbtF', symObjAddr: 0x3AA8, symBinAddr: 0x100236D54, symSize: 0x94 }
+  - { offset: 0x14CC38, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0V17measureDivergence15divergenceRatio8baseTimeS2d_SdtF', symObjAddr: 0x3B3C, symBinAddr: 0x100236DE8, symSize: 0x40 }
+  - { offset: 0x14CC7A, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0V27measureWavefrontUtilization13activeThreadsSdSi_tF', symObjAddr: 0x3B7C, symBinAddr: 0x100236E28, symSize: 0x88 }
+  - { offset: 0x14CCE7, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark021ThreadgroupSchedulingB0V23measureRegisterPressure18registersPerThread12maxRegistersSdSi_SitF', symObjAddr: 0x3C04, symBinAddr: 0x100236EB0, symSize: 0x94 }
+  - { offset: 0x14CEAA, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16deepShaderSourceSSvp', symObjAddr: 0x28B610, symBinAddr: 0x1004B2FB0, symSize: 0x0 }
+  - { offset: 0x14CEC5, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark12shaderSourceSSvp', symObjAddr: 0x28B620, symBinAddr: 0x1004B2FC0, symSize: 0x0 }
+  - { offset: 0x14CEE0, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark7librarySo10MTLLibrary_pvp', symObjAddr: 0x28B630, symBinAddr: 0x1004B2FD0, symSize: 0x0 }
+  - { offset: 0x14CEEE, size: 0x8, addend: 0x0, symName: _MetalBenchmark_main, symObjAddr: 0x0, symBinAddr: 0x1002373FC, symSize: 0x1802C }
+  - { offset: 0x14DF3E, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark15printDeviceInfo6deviceySo9MTLDevice_p_tF', symObjAddr: 0x180C4, symBinAddr: 0x10024F428, symSize: 0x864 }
+  - { offset: 0x14DF6E, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark20testMatmulFP16vsFP326device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x18950, symBinAddr: 0x10024FC8C, symSize: 0x3190 }
+  - { offset: 0x14E745, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark20testVectorFP16vsFP326device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1BAE0, symBinAddr: 0x100252E1C, symSize: 0x1AE4 }
+  - { offset: 0x14EB71, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark25testConversionPerformance6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1D5C4, symBinAddr: 0x100254900, symSize: 0x1514 }
+  - { offset: 0x14EEB2, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24testReductionPerformance6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1EAD8, symBinAddr: 0x100255E14, symSize: 0x1870 }
+  - { offset: 0x14F22F, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark19testDeepGPUResearch6device5queueySo9MTLDevice_p_So15MTLCommandQueue_ptKF', symObjAddr: 0x20348, symBinAddr: 0x100257684, symSize: 0xF7B48 }
+  - { offset: 0x157E8C, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark23testDeepMemoryBandwidth6device5queueySo9MTLDevice_p_So15MTLCommandQueue_ptKF', symObjAddr: 0x117E90, symBinAddr: 0x10034F1CC, symSize: 0x8370 }
+  - { offset: 0x158BB6, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark28testHighPerformanceBandwidth6device5queueySo9MTLDevice_p_So15MTLCommandQueue_ptKF', symObjAddr: 0x120200, symBinAddr: 0x10035753C, symSize: 0x50AC }
+  - { offset: 0x15932E, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24testComputeBoundAnalysis6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1252AC, symBinAddr: 0x10035C5E8, symSize: 0xBE4 }
+  - { offset: 0x159384, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark20testCacheTLBAnalysis6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x125E90, symBinAddr: 0x10035D1CC, symSize: 0x3928 }
+  - { offset: 0x159992, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark26testSIMDEfficiencyAnalysis6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1297B8, symBinAddr: 0x100360AF4, symSize: 0x1878 }
+  - { offset: 0x1599E8, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark27testSynchronizationAnalysis6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x12B030, symBinAddr: 0x10036236C, symSize: 0x1410 }
+  - { offset: 0x159A3E, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24testOptimizationCookbook6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x12C440, symBinAddr: 0x10036377C, symSize: 0xD30 }
+  - { offset: 0x159A94, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark24testRealWorldCaseStudies6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x12D170, symBinAddr: 0x1003644AC, symSize: 0xB4C }
+  - { offset: 0x159AEA, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark32testAlgorithmPerformanceDatabase6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x12DCBC, symBinAddr: 0x100364FF8, symSize: 0x2FB4 }
+  - { offset: 0x159B40, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark30testAdvancedTexturePerformance6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x130C70, symBinAddr: 0x100367FAC, symSize: 0x2CDC }
+  - { offset: 0x159F0A, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark30testAdvancedTexturePerformance6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKFySWXEfU_', symObjAddr: 0x19A594, symBinAddr: 0x1003D1170, symSize: 0x1C8 }
+  - { offset: 0x159F79, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark27testQuantizationPerformance6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x13394C, symBinAddr: 0x10036AC88, symSize: 0x26A0 }
+  - { offset: 0x15A582, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark22testDataLayoutAnalysis6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x135FEC, symBinAddr: 0x10036D328, symSize: 0x2AB0 }
+  - { offset: 0x15ACB3, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark22testDualBufferPipeline6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x138A9C, symBinAddr: 0x10036FDD8, symSize: 0x2F14 }
+  - { offset: 0x15B2BC, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark23testTensorCoreEmulation6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x13B9B0, symBinAddr: 0x100372CEC, symSize: 0x2B14 }
+  - { offset: 0x15B9B1, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark20testPredicateMasking6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x13E4C4, symBinAddr: 0x100375800, symSize: 0x2254 }
+  - { offset: 0x15BE16, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark19testImageProcessing6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x140718, symBinAddr: 0x100377A54, symSize: 0x37F8 }
+  - { offset: 0x15C457, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark25testInstructionThroughput6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x143F10, symBinAddr: 0x10037B24C, symSize: 0x3B88 }
+  - { offset: 0x15CB6D, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark15testDCTAnalysis6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x147A98, symBinAddr: 0x10037EDD4, symSize: 0x1CA8 }
+  - { offset: 0x15CECA, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark15testBloomFilter6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x149740, symBinAddr: 0x100380A7C, symSize: 0x2738 }
+  - { offset: 0x15D3DB, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark17testPriorityQueue6device5queue7libraryySo9MTLDevice_p_So010MTLCommandE0_pSo10MTLLibrary_ptKF', symObjAddr: 0x14BE78, symBinAddr: 0x1003831B4, symSize: 0x2BD0 }
+  - { offset: 0x15DA25, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16testParallelScan6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x14EA48, symBinAddr: 0x100385D84, symSize: 0x2574 }
+  - { offset: 0x15DF20, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark19testGraphAlgorithms6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x150FBC, symBinAddr: 0x1003882F8, symSize: 0x38BC }
+  - { offset: 0x15E8D9, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16testSparseMatrix6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x154878, symBinAddr: 0x10038BBB4, symSize: 0x20B4 }
+  - { offset: 0x15ED7C, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark21testSortingAlgorithms6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x15692C, symBinAddr: 0x10038DC68, symSize: 0x328C }
+  - { offset: 0x15F3BB, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark14testMonteCarlo6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x159BB8, symBinAddr: 0x100390EF4, symSize: 0x2A20 }
+  - { offset: 0x15F87E, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark18testFFTConvolution6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x15C5D8, symBinAddr: 0x100393914, symSize: 0x16D8 }
+  - { offset: 0x15FB03, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark15testDatabaseOps6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x15DCB0, symBinAddr: 0x100394FEC, symSize: 0x2CBC }
+  - { offset: 0x1600A8, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark26testAccelerationStructures6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x16096C, symBinAddr: 0x100397CA8, symSize: 0x2DE0 }
+  - { offset: 0x160586, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark26testAccelerationStructures6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF8buildBVHL_7nodeIdx4minB4maxB10sphereListySu_s5SIMD3VySfGAPSays6UInt32VGtF', symObjAddr: 0x19A8F4, symBinAddr: 0x1003D14A8, symSize: 0xE74 }
+  - { offset: 0x1608AB, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark26testAccelerationStructures6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKFs6UInt32VAJXEfU_', symObjAddr: 0x19B768, symBinAddr: 0x1003D231C, symSize: 0x20 }
+  - { offset: 0x1608E4, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark29testIndirectCommandGeneration6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x16374C, symBinAddr: 0x10039AA88, symSize: 0x3864 }
+  - { offset: 0x160FD9, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark19testDoubleBuffering6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x166FB0, symBinAddr: 0x10039E2EC, symSize: 0x4344 }
+  - { offset: 0x1617A0, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark20testThreadDivergence6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x16B2F4, symBinAddr: 0x1003A2630, symSize: 0x43FC }
+  - { offset: 0x162115, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark17testCacheBehavior6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x16F6F0, symBinAddr: 0x1003A6A2C, symSize: 0x4AE4 }
+  - { offset: 0x162A2D, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark20testAtomicOperations6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1741D4, symBinAddr: 0x1003AB510, symSize: 0x524C }
+  - { offset: 0x1634AC, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark22testMemoryTransactions6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x179420, symBinAddr: 0x1003B075C, symSize: 0x5720 }
+  - { offset: 0x163EF7, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark18testWarpScheduling6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x17EB40, symBinAddr: 0x1003B5E7C, symSize: 0x3554 }
+  - { offset: 0x16455A, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark21testPrecisionAnalysis6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x182094, symBinAddr: 0x1003B93D0, symSize: 0x4E1C }
+  - { offset: 0x164E23, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark18testInstructionMix6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x186EB0, symBinAddr: 0x1003BE1EC, symSize: 0x37CC }
+  - { offset: 0x1653B6, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark18testInstructionMix6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKFSbSS_S3dt_tXEfU_', symObjAddr: 0x19C074, symBinAddr: 0x1003D2454, symSize: 0xB8 }
+  - { offset: 0x1653E8, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark18testInstructionMix6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKFSdSS_S3dt_tXEfU0_', symObjAddr: 0x19C198, symBinAddr: 0x1003D2578, symSize: 0x78 }
+  - { offset: 0x165421, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark26testSIMDGroupCommunication6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x18A67C, symBinAddr: 0x1003C19B8, symSize: 0x3598 }
+  - { offset: 0x165848, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark27testShaderAndLaunchOverhead6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x18DC14, symBinAddr: 0x1003C4F50, symSize: 0x4504 }
+  - { offset: 0x165DCE, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark27testShaderAndLaunchOverhead6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKFS2d_SdtYbcfu_', symObjAddr: 0x19C62C, symBinAddr: 0x1003D2950, symSize: 0x2C }
+  - { offset: 0x165E0A, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark27testShaderAndLaunchOverhead6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKFS2d_SdtYbcfu0_', symObjAddr: 0x19C6C4, symBinAddr: 0x1003D297C, symSize: 0x2C }
+  - { offset: 0x165E4D, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark019ANEPowerConsumptionB0VWOs', symObjAddr: 0x192118, symBinAddr: 0x1003C9454, symSize: 0x3C }
+  - { offset: 0x165E61, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark23testAsynchronousOverlap6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x192154, symBinAddr: 0x1003C9490, symSize: 0x257C }
+  - { offset: 0x16613A, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark25testMultiQueueParallelism6device5queue7libraryySo9MTLDevice_p_So010MTLCommandE0_pSo10MTLLibrary_ptKF', symObjAddr: 0x1946D0, symBinAddr: 0x1003CBA0C, symSize: 0x227C }
+  - { offset: 0x1663FB, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark30testSharedEventSynchronization6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x19694C, symBinAddr: 0x1003CDC88, symSize: 0x1998 }
+  - { offset: 0x1665F1, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark16testFinalSummary6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKF', symObjAddr: 0x1982E4, symBinAddr: 0x1003CF620, symSize: 0xAB0 }
+  - { offset: 0x166647, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark12getTimeNanoss6UInt64VyF', symObjAddr: 0x1990D8, symBinAddr: 0x1003D00D0, symSize: 0x1B4 }
+  - { offset: 0x1666B7, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark17getElapsedSeconds5start3endSds6UInt64V_AFtF', symObjAddr: 0x19928C, symBinAddr: 0x1003D0284, symSize: 0x14C }
+  - { offset: 0x166763, size: 0x8, addend: 0x0, symName: '_$ss6UInt16VABs17FixedWidthIntegersWl', symObjAddr: 0x1993D8, symBinAddr: 0x1003D03D0, symSize: 0x64 }
+  - { offset: 0x166777, size: 0x8, addend: 0x0, symName: '_$ss6UInt16VABSUsWl', symObjAddr: 0x19943C, symBinAddr: 0x1003D0434, symSize: 0x64 }
+  - { offset: 0x16678B, size: 0x8, addend: 0x0, symName: '_$sSo20MTLTextureDescriptorCMa', symObjAddr: 0x199660, symBinAddr: 0x1003D0498, symSize: 0x60 }
+  - { offset: 0x16679F, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark11FloatToHalfys6UInt16VSfF', symObjAddr: 0x1996C0, symBinAddr: 0x1003D04F8, symSize: 0x494 }
+  - { offset: 0x1668EB, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark11HalfToFloatySfs6UInt16VF', symObjAddr: 0x199B54, symBinAddr: 0x1003D098C, symSize: 0x2CC }
+  - { offset: 0x1669C3, size: 0x8, addend: 0x0, symName: '_$ss5Int64VABs17FixedWidthIntegersWl', symObjAddr: 0x199F4C, symBinAddr: 0x1003D0C84, symSize: 0x64 }
+  - { offset: 0x1669D7, size: 0x8, addend: 0x0, symName: '_$ss5Int64VABSZsWl', symObjAddr: 0x199FB0, symBinAddr: 0x1003D0CE8, symSize: 0x64 }
+  - { offset: 0x1669EB, size: 0x8, addend: 0x0, symName: '_$ss5Int64VABSzsWl', symObjAddr: 0x19A014, symBinAddr: 0x1003D0D4C, symSize: 0x64 }
+  - { offset: 0x1669FF, size: 0x8, addend: 0x0, symName: '_$sSo7MTLSizeaMa', symObjAddr: 0x19A078, symBinAddr: 0x1003D0DB0, symSize: 0x94 }
+  - { offset: 0x166A13, size: 0x8, addend: 0x0, symName: '_$sSS14MetalBenchmarkE8padStartySSSiF', symObjAddr: 0x19A204, symBinAddr: 0x1003D0E44, symSize: 0x120 }
+  - { offset: 0x166A69, size: 0x8, addend: 0x0, symName: '_$sSo15MTLArchitectureCMa', symObjAddr: 0x19A388, symBinAddr: 0x1003D0F64, symSize: 0x60 }
+  - { offset: 0x166A7D, size: 0x8, addend: 0x0, symName: '_$sSo15MTLArchitectureCSo8NSObjectCs23CustomStringConvertible10FoundationWl', symObjAddr: 0x19A3E8, symBinAddr: 0x1003D0FC4, symSize: 0x6C }
+  - { offset: 0x166A91, size: 0x8, addend: 0x0, symName: '_$ss10ArraySliceVySiGAByxGSlsWl', symObjAddr: 0x19A46C, symBinAddr: 0x1003D1048, symSize: 0x6C }
+  - { offset: 0x166AA5, size: 0x8, addend: 0x0, symName: '_$ss16IndexingIteratorVys10ArraySliceVySiGGWOh', symObjAddr: 0x19A4D8, symBinAddr: 0x1003D10B4, symSize: 0x28 }
+  - { offset: 0x166AB9, size: 0x8, addend: 0x0, symName: '_$sSaySi_S2StGSayxGSlsWl', symObjAddr: 0x19A500, symBinAddr: 0x1003D10DC, symSize: 0x6C }
+  - { offset: 0x166ACD, size: 0x8, addend: 0x0, symName: '_$ss16IndexingIteratorVySaySi_S2StGGWOh', symObjAddr: 0x19A56C, symBinAddr: 0x1003D1148, symSize: 0x28 }
+  - { offset: 0x166AE1, size: 0x8, addend: 0x0, symName: '_$s14MetalBenchmark30testAdvancedTexturePerformance6device5queue7libraryySo9MTLDevice_p_So15MTLCommandQueue_pSo10MTLLibrary_ptKFySWXEfU_TA', symObjAddr: 0x19A75C, symBinAddr: 0x1003D1338, symSize: 0x28 }
+  - { offset: 0x166AF5, size: 0x8, addend: 0x0, symName: '_$sSaySo23MTLComputePipelineState_p_SStGSayxGSlsWl', symObjAddr: 0x19A7AC, symBinAddr: 0x1003D1360, symSize: 0x6C }
+  - { offset: 0x166B09, size: 0x8, addend: 0x0, symName: '_$ss16IndexingIteratorVySaySo23MTLComputePipelineState_p_SStGGWOh', symObjAddr: 0x19A818, symBinAddr: 0x1003D13CC, symSize: 0x28 }
+  - { offset: 0x166B1D, size: 0x8, addend: 0x0, symName: '_$sSaySS_S2ftGWOh', symObjAddr: 0x19A840, symBinAddr: 0x1003D13F4, symSize: 0x28 }
+  - { offset: 0x166B31, size: 0x8, addend: 0x0, symName: '_$sSo17MTLCompileOptionsCMa', symObjAddr: 0x19A868, symBinAddr: 0x1003D141C, symSize: 0x60 }
+  - { offset: 0x166B45, size: 0x8, addend: 0x0, symName: '_$sSnys6UInt32VGSnyxGSlsSxRzSZ6StrideRpzrlWl', symObjAddr: 0x19BEA0, symBinAddr: 0x1003D233C, symSize: 0x84 }
+  - { offset: 0x166B59, size: 0x8, addend: 0x0, symName: '_$sSaySS_So23MTLComputePipelineState_pSitGSayxGSlsWl', symObjAddr: 0x19BF24, symBinAddr: 0x1003D23C0, symSize: 0x6C }
+  - { offset: 0x166B6D, size: 0x8, addend: 0x0, symName: '_$ss16IndexingIteratorVySaySS_So23MTLComputePipelineState_pSitGGWOh', symObjAddr: 0x19BF90, symBinAddr: 0x1003D242C, symSize: 0x28 }
+  - { offset: 0x166B81, size: 0x8, addend: 0x0, symName: '_$sSaySS_S3dtGSayxGSTsWl', symObjAddr: 0x19C12C, symBinAddr: 0x1003D250C, symSize: 0x6C }
+  - { offset: 0x166B95, size: 0x8, addend: 0x0, symName: '_$sSS_S3dtSgWOh', symObjAddr: 0x19C43C, symBinAddr: 0x1003D281C, symSize: 0x28 }
+  - { offset: 0x166BA9, size: 0x8, addend: 0x0, symName: '_$sSo10MTLLibrary_pSgWOh', symObjAddr: 0x19C48C, symBinAddr: 0x1003D2844, symSize: 0x28 }
+  - { offset: 0x166BBD, size: 0x8, addend: 0x0, symName: '_$sSaySS_SSSitGSayxGSlsWl', symObjAddr: 0x19C504, symBinAddr: 0x1003D28BC, symSize: 0x6C }
+  - { offset: 0x166BD1, size: 0x8, addend: 0x0, symName: '_$ss16IndexingIteratorVySaySS_SSSitGGWOh', symObjAddr: 0x19C570, symBinAddr: 0x1003D2928, symSize: 0x28 }
+  - { offset: 0x166BE5, size: 0x8, addend: 0x0, symName: '_$ss6UInt16VABSzsWl', symObjAddr: 0x19C874, symBinAddr: 0x1003D29A8, symSize: 0x64 }
+  - { offset: 0x166BF9, size: 0x8, addend: 0x0, symName: '_$sS2uSzsWl', symObjAddr: 0x19C8D8, symBinAddr: 0x1003D2A0C, symSize: 0x64 }
+  - { offset: 0x166C0D, size: 0x8, addend: 0x0, symName: '_$sS2uSUsWl', symObjAddr: 0x19C9A0, symBinAddr: 0x1003D2A70, symSize: 0x64 }
+  - { offset: 0x166C21, size: 0x8, addend: 0x0, symName: '_$sSo7MTLSizeawet', symObjAddr: 0x19CA44, symBinAddr: 0x1003D2AD4, symSize: 0xE0 }
+  - { offset: 0x166C35, size: 0x8, addend: 0x0, symName: '_$sSo7MTLSizeawst', symObjAddr: 0x19CB24, symBinAddr: 0x1003D2BB4, symSize: 0x1AC }
+  - { offset: 0x166C49, size: 0x8, addend: 0x0, symName: '_$sSo15MTLTextureUsageVs9OptionSetSCSYWb', symObjAddr: 0x19D190, symBinAddr: 0x1003D2DA0, symSize: 0x14 }
+  - { offset: 0x166C5D, size: 0x8, addend: 0x0, symName: '_$sSo15MTLTextureUsageVs9OptionSetSCs0D7AlgebraPWb', symObjAddr: 0x19D210, symBinAddr: 0x1003D2DB4, symSize: 0x14 }
+  - { offset: 0x166C71, size: 0x8, addend: 0x0, symName: '_$sSo15MTLTextureUsageVs10SetAlgebraSCSQWb', symObjAddr: 0x19D224, symBinAddr: 0x1003D2DC8, symSize: 0x14 }
+  - { offset: 0x166C85, size: 0x8, addend: 0x0, symName: '_$sSo15MTLTextureUsageVs10SetAlgebraSCs25ExpressibleByArrayLiteralPWb', symObjAddr: 0x19D2A4, symBinAddr: 0x1003D2DDC, symSize: 0x14 }
+  - { offset: 0x166C99, size: 0x8, addend: 0x0, symName: '_$sxSgs5ErrorRd__Ri_d_0_r_0_lWOc', symObjAddr: 0x19D394, symBinAddr: 0x1003D2DF0, symSize: 0xA4 }
+  - { offset: 0x166CBD, size: 0x8, addend: 0x0, symName: '_$sSlsE9dropFirsty11SubSequenceQzSiFfA_', symObjAddr: 0x19A454, symBinAddr: 0x1003D1030, symSize: 0x18 }
+  - { offset: 0x166CE7, size: 0x8, addend: 0x0, symName: '_$sSq3mapyqd_0_Sgqd_0_xqd__YKXEqd__YKs5ErrorRd__Ri_d_0_r0_lF', symObjAddr: 0x19C210, symBinAddr: 0x1003D25F0, symSize: 0x22C }
+  - { offset: 0x166D31, size: 0x8, addend: 0x0, symName: '_$sSv10storeBytes2of12toByteOffset2asyx_Sixmts15BitwiseCopyableRzlFfA0_', symObjAddr: 0x19C4B4, symBinAddr: 0x1003D286C, symSize: 0x14 }
+  - { offset: 0x166D5B, size: 0x8, addend: 0x0, symName: '_$sSv10storeBytes2of12toByteOffset2asyx_Sixmts15BitwiseCopyableRzlF', symObjAddr: 0x19C4C8, symBinAddr: 0x1003D2880, symSize: 0x3C }
+  - { offset: 0x1670E3, size: 0x8, addend: 0x0, symName: '_$sSo20MTLTextureDescriptorCABycfC', symObjAddr: 0x199E20, symBinAddr: 0x1003D0C58, symSize: 0x2C }
+  - { offset: 0x1670FE, size: 0x8, addend: 0x0, symName: '_$sSo17MTLCompileOptionsCABycfC', symObjAddr: 0x19A8C8, symBinAddr: 0x1003D147C, symSize: 0x2C }
+  - { offset: 0x167112, size: 0x8, addend: 0x0, symName: '_$sSo20MTLTextureDescriptorCABycfcTO', symObjAddr: 0x19CCD0, symBinAddr: 0x1003D2D60, symSize: 0x20 }
+  - { offset: 0x167126, size: 0x8, addend: 0x0, symName: '_$sSo17MTLCompileOptionsCABycfcTO', symObjAddr: 0x19CCF4, symBinAddr: 0x1003D2D80, symSize: 0x20 }
+  - { offset: 0x1673C5, size: 0x8, addend: 0x0, symName: _MTLRegionMake2D, symObjAddr: 0x19D460, symBinAddr: 0x1003D2E94, symSize: 0x4C }
+  - { offset: 0x1673D3, size: 0x8, addend: 0x0, symName: _MTLRegionMake2D, symObjAddr: 0x19D460, symBinAddr: 0x1003D2E94, symSize: 0x4C }
 ...

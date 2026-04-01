@@ -1,0 +1,69 @@
+=== Metal GPU Occupancy and Threadgroup Scheduling Analysis ===
+
+--- Threadgroup Size vs Performance ---
+| Threads | Time (ms) | Occupancy |
+| 32 | 1.00 | 3.1% |
+| 64 | 0.55 | 6.3% |
+| 128 | 0.35 | 12.5% |
+| 192 | 0.30 | 18.8% |
+| 256 | 0.28 | 25.0% |
+| 384 | 0.32 | 37.5% |
+| 512 | 0.38 | 50.0% |
+| 768 | 0.48 | 75.0% |
+| 1024 | 0.60 | 100.0% |
+
+--- Occupancy Level Impact ---
+| Occupancy | Compute Bound | Memory Bound |
+| 12.5% | 1.00 | 1.00 |
+| 25% | 0.55 | 0.70 |
+| 50% | 0.35 | 0.55 |
+| 75% | 0.30 | 0.48 |
+| 100% | 0.28 | 0.45 |
+
+--- Kernel Launch Latency ---
+| Kernel Size | Cold (μs) | Warm (μs) |
+| 64 | 5.01 | 1.00 |
+| 256 | 5.03 | 1.00 |
+| 1024 | 5.10 | 1.01 |
+| 4096 | 5.41 | 1.04 |
+| 16384 | 6.64 | 1.16 |
+| 65536 | 11.56 | 1.66 |
+
+--- Thread Divergence Cost ---
+| Divergence | Time (ms) | Efficiency |
+| No divergence | 0.30 | 100% |
+| 25% divergent | 0.45 | 67% |
+| 50% divergent | 0.65 | 46% |
+| 75% divergent | 0.90 | 33% |
+| 100% divergent | 1.20 | 25% |
+
+--- Wavefront/SIMD Utilization ---
+| Active Threads | Utilization |
+| 8 | 25% |
+| 16 | 50% |
+| 24 | 75% |
+| 32 | 100% |
+| 48 | 100% |
+| 64 | 100% |
+| 96 | 100% |
+| 128 | 100% |
+
+--- Register Pressure vs Occupancy ---
+| Registers/Thread | Occupancy |
+| 8 | 100% |
+| 16 | 100% |
+| 24 | 100% |
+| 32 | 100% |
+| 48 | 66% |
+| 64 | 50% |
+| 128 | 25% |
+| 256 | 12.5% |
+
+--- Key Findings ---
+1. Optimal threadgroup size: 128-256 threads for most kernels
+2. Occupancy > 50% provides near-peak performance
+3. Kernel launch latency: ~1-5μs for warm launches
+4. Thread divergence: 2-4x slowdown for highly divergent code
+5. Wavefront utilization: full utilization requires multiples of 32
+6. Register pressure: 32 regs/thread achieves 100% occupancy
+7. Cold launch is ~5x slower than warm launch
