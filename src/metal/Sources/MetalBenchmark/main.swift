@@ -17173,6 +17173,7 @@ do { try MetalAtomicMemoryOrderingBenchmark(device: device, queue: queue).run() 
 do { try MetalPipelineDepthBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalTextureCacheBehaviorBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalDoubleBufferingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try MetalDualCommandBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalFrameTimingPipelineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalBranchDivergenceBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try FFTBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
