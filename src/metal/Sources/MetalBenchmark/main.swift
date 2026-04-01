@@ -17098,6 +17098,7 @@ do { try ANEDataTransferEfficiencyBenchmark(device: device, queue: queue).run() 
 do { try ANEMatrixMultiplicationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEBroadcastingReshapingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEAdvancedIndexingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANELossMarginRankingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERandomSamplingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANECompressionEncodingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEStringTextBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
