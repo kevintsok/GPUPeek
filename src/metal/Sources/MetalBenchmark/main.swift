@@ -17106,6 +17106,7 @@ do { try ANEGeometricTransformOperationsBenchmark(device: device, queue: queue).
 do { try ANERandomSamplingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANECompressionEncodingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEControlFlowBranchingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEDataLayoutTransformationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEStringTextBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEGraphOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEKnowledgeDistillationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
