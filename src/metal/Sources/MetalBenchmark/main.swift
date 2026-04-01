@@ -17086,6 +17086,7 @@ do { try ANEBinaryBitwiseOperationsBenchmark(device: device, queue: queue).run()
 do { try ANEInterpolationOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPolynomialSpecialFunctionsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESortingRankingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEScatterGatherBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEKnowledgeDistillationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEGradientCheckpointingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERayTracingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
