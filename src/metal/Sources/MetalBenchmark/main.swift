@@ -17078,6 +17078,7 @@ do { try ANEFlashAttentionBenchmark(device: device, queue: queue).run() } catch 
 do { try ANEPruningBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEActivationFunctionsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEDistanceMetricsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEAudioSignalProcessingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEKnowledgeDistillationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEGradientCheckpointingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERayTracingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
