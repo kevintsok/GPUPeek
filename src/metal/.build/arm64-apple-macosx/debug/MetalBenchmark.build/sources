@@ -128,6 +128,7 @@
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/MetalMatrixTranspose/MetalMatrixTransposeBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/MetalPrefixSumStreamCompaction/MetalPrefixSumStreamCompactionBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/MetalSIMDGroupReduction/MetalSIMDGroupReductionBenchmark.swift
+/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/MetalStencilOperations/MetalStencilOperationsBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/OccupancyOptimization/OccupancyOptimizationBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/ReductionOptimization/ReductionOptimizationBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/SIMDGroupPrimitives/SIMDGroupPrimitivesBenchmark.swift

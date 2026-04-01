@@ -17067,6 +17067,7 @@ do { try NBodyOptimizationBenchmark(device: device, queue: queue).run() } catch 
 do { try ReductionOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalPrefixSumStreamCompactionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalMatrixTransposeBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try MetalStencilOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MemoryTransactionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try InstructionThroughputBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try OccupancyOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
