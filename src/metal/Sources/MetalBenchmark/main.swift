@@ -17113,6 +17113,7 @@ do { try ANEPoolingOperationsBenchmark(device: device, queue: queue).run() } cat
 do { try ANEEmbeddingLookupBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEParallelismSchedulingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMemoryAccessPatternsCacheBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEDataTypePerformanceBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERealWorldModelInferenceBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEStringTextBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEGraphOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }

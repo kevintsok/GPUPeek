@@ -152,6 +152,12 @@
     "swiftmodule": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEDataTransferEfficiencyBenchmark~partial.swiftmodule",
     "swift-dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEDataTransferEfficiencyBenchmark.swiftdeps"
   },
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDataTypePerformance/ANEDataTypePerformanceBenchmark.swift": {
+    "dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEDataTypePerformanceBenchmark.d",
+    "object": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEDataTypePerformanceBenchmark.swift.o",
+    "swiftmodule": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEDataTypePerformanceBenchmark~partial.swiftmodule",
+    "swift-dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEDataTypePerformanceBenchmark.swiftdeps"
+  },
   "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDispatchOptimization/ANEDispatchOptimizationBenchmark.swift": {
     "dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEDispatchOptimizationBenchmark.d",
     "object": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEDispatchOptimizationBenchmark.swift.o",
