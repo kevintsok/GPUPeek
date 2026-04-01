@@ -17158,6 +17158,7 @@ do { try MetalHeapAllocationBenchmark(device: device, queue: queue).run() } catc
 do { try RenderPipelineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try TextureOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try PostProcessingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try OcclusionCullingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try FragmentDepthBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 // do { try ANEOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try SharedMemoryAccessBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
