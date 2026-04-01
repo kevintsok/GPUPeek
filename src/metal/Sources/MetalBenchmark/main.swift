@@ -17172,6 +17172,7 @@ do { try CommandBufferParallelismBenchmark(device: device, commandQueue: queue).
 do { try SIMDGroupPrimitivesBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try SimdGroupBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MemoryFenceBarrierBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try AtomicMemoryOrderingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMemoryLatencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try GPUFamilyComparisonBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEModelInferenceBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
