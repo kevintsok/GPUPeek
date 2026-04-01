@@ -17187,6 +17187,7 @@ do { try RenderPipelineBenchmark(device: device, queue: queue).run() } catch { p
 do { try TextureOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try PostProcessingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try PrimitiveAssemblyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try MetalRenderPassDependencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalIndirectCommandExecutionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalVertexProcessingEfficiencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try FramePacingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
