@@ -17083,6 +17083,7 @@ do { try ANETailLatencyBenchmark(device: device, queue: queue).run() } catch { p
 do { try ANESchedulerEfficiencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPrecisionPerformanceTradeoffsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEBatchEfficiencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEChannelSensitivityBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try CoreMLVsMetalBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPowerConsumptionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEQuantizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
