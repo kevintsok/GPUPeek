@@ -17115,6 +17115,7 @@ do { try ANEStreamingBenchmark(device: device, queue: queue).run() } catch { pri
 do { try ANEMultiModelBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEInstructionThroughputBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEAttentionMechanismBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEResolutionSensitivityBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMemoryIndexingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEEmbeddingFFNBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEGradientComputationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
