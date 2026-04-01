@@ -17088,6 +17088,7 @@ do { try ANEPolynomialSpecialFunctionsBenchmark(device: device, queue: queue).ru
 do { try ANESortingRankingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEScatterGatherBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEHistogramWindowingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANELossGradientBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEKnowledgeDistillationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEGradientCheckpointingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERayTracingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
