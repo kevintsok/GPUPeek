@@ -17074,6 +17074,7 @@ do { try ANELatencyComparisonBenchmark(device: device, queue: queue).run() } cat
 do { try ANEThroughputScalingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANECommandBufferParallelismBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANETailLatencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANESchedulerEfficiencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPrecisionPerformanceTradeoffsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEBatchEfficiencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try CoreMLVsMetalBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
