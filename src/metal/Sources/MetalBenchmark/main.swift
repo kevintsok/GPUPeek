@@ -17186,6 +17186,7 @@ do { try TessellationBenchmark(device: device, queue: queue).run() } catch { pri
 do { try ComputationalPhotographyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try OcclusionCullingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MeshShaderBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try MetalGraphicsPipelineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try FragmentDepthBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 // do { try ANEOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try SharedMemoryAccessBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
