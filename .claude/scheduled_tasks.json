@@ -5,7 +5,7 @@
       "cron": "*/30 * * * *",
       "prompt": "Deep Research Loop Iteration for GPUPeek Apple Metal Research\n\nRun the following commands in /Users/longxia/Projects/GPUPeek/src/metal:\n\n1. Pick a research topic that hasn't been deeply explored yet (from: ANE, async copy details, specific algorithm optimizations, etc.)\n2. Read relevant documentation and code\n3. Write a new benchmark if needed to test the topic\n4. Compile and run the benchmark\n5. Update findings to the appropriate RESEARCH.md file\n6. Commit and push changes with: git add -A && git commit -m \"Deep research: [topic name]\" && git push\n7. Report what was researched\n\nChoose topics from this pool that haven't been deeply studied:\n- ANE (Apple Neural Engine) integration\n- Core ML vs Metal performance\n- Specific memory access patterns\n- Algorithm optimizations (sorting, FFT, etc.)\n- GPU family differences\n\nFocus on creating NEW benchmarks or extending existing ones to get REAL measured data.",
       "createdAt": 1774884382705,
-      "lastFiredAt": 1775073724555,
+      "lastFiredAt": 1775075524723,
       "recurring": true
     },
     {
