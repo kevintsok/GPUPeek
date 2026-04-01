@@ -17170,6 +17170,7 @@ do { try TextureOptimizationBenchmark(device: device, queue: queue).run() } catc
 do { try PostProcessingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try PrimitiveAssemblyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try FramePacingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try TessellationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try OcclusionCullingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try FragmentDepthBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 // do { try ANEOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
