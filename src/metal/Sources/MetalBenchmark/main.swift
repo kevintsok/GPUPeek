@@ -17091,6 +17091,7 @@ do { try ANEHistogramWindowingBenchmark(device: device, queue: queue).run() } ca
 do { try ANELossGradientBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEDistanceSimilarityBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANELogicalBooleanBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEPrefixSumWalshHadamardBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEKnowledgeDistillationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEGradientCheckpointingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERayTracingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
