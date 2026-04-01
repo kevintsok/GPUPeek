@@ -17072,6 +17072,7 @@ do { try AsyncCopyOptimizationBenchmark(device: device, queue: queue).run() } ca
 do { try ArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANELatencyComparisonBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEThroughputScalingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANECommandBufferParallelismBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPrecisionPerformanceTradeoffsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEBatchEfficiencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try CoreMLVsMetalBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
