@@ -17238,6 +17238,7 @@ do { try ANEOperationFusionBenchmark(device: device, queue: queue).run() } catch
 do { try MetalThreadgroupSIMDBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalPipelineBubblesBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalWarpEfficiencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try MetalIndirectCommandBufferDispatchBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEHardwareCountersBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalMemoryHierarchyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESparseComputationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
