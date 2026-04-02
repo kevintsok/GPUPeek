@@ -236,6 +236,7 @@
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalGraphicsPipeline/MetalGraphicsPipelineBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalIndirectCommandExecution/MetalIndirectCommandExecutionBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalRenderPassDependency/MetalRenderPassDependencyBenchmark.swift
+/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalRenderPipelineTBDR/MetalRenderPipelineTBDRBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalTextureLODPerformance/MetalTextureLODBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalVertexIndexPerformance/MetalVertexIndexBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalVertexProcessingEfficiency/MetalVertexProcessingEfficiencyBenchmark.swift
