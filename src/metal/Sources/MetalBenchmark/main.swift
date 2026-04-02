@@ -17294,6 +17294,7 @@ do { try ANEPoseEstimationGestureRecognitionBenchmark(device: device, queue: que
 do { try ANENLPSpeechSynthesisBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try AudioSourceSeparationMusicProcessingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMedicalImageAnalysisBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANERecommendationSystemsRankingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try testAsynchronousOverlap(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testMultiQueueParallelism(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testSharedEventSynchronization(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
