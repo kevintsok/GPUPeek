@@ -17073,6 +17073,7 @@ do { try MemoryTransactionBenchmark(device: device, queue: queue).run() } catch 
 do { try InstructionThroughputBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try OccupancyOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalKernelFusionOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try MetalHashingRandomGenerationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ThreadgroupSchedulingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try AsyncCopyOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
