@@ -17128,6 +17128,7 @@ do { try ANECryptographyHashingBenchmark(device: device, queue: queue).run() } c
 do { try ANECybersecurityNetworkAnalysisBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERemoteSensingSatelliteImageryBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEBioinformaticsGenomicsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEBayesianInferenceProbabilisticBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEScientificComputingSimulationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPrivacyPreservingFederatedBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEComputerVision3DPerceptionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
