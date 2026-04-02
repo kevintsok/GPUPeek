@@ -17085,6 +17085,7 @@ do { try ANEPruningBenchmark(device: device, queue: queue).run() } catch { print
 do { try ANESparseOperationsPruningBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEActivationFunctionsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEAgriculturalPrecisionFarmingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEGenerativeAIDiffusionModelsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEDistanceMetricsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEAudioSignalProcessingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEAudioSourceSeparationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
