@@ -17122,6 +17122,7 @@ do { try ANEFourierDescriptorContourBenchmark(device: device, queue: queue).run(
 do { try ANEBeamSearchSequenceDecodingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANENonnegativeMatrixFactorizationICABenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEGraphNeuralNetworkRLBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEGraphNeuralNetworksRelationalBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEVideoProcessingInterpolationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANECryptographyHashingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANECybersecurityNetworkAnalysisBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
