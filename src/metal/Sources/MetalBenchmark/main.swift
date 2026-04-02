@@ -17120,6 +17120,7 @@ do { try ANEIndustrialQualityControlBenchmark(device: device, queue: queue).run(
 do { try ANESpeechSynthesisRecognitionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEFourierDescriptorContourBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEBeamSearchSequenceDecodingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEBiomedicalSignalProcessingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANENonnegativeMatrixFactorizationICABenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEGraphNeuralNetworkRLBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEGraphNeuralNetworksRelationalBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
