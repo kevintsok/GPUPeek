@@ -17178,6 +17178,7 @@ do { try ANEDispatchOptimizationBenchmark(device: device, queue: queue).run() } 
 do { try ANENumericalStabilityBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEHardwareUtilizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERecurrentBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANERecurrentNeuralNetworkOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEEmbeddingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANENormalizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEElementWiseBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
