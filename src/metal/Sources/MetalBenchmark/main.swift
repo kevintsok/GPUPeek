@@ -17098,6 +17098,7 @@ do { try ANEOCRDocumentAnalysisBenchmark(device: device, queue: queue).run() } c
 do { try ANEMultiModalLearningBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEWirelessCommunicationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEAutonomousDrivingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEQuantitativeFinanceBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEHashingRandomBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEBitwisePackingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEWaveletTransformBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
