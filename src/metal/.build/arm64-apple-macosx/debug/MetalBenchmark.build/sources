@@ -29,6 +29,7 @@
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEConvolutionOperations/ANEConvolutionBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECoreMLOptimization/ANECoreMLOptimizationBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECryptographyHashing/ANECryptographyHashingBenchmark.swift
+/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECybersecurityNetworkAnalysis/ANECybersecurityNetworkAnalysisBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDataFlowAnalysis/ANEDataFlowAnalysisBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDataLayoutTransformation/ANEDataLayoutTransformationBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDataTransferEfficiency/ANEDataTransferEfficiencyBenchmark.swift

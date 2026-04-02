@@ -148,6 +148,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECybersecurityNetworkAnalysis/ANECybersecurityNetworkAnalysisBenchmark.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDataFlowAnalysis/ANEDataFlowAnalysisBenchmark.swift"
         },
         {
@@ -1058,6 +1062,7 @@
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEConvolutionBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANECoreMLOptimizationBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANECryptographyHashingBenchmark.swift.o",
+        "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANECybersecurityNetworkAnalysisBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEDataFlowAnalysisBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEDataLayoutTransformationBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEDataTransferEfficiencyBenchmark.swift.o",
@@ -1437,6 +1442,10 @@
         {
           "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANECryptographyHashingBenchmark.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANECybersecurityNetworkAnalysisBenchmark.swift.o"
         },
         {
           "kind" : "file",
@@ -2344,6 +2353,7 @@
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEConvolutionOperations/ANEConvolutionBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECoreMLOptimization/ANECoreMLOptimizationBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECryptographyHashing/ANECryptographyHashingBenchmark.swift",
+        "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECybersecurityNetworkAnalysis/ANECybersecurityNetworkAnalysisBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDataFlowAnalysis/ANEDataFlowAnalysisBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDataLayoutTransformation/ANEDataLayoutTransformationBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDataTransferEfficiency/ANEDataTransferEfficiencyBenchmark.swift",
@@ -2609,6 +2619,7 @@
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEConvolutionOperations/ANEConvolutionBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECoreMLOptimization/ANECoreMLOptimizationBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECryptographyHashing/ANECryptographyHashingBenchmark.swift",
+      "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECybersecurityNetworkAnalysis/ANECybersecurityNetworkAnalysisBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDataFlowAnalysis/ANEDataFlowAnalysisBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDataLayoutTransformation/ANEDataLayoutTransformationBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDataTransferEfficiency/ANEDataTransferEfficiencyBenchmark.swift",
@@ -3025,6 +3036,10 @@
         {
           "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECryptographyHashing/ANECryptographyHashingBenchmark.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECybersecurityNetworkAnalysis/ANECybersecurityNetworkAnalysisBenchmark.swift"
         },
         {
           "kind" : "file",
@@ -4011,6 +4026,10 @@
         {
           "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANECryptographyHashingBenchmark.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANECybersecurityNetworkAnalysisBenchmark.swift.o"
         },
         {
           "kind" : "file",

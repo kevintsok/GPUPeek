@@ -188,6 +188,12 @@
     "swiftmodule": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANECryptographyHashingBenchmark~partial.swiftmodule",
     "swift-dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANECryptographyHashingBenchmark.swiftdeps"
   },
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECybersecurityNetworkAnalysis/ANECybersecurityNetworkAnalysisBenchmark.swift": {
+    "dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANECybersecurityNetworkAnalysisBenchmark.d",
+    "object": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANECybersecurityNetworkAnalysisBenchmark.swift.o",
+    "swiftmodule": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANECybersecurityNetworkAnalysisBenchmark~partial.swiftmodule",
+    "swift-dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANECybersecurityNetworkAnalysisBenchmark.swiftdeps"
+  },
   "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDataFlowAnalysis/ANEDataFlowAnalysisBenchmark.swift": {
     "dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEDataFlowAnalysisBenchmark.d",
     "object": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEDataFlowAnalysisBenchmark.swift.o",
