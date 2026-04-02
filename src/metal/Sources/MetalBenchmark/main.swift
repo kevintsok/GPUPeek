@@ -17288,6 +17288,7 @@ do { try GPUFamilyComparisonBenchmark(device: device, queue: queue).run() } catc
 do { try ANEModelInferenceBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEComputeOperatorsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEObjectDetectionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANESegmentationTrackingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try testAsynchronousOverlap(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testMultiQueueParallelism(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testSharedEventSynchronization(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
