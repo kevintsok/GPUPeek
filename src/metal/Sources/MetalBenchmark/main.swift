@@ -17100,6 +17100,7 @@ do { try ANEColorSpaceToneMappingBenchmark(device: device, queue: queue).run() }
 do { try ANEOpticalFlowMotionEstimationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMatrixFactorizationDecompositionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEKalmanParticleFilterBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEImageRegistrationStitchingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEDistanceTransformMorphologyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESortingNetworkBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERunningStatisticsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
