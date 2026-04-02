@@ -17094,6 +17094,7 @@ do { try ANEDistanceSimilarityBenchmark(device: device, queue: queue).run() } ca
 do { try ANELogicalBooleanBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPrefixSumWalshHadamardBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESortingNetworkBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANERunningStatisticsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEReductionOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEExecutionUnitBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEDataTransferEfficiencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
