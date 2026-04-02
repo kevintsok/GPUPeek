@@ -17302,6 +17302,7 @@ do { try SharedMemoryAccessBenchmark(device: device, queue: queue).run() } catch
 do { try BankConflictAnalysisBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try KernelLaunchOverheadBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try CommandBufferParallelismBenchmark(device: device, commandQueue: queue).run() } catch { print("Error: \(error)") }
+do { try MetalAsyncComputeDataTransferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try SIMDGroupPrimitivesBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try SimdGroupBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try SIMDGroupVoteBallotBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
