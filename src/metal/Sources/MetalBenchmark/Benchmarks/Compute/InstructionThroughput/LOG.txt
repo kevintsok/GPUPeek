@@ -3,33 +3,33 @@
 --- Arithmetic Instructions ---
 | Instruction | GOPS | Relative to Add |
 |-------------|------|-----------------|
-| ADD | 0.31 | 1.00x |
-| MUL | 0.33 | 1.04x |
-| FMA | 0.26 | 0.82x |
+| ADD | 0.33 | 1.00x |
+| MUL | 0.32 | 0.97x |
+| FMA | 0.25 | 0.77x |
 
 --- Division & Square Root ---
 | Instruction | GOPS | Relative to Add |
 |-------------|------|-----------------|
-| DIV | 0.32 | 1.02x |
-| SQRT | 0.54 | 1.73x |
-| RCP | 0.56 | 1.79x |
+| DIV | 0.31 | 0.97x |
+| SQRT | 0.51 | 1.56x |
+| RCP | 0.53 | 1.61x |
 
 --- Transcendental Functions ---
 | Instruction | GOPS | Relative to Add |
 |-------------|------|-----------------|
-| EXP | 0.58 | 1.85x |
-| LOG | 0.59 | 1.88x |
-| POW | 0.54 | 1.72x |
-| SIN | 0.48 | 1.54x |
-| COS | 0.48 | 1.53x |
-| TANH | 0.51 | 1.62x |
+| EXP | 0.54 | 1.67x |
+| LOG | 0.56 | 1.71x |
+| POW | 0.51 | 1.57x |
+| SIN | 0.45 | 1.38x |
+| COS | 0.45 | 1.39x |
+| TANH | 0.48 | 1.47x |
 
 --- Comparison & Selection ---
 | Instruction | GOPS | Relative to Add |
 |-------------|------|-----------------|
-| MIN/MAX | 0.32 | 1.02x |
-| ABS | 0.61 | 1.94x |
-| SELECT | 0.32 | 1.02x |
+| MIN/MAX | 0.25 | 0.77x |
+| ABS | 0.50 | 1.54x |
+| SELECT | 0.16 | 0.48x |
 
 --- Cost Classification ---
 | Category | Instructions |
