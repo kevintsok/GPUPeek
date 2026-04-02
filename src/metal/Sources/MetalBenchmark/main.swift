@@ -17115,6 +17115,7 @@ do { try ANENaturalLanguageProcessingTextBenchmark(device: device, queue: queue)
 do { try AudioSpeechProcessingVoiceBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERecommendationCollaborativeFilteringBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANETimeSeriesForecastingAnalysisBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEGenerativeAIDiffusionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEDistanceTransformMorphologyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESortingNetworkBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERunningStatisticsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
