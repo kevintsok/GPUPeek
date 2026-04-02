@@ -17098,6 +17098,7 @@ do { try ANEBitwisePackingBenchmark(device: device, queue: queue).run() } catch 
 do { try ANEWaveletTransformBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEColorSpaceToneMappingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEOpticalFlowMotionEstimationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEMatrixFactorizationDecompositionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEDistanceTransformMorphologyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESortingNetworkBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERunningStatisticsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
