@@ -3,25 +3,25 @@
 --- Basic Read/Write Bandwidth ---
 | Size | Write (GB/s) | Read (GB/s) | ReadWrite (GB/s) |
 |------|--------------|-------------|------------------|
-| 64K | 2.685 | 2.854 | 5.749 |
-| 256K | 9.417 | 11.936 | 19.053 |
-| 1024K | 28.539 | 47.422 | 62.303 |
-| 4096K | 67.449 | 172.423 | 125.379 |
+| 64K | 2.657 | 2.980 | 5.872 |
+| 256K | 10.286 | 12.514 | 20.855 |
+| 1024K | 32.302 | 50.901 | 67.076 |
+| 4096K | 71.218 | 180.766 | 125.836 |
 
 --- Access Pattern Analysis ---
 | Pattern | Bandwidth (GB/s) | Relative to Sequential |
 |---------|------------------|----------------------|
-| Sequential | 11.494 | 1.00x |
-| Strided x4 | 10.998 | 1.05x |
-| Strided x16 | 11.146 | 1.03x |
-| Temporal (16x read same) | 11.567 | 0.99x |
+| Sequential | 10.806 | 1.00x |
+| Strided x4 | 10.548 | 1.02x |
+| Strided x16 | 10.411 | 1.04x |
+| Temporal (16x read same) | 10.688 | 1.01x |
 
 --- Read-Write Patterns ---
 | Pattern | Bandwidth (GB/s) |
 |---------|------------------|
-| Write-Read | 1.665 |
-| Read-Modify-Write | 2.065 |
-| Bidirectional | 21.562 |
+| Write-Read | 1.373 |
+| Read-Modify-Write | 1.302 |
+| Bidirectional | 21.231 |
 
 --- Atomic Operations ---
 Atomic increment: 0.159 GB/s effective

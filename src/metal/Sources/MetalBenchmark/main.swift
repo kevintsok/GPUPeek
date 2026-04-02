@@ -17080,6 +17080,7 @@ do { try ANEThroughputScalingBenchmark(device: device, queue: queue).run() } cat
 do { try ANEFlashAttentionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPruningBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEActivationFunctionsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEAgriculturalPrecisionFarmingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEDistanceMetricsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEAudioSignalProcessingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEAudioSourceSeparationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
