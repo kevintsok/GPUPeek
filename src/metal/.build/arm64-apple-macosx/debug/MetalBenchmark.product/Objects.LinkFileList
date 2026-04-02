@@ -93,6 +93,7 @@
 /Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANENumericalPrecisionBenchmark.swift.o
 /Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANENumericalStabilityAnalysisBenchmark.swift.o
 /Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANENumericalStabilityBenchmark.swift.o
+/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEObjectDetectionBenchmark.swift.o
 /Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEOperationBenchmarkingBenchmark.swift.o
 /Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEOperationChainingBenchmark.swift.o
 /Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEOperationFusionBenchmark.swift.o
