@@ -17072,6 +17072,7 @@ do { try MetalStencilOperationsBenchmark(device: device, queue: queue).run() } c
 do { try MemoryTransactionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try InstructionThroughputBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try OccupancyOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try MetalKernelFusionOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ThreadgroupSchedulingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try AsyncCopyOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
