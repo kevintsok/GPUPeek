@@ -6,7 +6,7 @@ This research analyzes sparse and quantized operation performance on Apple's Neu
 
 ## Research Date
 
-- Date: 2026-03-31
+- Date: 2026-04-03
 - Device: Apple M2 (ANE: 15.8 TOPS)
 - Focus: Sparse and quantized operations on ANE
 
