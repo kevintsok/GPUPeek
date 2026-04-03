@@ -1,6 +1,6 @@
 ANE Latency Hiding Benchmark
 ============================
-Date: 2026-04-03T22:41:07Z
+Date: 2026-04-03T23:06:03Z
 
 Memory Latency Impact:
 Global Memory Read: 85ns latency, 72% hidden = 24ns effective
