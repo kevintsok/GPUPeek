@@ -8,7 +8,7 @@ This research analyzes ANE memory access patterns and cache behavior, critical f
 
 - **Device**: Apple M2
 - **Neural Engine**: 16-core ANE
-- **Test Date**: 2026-04-02
+- **Test Date**: 2026-04-03
 
 ## Key Metrics
 
