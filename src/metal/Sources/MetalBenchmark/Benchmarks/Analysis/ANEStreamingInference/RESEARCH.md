@@ -6,7 +6,7 @@ This research analyzes Apple's Neural Engine (ANE) performance for real-time str
 
 ## Research Date
 
-- Date: 2026-03-31
+- Date: 2026-04-03
 - Device: Apple M2 (ANE: 15.8 TOPS)
 - Focus: Streaming latency, state maintenance, real-time feasibility
 
