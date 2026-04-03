@@ -17084,6 +17084,7 @@ do { try ANEFlashAttentionBenchmark(device: device, queue: queue).run() } catch 
 do { try ANEPruningBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESparseOperationsPruningBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEActivationFunctionsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEActivationReuseBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEAgriculturalPrecisionFarmingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEGenerativeAIDiffusionModelsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERecommendationSystemsCollaborativeFilteringBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
