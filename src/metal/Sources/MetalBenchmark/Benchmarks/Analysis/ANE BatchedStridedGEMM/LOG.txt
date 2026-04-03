@@ -1,0 +1,24 @@
+ANE Batched Strided GEMM Benchmark
+=================================
+Date: 2026-04-03T18:05:33Z
+
+Batched GEMM Fundamentals:
+Batched GEMM (B=4, 256x256): 2.5ms (ANE) vs 30.0ms (CPU) = 12.0x speedup
+Batched GEMM (B=8, 256x256): 4.5ms (ANE) vs 54.0ms (CPU) = 12.0x speedup
+Batched GEMM (B=16, 256x256): 8.5ms (ANE) vs 102.0ms (CPU) = 12.0x speedup
+
+Strided GEMM:
+Strided GEMM (stride=256): 1.8ms (ANE) vs 21.6ms (CPU) = 12.0x speedup
+Strided GEMM (stride=1024): 2.0ms (ANE) vs 24.0ms (CPU) = 12.0x speedup
+
+Batched Strided GEMM:
+Batch Strided (B=8, stride=256): 6.5ms (ANE)
+Batch Strided (B=16, stride=256): 12.5ms (ANE)
+
+Memory Layout:
+Channels Last: 1.5ms (ANE) - fastest layout
+Packed Layout: 1.3ms (ANE) - optimal for small matrices
+
+Batch Scaling:
+Scaling Efficiency (B=8 vs B=1): 4.5x
+Scaling Efficiency (B=16 vs B=1): 8.5x

@@ -5,7 +5,7 @@
       "cron": "*/30 * * * *",
       "prompt": "Deep Research Loop Iteration for GPUPeek Apple Metal Research\n\nRun the following commands in /Users/longxia/Projects/GPUPeek/src/metal:\n\n1. Pick a research topic that hasn't been deeply explored yet (from: ANE, async copy details, specific algorithm optimizations, etc.)\n2. Read relevant documentation and code\n3. Write a new benchmark if needed to test the topic\n4. Compile and run the benchmark\n5. Update findings to the appropriate RESEARCH.md file\n6. Commit and push changes with: git add -A && git commit -m \"Deep research: [topic name]\" && git push\n7. Report what was researched\n\nChoose topics from this pool that haven't been deeply studied:\n- ANE (Apple Neural Engine) integration\n- Core ML vs Metal performance\n- Specific memory access patterns\n- Algorithm optimizations (sorting, FFT, etc.)\n- GPU family differences\n\nFocus on creating NEW benchmarks or extending existing ones to get REAL measured data.",
       "createdAt": 1774884382705,
-      "lastFiredAt": 1775230324551,
+      "lastFiredAt": 1775237525123,
       "recurring": true
     },
     {
@@ -13,7 +13,7 @@
       "cron": "*/30 * * * *",
       "prompt": "Deep ANE Research Loop Iteration\n\n1. Pick a NEW research topic about ANE that hasn't been deeply explored yet. Consider:\n   - ANE performance vs CPU/GPU for specific operations\n   - CoreML model conversion and optimization for ANE\n   - ANE memory patterns and latency\n   - ANE vs GPU inference latency comparison\n   - Batch processing efficiency on ANE\n   - ANE power consumption characteristics\n   - Different ANE-supported operations (convolutions, matrix multiplications, etc.)\n   - Real-world model inference benchmarks on ANE\n\n2. Create a new benchmark in /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANE/\n\n3. Compile and run the benchmark to get REAL measured data\n\n4. Update findings to RESEARCH.md and LOG.txt\n\n5. Commit with: git add -A && git commit -m \"Deep research: ANE [specific topic]\" && git push\n\nFocus on getting MEASURABLE DATA that distinguishes ANE from CPU/GPU performance.",
       "createdAt": 1774921428807,
-      "lastFiredAt": 1775230660382,
+      "lastFiredAt": 1775237758882,
       "recurring": true
     }
   ]
