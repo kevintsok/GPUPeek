@@ -6,7 +6,7 @@ This research analyzes Apple Neural Engine (ANE) instruction scheduling, examini
 
 ## Research Date
 
-- Date: 2026-04-01
+- Date: 2026-04-03
 - Device: Apple M2 (ANE)
 - Focus: Instruction latency, dependency analysis, ILP, pipeline efficiency, latency hiding
 
