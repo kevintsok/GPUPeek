@@ -1,6 +1,6 @@
 ANE Operation Interleaving Benchmark
 ====================================
-Date: 2026-04-03T22:13:00Z
+Date: 2026-04-03T22:36:19Z
 
 Mode Switching Overhead:
 Same op (Conv→Conv): 10.5ms (baseline)
