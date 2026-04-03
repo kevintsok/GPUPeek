@@ -17091,6 +17091,7 @@ do { try ANEPaddingOperationsBenchmark(device: device, queue: queue).run() } cat
 do { try ANERoundingModesBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEEntropyCodingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEExtremumFindingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEDilatedConvolutionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalKernelArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANELatencyComparisonBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
