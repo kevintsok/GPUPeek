@@ -17081,6 +17081,7 @@ do { try ArgumentBufferBenchmark(device: device, queue: queue).run() } catch { p
 do { try MetalKernelArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANELatencyComparisonBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEThroughputScalingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANETopKBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEFlashAttentionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPruningBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESparseOperationsPruningBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
