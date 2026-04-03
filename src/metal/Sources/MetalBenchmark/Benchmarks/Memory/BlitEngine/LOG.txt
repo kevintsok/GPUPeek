@@ -4,36 +4,36 @@
 64KB: 0.03 GB/s
 256KB: 0.09 GB/s
 1MB: 0.32 GB/s
-4MB: 0.81 GB/s
+4MB: 0.78 GB/s
 16MB: 1.38 GB/s
 
 --- Asynchronous Copy (Non-blocking) ---
 64KB: 0.06 GB/s
 256KB: 0.30 GB/s
 1MB: 1.17 GB/s
-4MB: 1.98 GB/s
-16MB: 2.06 GB/s
+4MB: 1.93 GB/s
+16MB: 2.02 GB/s
 
 --- Synchronous Copy (Blocking) ---
 64KB: 0.00 GB/s
 256KB: 0.04 GB/s
-1MB: 0.14 GB/s
-4MB: 0.37 GB/s
+1MB: 0.15 GB/s
+4MB: 0.38 GB/s
 16MB: 0.70 GB/s
 
 --- Fill Operation Performance ---
 64KB: 0.01 GB/s
-256KB: 0.04 GB/s
+256KB: 0.05 GB/s
 1MB: 0.17 GB/s
-4MB: 0.48 GB/s
-16MB: 1.21 GB/s
+4MB: 0.53 GB/s
+16MB: 1.18 GB/s
 
 --- Batch Copy (4 operations per command buffer) ---
-64KB: 0.04 GB/s
-256KB: 0.14 GB/s
-1MB: 0.44 GB/s
-4MB: 0.87 GB/s
-16MB: 0.94 GB/s
+64KB: 0.05 GB/s
+256KB: 0.16 GB/s
+1MB: 0.49 GB/s
+4MB: 0.89 GB/s
+16MB: 0.92 GB/s
 
 --- Key Findings ---
 1. BlitEngine provides optimized GPU copy operations
