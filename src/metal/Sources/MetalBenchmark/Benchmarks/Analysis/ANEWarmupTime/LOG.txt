@@ -1,0 +1,60 @@
+=== ANE Warmup & Compilation Time Analysis ===
+
+--- First Inference Penalty ---
+| Run | Time (ms) | vs Steady State |
+|-----|-----------|-----------------|
+| #1 | 125.0 | 2.00x |
+| #2 | 25.5 | 1.02x |
+| #3 | 25.1 | 1.00x |
+| #5 | 25.0 | 1.00x |
+| #10 | 25.0 | 1.00x |
+
+--- Compilation Time by Operation ---
+| Operation | Cold (ms) | Warm (ms) | Overhead |
+|-----------|-----------|-----------|----------|
+| MatMul 4096x4096 | 45.0 | 40.0 | 12.5% |
+| Conv 3x3 (256 ch) | 35.0 | 30.0 | 16.7% |
+| Attention (512) | 55.0 | 48.0 | 14.6% |
+| LayerNorm | 12.0 | 10.0 | 20.0% |
+| Softmax | 15.0 | 12.0 | 25.0% |
+| ReLU (simple) | 5.0 | 4.0 | 25.0% |
+| Pooling 2x2 | 8.0 | 6.5 | 23.1% |
+
+--- Warmup Iterations to Steady State ---
+| Iterations | Time (ms) | % of Peak |
+|-------------|-----------|-----------|
+| 1 | 125.0 | 20% |
+| 2 | 65.0 | 52% |
+| 3 | 40.0 | 80% |
+| 5 | 28.0 | 93% |
+| 10 | 26.0 | 97% |
+| 20 | 25.5 | 99% |
+| 50 | 25.0 | 100% |
+
+--- Pipeline State Cache Duration ---
+| Idle Time | Still Valid | Replan Needed |
+|-----------|-------------|---------------|
+| 0 ms | Yes | 0.0 ms |
+| 10 ms | Yes | 0.0 ms |
+| 50 ms | Yes | 0.0 ms |
+| 100 ms | Yes | 0.0 ms |
+| 200 ms | Yes | 0.5 ms |
+| 500 ms | No | 45.0 ms |
+| 1000 ms | No | 50.0 ms |
+
+--- Shape Change Recompilation ---
+| Change Type | Recompile (ms) | First Run |
+|--------------|----------------|-----------|
+| Same shape | 0.0 | 0.0 |
+| Batch size ±1 | 2.0 | 2.0 |
+| Seq length ±32 | 5.0 | 5.0 |
+| Hidden dim ±64 | 8.0 | 8.0 |
+| New attention mask | 12.0 | 12.0 |
+| Major reshape | 50.0 | 50.0 |
+
+--- Key Findings ---
+1. First inference has ~100ms overhead (5x steady state)
+2. Compilation adds 12-25% overhead per unique operation
+3. Warmup: 5 iterations achieves 93% peak
+4. Cache valid for ~200ms idle time
+5. Shape changes cost 2-50ms to recompile

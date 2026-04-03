@@ -6,7 +6,7 @@ This research analyzes kernel compilation overhead, warmup time, and first-infer
 
 ## Research Date
 
-- Date: 2026-03-31
+- Date: 2026-04-03
 - Device: Apple M2 (ANE: 15.8 TOPS)
 - Focus: Compilation overhead, pipeline caching, warmup behavior
 
