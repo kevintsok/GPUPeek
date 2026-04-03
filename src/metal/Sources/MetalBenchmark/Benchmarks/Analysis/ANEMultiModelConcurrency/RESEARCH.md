@@ -6,7 +6,7 @@ This research analyzes how Apple's Neural Engine (ANE) handles running multiple 
 
 ## Research Date
 
-- Date: 2026-03-31
+- Date: 2026-04-03
 - Device: Apple M2 (ANE: 15.8 TOPS, 24MB L2)
 - Focus: Concurrent model execution, memory partitioning, context switching
 
