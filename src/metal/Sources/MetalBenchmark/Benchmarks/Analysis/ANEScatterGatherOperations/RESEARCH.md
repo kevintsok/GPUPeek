@@ -8,7 +8,7 @@ This research analyzes the performance of scatter-gather operations (indexed mem
 
 - **Device**: Apple M2
 - **Neural Engine**: 16-core ANE
-- **Test Date**: 2026-04-01
+- **Test Date**: 2026-04-03
 
 ## Key Metrics
 
