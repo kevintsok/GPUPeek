@@ -17288,6 +17288,7 @@ do { try MemoryCoalescingBenchmark(device: device, queue: queue).run() } catch {
 do { try MetalHeapAllocationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try RenderPipelineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try TextureOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try MetalTextureGatherBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalTextureLODBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try PostProcessingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try PrimitiveAssemblyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
