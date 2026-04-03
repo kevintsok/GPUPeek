@@ -17082,6 +17082,7 @@ do { try ANEBatchedStridedGEMMBenchmark(device: device, queue: queue).run() } ca
 do { try ANEMemoryPressureResponseBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEHierarchicalTilingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEComputationDensityBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEDiscreteCosineTransformBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalKernelArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANELatencyComparisonBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
