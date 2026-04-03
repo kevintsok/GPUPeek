@@ -1,0 +1,43 @@
+=== ANE Layer-by-Layer Performance Analysis ===
+Date: 2026-04-03
+
+--- Neural Network Layer Performance ---
+| Layer Type | CPU (ms) | GPU (ms) | ANE (ms) | ANE Speedup |
+|------------|-----------|----------|----------|-------------|
+| Conv2D 3x3 | 2.50 | 0.30 | 0.10 | 25.0x |
+| Conv2D 1x1 | 1.80 | 0.22 | 0.12 | 15.0x |
+| Linear (FC) | 3.20 | 0.40 | 0.20 | 16.0x |
+| Attention | 4.50 | 0.55 | 0.18 | 25.0x |
+| LayerNorm | 0.80 | 0.15 | 0.85 | 0.9x |
+| ReLU | 0.05 | 0.08 | 0.06 | 0.8x |
+| MaxPool | 0.60 | 0.12 | 0.65 | 0.9x |
+| Softmax | 0.40 | 0.09 | 0.42 | 1.0x |
+
+--- Layer Complexity Impact ---
+| Layer Config | CPU | GPU | ANE | Speedup |
+|--------------|-----|-----|-----|---------|
+| Conv 3x3, ch=64 | 2.50 | 0.30 | 0.10 | 25.0x |
+| Conv 3x3, ch=128 | 5.20 | 0.62 | 0.18 | 28.9x |
+| Conv 3x3, ch=256 | 12.80 | 1.50 | 0.38 | 33.7x |
+| Conv 3x3, ch=512 | 28.50 | 3.30 | 0.75 | 38.0x |
+| Linear 512->512 | 1.20 | 0.15 | 0.08 | 15.0x |
+| Linear 512->2048 | 4.80 | 0.58 | 0.22 | 21.8x |
+| Attention h=8 | 4.50 | 0.55 | 0.18 | 25.0x |
+
+--- Layer Efficiency (GOPS/watt) ---
+| Layer Type | CPU | GPU | ANE | Best |
+|------------|-----|-----|-----|------|
+| Conv2D 3x3 | 12.5 | 18.5 | 52.0 | ANE |
+| Conv2D 1x1 | 8.5 | 12.2 | 38.0 | ANE |
+| Linear (FC) | 15.2 | 22.0 | 68.0 | ANE |
+| Attention | 18.0 | 28.0 | 85.0 | ANE |
+| LayerNorm | 3.2 | 4.8 | 4.5 | GPU |
+| ReLU | 0.8 | 1.2 | 1.1 | GPU |
+| MaxPool | 2.5 | 4.0 | 3.8 | GPU |
+| Softmax | 1.8 | 3.2 | 3.0 | GPU |
+
+--- Key Findings ---
+1. ANE excels at compute-intensive layers (Conv, Linear, Attention)
+2. Element-wise layers (ReLU, Pool): CPU/GPU faster due to lower overhead
+3. ANE speedup scales with layer complexity (larger = better speedup)
+4. Layer efficiency: ANE provides 3-5x better GOPS/watt for Conv/Linear
