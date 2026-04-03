@@ -8,7 +8,7 @@ This research analyzes the performance of logical operations and boolean computa
 
 - **Device**: Apple M2
 - **Neural Engine**: 16-core ANE
-- **Test Date**: 2026-04-02
+- **Test Date**: 2026-04-03
 
 ## Key Metrics
 
