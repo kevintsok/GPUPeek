@@ -17067,6 +17067,7 @@ do { try MetalBufferAliasingBenchmark(device: device, queue: queue).run() } catc
 do { try NBodyOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ReductionOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalPrefixSumStreamCompactionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try MetalGatherScatterBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalMatrixTransposeBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalStencilOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MemoryTransactionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
