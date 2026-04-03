@@ -1,6 +1,6 @@
 ANE Discrete Cosine Transform (DCT) Benchmark
 ===========================================
-Date: 2026-04-03T20:05:50Z
+Date: 2026-04-03T20:10:26Z
 
 1D DCT Performance:
 8-element: 0.023ms total, 2.8 GFLOPS
