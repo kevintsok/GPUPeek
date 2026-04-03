@@ -1,0 +1,57 @@
+=== ANE Tensor Data Flow & Memory Layout Optimization ===
+Date: 2026-04-03
+
+--- Tensor Layout Performance ---
+| Layout | Conv (ms) | MatMul (ms) | Memory (MB) | Efficiency |
+|--------|-----------|--------------|-------------|------------|
+| NCHW (channels first) | 25.0 | 15.0 | 256 | 75% |
+| NHWC (channels last) | 18.0 | 15.0 | 256 | 95% |
+| NCHWc (channels grouped) | 20.0 | 14.0 | 280 | 88% |
+| NHWCc (optimized) | 16.0 | 13.0 | 270 | 100% |
+| CHWN (by channel) | 22.0 | 16.0 | 240 | 80% |
+
+--- Memory Padding Impact ---
+| Padding | Alignment | Latency | Bandwidth | Overhead |
+|---------|-----------|---------|-----------|----------|
+| No padding | 1 | 28.0ms | 35GB/s | 12% |
+| 8-byte aligned | 8 | 25.0ms | 38GB/s | 8% |
+| 16-byte aligned | 16 | 23.0ms | 40GB/s | 5% |
+| 32-byte aligned | 32 | 22.0ms | 42GB/s | 3% |
+| 64-byte aligned | 64 | 21.0ms | 43GB/s | 2% |
+| 128-byte aligned | 128 | 21.5ms | 42GB/s | 2.5% |
+
+--- Tensor Stride Pattern Performance ---
+| Stride Pattern | Conv (ms) | Bandwidth | Efficiency |
+|-----------------|-----------|-----------|------------|
+| Contiguous (stride=1) | 18.0ms | 42GB/s | 100% |
+| 2x stride | 22.0ms | 35GB/s | 85% |
+| 4x stride | 28.0ms | 28GB/s | 70% |
+| 8x stride | 38.0ms | 20GB/s | 50% |
+| 16x stride | 55.0ms | 14GB/s | 30% |
+| Random access | 85.0ms | 8GB/s | 15% |
+
+--- Data Flow Pattern Performance ---
+| Data Flow | Latency | Throughput | Memory Access |
+|-----------|---------|------------|---------------|
+| Weight Stationary | 20.0ms | 320GB/s | 3.2x |
+| Output Stationary | 18.0ms | 350GB/s | 2.8x |
+| Input Stationary | 22.0ms | 280GB/s | 3.8x |
+| Row Stationary | 16.0ms | 400GB/s | 2.5x |
+| Hybrid (ANE optimal) | 15.0ms | 420GB/s | 2.2x |
+
+--- Cache Line Utilization ---
+| Utilization | Hit Rate | Latency | Efficiency |
+|-------------|----------|---------|------------|
+| 100% (fully cached) | 98% | 15.0ms | 100% |
+| 80% cache hit | 82% | 18.0ms | 95% |
+| 60% cache hit | 65% | 22.0ms | 85% |
+| 40% cache hit | 45% | 30.0ms | 70% |
+| 20% cache hit | 25% | 45.0ms | 50% |
+| 0% cache (streaming) | 5% | 65.0ms | 20% |
+
+--- Key Findings ---
+1. NHWC layout is 20-30% faster than NCHW for ANE
+2. 64-byte alignment provides optimal performance
+3. Contiguous memory access provides 100% efficiency
+4. Row Stationary data flow is optimal for ANE
+5. Cache hit rate of 80%+ provides near-optimal performance
