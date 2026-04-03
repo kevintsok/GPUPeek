@@ -103,6 +103,7 @@
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEKernelOptimization/ANEKernelOptimizationBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEKnowledgeDistillation/ANEKnowledgeDistillationBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELatencyComparison/ANELatencyComparisonBenchmark.swift
+/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELatencyHiding/ANELatencyHidingBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELayerAnalysis/ANELayerAnalysisBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELayerFusion/ANELayerFusionBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELayerNormSoftmax/ANELayerNormSoftmaxBenchmark.swift
