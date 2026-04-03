@@ -1,0 +1,29 @@
+ANE Normalization Efficiency Benchmark
+=====================================
+Date: 2026-04-03T19:14:52Z
+
+Batch Normalization:
+Batch=1: 0.6-2.5ms (inference mode)
+Batch=8: 8.5ms (training mode)
+ANE/GPU ratio: 0.23-0.33x (GPU is 3-4x faster)
+
+Layer Normalization:
+Seq=512, Hidden=512: 1.25ms
+Seq=512, Hidden=768 (BERT): 1.85ms
+ANE/GPU ratio: 0.71-0.77x (GPU slightly faster)
+
+Group Normalization:
+G=8 (recommended): 0.52ms
+G=32 (optimal for ANE): 0.42ms
+ANE/GPU ratio: 0.92-1.00x (near parity)
+
+Instance Normalization:
+64x28x28, C=256: 0.05ms
+512x512, C=3: 0.08ms
+ANE/GPU ratio: 1.20-1.25x (ANE is FASTER)
+
+RECOMMENDATIONS:
+- Transformers: Use LayerNorm
+- Object Detection: Use GroupNorm (G=8-32)
+- Style Transfer: Use InstanceNorm
+- CNN Inference: Avoid BatchNorm, prefer GroupNorm
