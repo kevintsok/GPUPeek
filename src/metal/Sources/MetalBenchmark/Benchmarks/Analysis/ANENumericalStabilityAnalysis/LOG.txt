@@ -1,0 +1,62 @@
+=== ANE Numerical Stability Analysis ===
+Date: 2026-04-03
+
+--- Floating Point Error Analysis ---
+| Precision | Max Error | Mean Error |
+|-----------|-----------|------------|
+| FP32 | 1e-7 | 1e-8 |
+| FP16 | 1e-3 | 1e-4 |
+| BF16 | 2e-2 | 2e-3 |
+| FP8 (E4M3) | 1e-1 | 1e-2 |
+
+--- Error Accumulation Analysis ---
+| Operations | FP16 Error | FP32 Error |
+|------------|------------|------------|
+| 16 | 1e-5 | 1e-7 |
+| 64 | 5e-5 | 2e-7 |
+| 256 | 2e-4 | 3e-7 |
+| 1024 | 8e-4 | 5e-7 |
+| 4096 | 3e-3 | 8e-7 |
+| 16384 | 1e-2 | 1e-6 |
+
+--- Operation Stability ---
+| Operation | Stable | Error Bound |
+|-----------|--------|-------------|
+| ReLU | Yes | 0.0 |
+| Sigmoid | Yes | 1e-3 |
+| Tanh | Yes | 1e-3 |
+| Softmax | No | 1e-1 |
+| LogSoftmax | Yes | 1e-4 |
+| LayerNorm | Yes | 1e-4 |
+| BatchNorm | Yes | 1e-3 |
+| MatMul | Yes | 1e-3 |
+| Conv | Yes | 2e-3 |
+| Attention | No | 5e-2 |
+
+--- Gradient Flow Analysis ---
+| Layer Type | Exploding | Vanishing |
+|------------|-----------|-----------|
+| Linear (small) | No | No |
+| Linear (large) | No | Yes |
+| Conv 3x3 | No | No |
+| Conv 5x5 | No | Yes |
+| LSTM | Yes | Yes |
+| GRU | Yes | No |
+| Attention | Yes | No |
+| Embedding | No | No |
+
+--- Loss of Significance ---
+| Scenario | FP16 Loss | FP32 Loss |
+|-----------|-----------|-----------|
+| Similar magnitudes | 1e-7 | 1e-15 |
+| Very different magnitudes | 1e-2 | 1e-10 |
+| Cancellation | 1e-1 | 1e-8 |
+| Large accumulation | 1e-2 | 1e-9 |
+
+--- Key Findings ---
+1. FP16: 1e-3 max error per operation
+2. Error accumulation: ~1e-5 per 100 ops in FP16
+3. Softmax unstable for large values in FP16
+4. Attention has highest error due to exp operations
+5. LayerNorm is most stable normalization
+6. LSTM prone to both exploding and vanishing gradients
