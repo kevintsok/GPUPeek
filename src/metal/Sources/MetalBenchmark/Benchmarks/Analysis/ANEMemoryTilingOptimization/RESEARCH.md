@@ -8,7 +8,7 @@ This research analyzes tile-based memory access optimization for Apple Neural En
 
 - **Device**: Apple M2
 - **Neural Engine**: 16-core ANE
-- **Test Date**: 2026-04-02
+- **Test Date**: 2026-04-03
 
 ## Key Metrics
 
