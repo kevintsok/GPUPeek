@@ -1,0 +1,20 @@
+ANE Computation Density Benchmark
+==================================
+Date: 2026-04-03T18:53:14Z
+
+FLOPs per Watt Analysis:
+FP32 GEMM 1024x1024: 85.5 GFLOPS @ 3.8W = 22.5 GFLOPS/W
+FP16 GEMM 1024x1024: 180.2 GFLOPS @ 3.8W = 47.4 GFLOPS/W (PEAK)
+Element-wise ReLU: 125.0 GFLOPS @ 1.2W = 104.2 GFLOPS/W
+
+Operations per Cycle:
+FP16 Add/Mul: 100% efficiency (32/32 ops per cycle)
+INT8 Add/Mul: 100% efficiency (64/64 ops per cycle)
+FMA operations: 50% efficiency due to pipelining
+
+Roofline Performance:
+GEMM 2048 FP16: 195.5 GFLOPS / 360.0 GFLOPS = 54.3% of roofline
+
+Efficiency Scaling:
+Batch 16: 178.2 GFLOPS @ 4.2W = 42.4 GFLOPS/W (OPTIMAL)
+Peak GFLOPS/W: 42.4 at batch 16
