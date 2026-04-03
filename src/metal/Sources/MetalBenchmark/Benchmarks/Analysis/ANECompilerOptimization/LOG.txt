@@ -1,5 +1,5 @@
 === ANE Compiler Optimization and Kernel Fusion Analysis ===
-Date: 2026-04-01
+Date: 2026-04-03
 
 --- Kernel Fusion Opportunities ---
 | Fusion Pattern | Speedup | Memory Saved |
