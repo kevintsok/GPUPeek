@@ -17293,6 +17293,7 @@ do { try MetalRenderPassDependencyBenchmark(device: device, queue: queue).run() 
 do { try MetalIndirectCommandExecutionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalVertexProcessingEfficiencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalVertexIndexBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try MetalVertexCacheOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try FramePacingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try TessellationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ComputationalPhotographyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
