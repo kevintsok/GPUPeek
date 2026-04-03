@@ -6,7 +6,7 @@ This research analyzes how Apple's Neural Engine (ANE) handles dynamic shapes an
 
 ## Research Date
 
-- Date: 2026-03-31
+- Date: 2026-04-03
 - Device: Apple M2 (ANE: 15.8 TOPS)
 - Focus: Dynamic tensor shapes, sequence length handling, padding efficiency
 
