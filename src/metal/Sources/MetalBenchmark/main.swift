@@ -17195,6 +17195,7 @@ do { try ANEElementWiseBenchmark(device: device, queue: queue).run() } catch { p
 do { try ANEPoolingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESoftmaxBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEConvolutionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEDepthwiseSeparableConvolutionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEResidualBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEShapeBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEEndToEndBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
