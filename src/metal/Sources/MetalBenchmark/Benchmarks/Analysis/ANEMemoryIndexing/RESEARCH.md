@@ -6,7 +6,7 @@ This research analyzes Apple Neural Engine (ANE) performance for memory indexing
 
 ## Research Date
 
-- Date: 2026-04-01
+- Date: 2026-04-03
 - Device: Apple M2 (Neural Engine)
 - Focus: Gather, scatter, mask, select, and indexing patterns
 

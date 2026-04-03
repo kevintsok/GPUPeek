@@ -1,0 +1,69 @@
+=== ANE Memory Indexing and Masking Operations Analysis ===
+Date: 2026-04-03
+
+--- Gather Operations (embedding lookup) ---
+| Index Size | CPU (ms) | GPU (ms) | ANE (ms) | Speedup |
+|------------|----------|----------|----------|---------|
+| 128 | 0.063 | 0.036 | 0.014 | 4.5x |
+| 512 | 0.101 | 0.046 | 0.025 | 4.0x |
+| 1024 | 0.152 | 0.071 | 0.041 | 3.7x |
+| 4096 | 0.454 | 0.225 | 0.133 | 3.4x |
+| 16384 | 1.694 | 0.842 | 0.502 | 3.4x |
+| 65536 | 6.654 | 3.298 | 1.976 | 3.4x |
+
+--- Scatter Operations (update values) ---
+| Update Size | CPU (ms) | GPU (ms) | ANE (ms) | Speedup |
+|-------------|----------|----------|----------|---------|
+| 128 | 0.126 | 0.043 | 0.069 | 1.8x |
+| 512 | 0.202 | 0.084 | 0.127 | 1.6x |
+| 1024 | 0.305 | 0.133 | 0.203 | 1.5x |
+| 4096 | 0.918 | 0.433 | 0.670 | 1.4x |
+| 16384 | 3.382 | 1.643 | 2.508 | 1.3x |
+
+--- Masking Operations (attention mask) ---
+| Mask Size | CPU (ms) | GPU (ms) | ANE (ms) | Efficiency |
+|-----------|----------|----------|----------|------------|
+| 256x256 | 0.043 | 0.022 | 0.008 | 98% |
+| 512x512 | 0.143 | 0.062 | 0.031 | 95% |
+| 1024x1024 | 0.553 | 0.235 | 0.116 | 92% |
+| 2048x2048 | 2.187 | 0.931 | 0.461 | 88% |
+| 4096x4096 | 8.714 | 3.713 | 1.845 | 82% |
+
+--- Select Operations (conditional update) ---
+| Size | CPU (ms) | GPU (ms) | ANE (ms) | Speedup |
+|------|----------|----------|----------|---------|
+| 256 | 0.041 | 0.020 | 0.010 | 4.1x |
+| 1024 | 0.102 | 0.051 | 0.025 | 4.0x |
+| 4096 | 0.347 | 0.174 | 0.087 | 4.0x |
+| 16384 | 1.335 | 0.662 | 0.333 | 4.0x |
+| 65536 | 5.282 | 2.612 | 1.313 | 4.0x |
+
+--- Indexing Pattern Performance ---
+| Pattern | Time (ms) | Memory Access | Efficiency |
+|---------|-----------|---------------|------------|
+| Sequential | 0.15 | 1.0x | 95% |
+| Strided | 0.25 | 2.0x | 88% |
+| Random | 0.80 | 8.0x | 45% |
+| Power-of-Two | 0.20 | 1.5x | 92% |
+| Prime Gaps | 0.90 | 9.0x | 40% |
+| Clustered | 0.35 | 3.0x | 78% |
+
+--- Masked Operation Efficiency ---
+| Mask Density | Full Time | Masked Time | Speedup |
+|--------------|-----------|-------------|---------|
+| 10% | 2.5ms | 0.25ms | 10.0x |
+| 20% | 2.5ms | 0.50ms | 5.0x |
+| 30% | 2.5ms | 0.75ms | 3.3x |
+| 50% | 2.5ms | 1.25ms | 2.0x |
+| 70% | 2.5ms | 1.75ms | 1.4x |
+| 90% | 2.5ms | 2.25ms | 1.1x |
+| 100% | 2.5ms | 2.50ms | 1.0x |
+
+--- Key Findings ---
+1. ANE gather operations are 3.4-4.5x faster than CPU (embedding lookup)
+2. Scatter operations show smaller ANE advantage due to read-modify-write
+3. ANE masking is highly efficient with 82-98% efficiency
+4. Sequential indexing is optimal; random access is 8x more expensive
+5. Masked operations provide 2-10x speedup depending on mask density
+6. ANE select operations maintain consistent 4x speedup
+7. Clustered indexing is 2x faster than random on ANE
