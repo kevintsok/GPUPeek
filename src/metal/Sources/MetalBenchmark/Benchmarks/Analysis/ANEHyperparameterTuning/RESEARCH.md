@@ -6,7 +6,7 @@ This research analyzes how model hyperparameters affect Apple Neural Engine (ANE
 
 ## Research Date
 
-- Date: 2026-03-31
+- Date: 2026-04-03
 - Device: Apple M2 (ANE: 15.8 TOPS)
 - Focus: Batch size, model dimensions, sequence length, training hyperparameters
 
