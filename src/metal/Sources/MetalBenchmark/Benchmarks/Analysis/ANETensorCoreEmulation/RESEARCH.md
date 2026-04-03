@@ -6,7 +6,7 @@ This research analyzes how Apple's Neural Engine (ANE) handles matrix multiplica
 
 ## Research Date
 
-- Date: 2026-03-31
+- Date: 2026-04-03
 - Device: Apple M2 (ANE: 15.8 TOPS, GPU: 3.6 TFLOPS FP16)
 - Focus: GEMM performance, tile optimization, block sparsity
 
