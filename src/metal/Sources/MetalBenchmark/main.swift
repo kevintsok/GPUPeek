@@ -17084,6 +17084,7 @@ do { try ANEHierarchicalTilingBenchmark(device: device, queue: queue).run() } ca
 do { try ANEComputationDensityBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEDiscreteCosineTransformBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANENormalizationEfficiencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANETemplateMatchingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalKernelArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANELatencyComparisonBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
