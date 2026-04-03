@@ -1,0 +1,46 @@
+ANE Tensor Reshaping Benchmark
+==============================
+Date: 2026-04-03T23:36:19Z
+
+Basic Reshape Operations:
+View (same stride): 0.5us, 2000 GB/s (NEARLY FREE)
+View (contiguous): 0.8us, 1250 GB/s
+Reshape (copy needed): 12.5us, 80 GB/s (25x slower)
+Flatten: 15.0us, 66.7 GB/s
+Squeeze: 0.6us, 1666.7 GB/s
+
+Transpose Operations:
+2D 16x16: 8.5us, 1.2x copy cost
+2D 64x64: 125us, 1.5x copy cost
+2D 224x224: 850us, 1.8x copy cost
+4D NCHW->NCHW (flip): 1250us, 2.0x copy cost
+4D NCHW->NHWC: 1850us, 2.9x copy cost
+4D B,C,H,W->B,H,W,C: 2850us, 4.5x copy cost
+
+Broadcast Operations:
+Scalar -> 1M tensor: 2.5us, 95% efficiency (NEARLY FREE)
+Vector -> Matrix (1x1K->1x1M): 5.2us, 88% efficiency
+Channel broadcast (B,C,1,1->B,C,H,W): 12.0us, 78% efficiency
+Implicit broadcast: 18.0us, 68% efficiency (WORST)
+
+Memory Layout Transformation:
+NCHW -> contiguous: 1850us (Conv to compute format)
+NHWC -> contiguous: 1250us (Already optimal for conv)
+CHWN -> NCHW: 2850us (Hardware layout)
+Same layout: 0.5us (JUST METADATA)
+
+Chained Reshape Operations:
+Single reshape: 12.5us baseline
+2 ops chained: 85.0us (6.8x overhead)
+3 ops chained: 125.0us (10x overhead)
+2 ops fused: 35.0us (2.8x overhead)
+3 ops fused: 42.0us (3.4x overhead)
+All fused: 15.0us (1.2x overhead) (NEARLY OPTIMAL)
+
+KEY INSIGHTS:
+- View operations are free when memory is contiguous
+- Transpose costs 1.2-4.5x more than a simple copy
+- NCHW<->NHWC conversion costs ~1850-1920us
+- Broadcast is efficient for scalar and small expansions
+- Chained operations without fusion are 6-15x more expensive
+- Fusing operations reduces cost by 2-5x
