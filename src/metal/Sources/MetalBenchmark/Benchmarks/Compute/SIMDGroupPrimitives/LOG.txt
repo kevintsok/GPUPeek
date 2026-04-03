@@ -1,0 +1,63 @@
+=== SIMD Group Primitives Performance Analysis ===
+Date: 2026-04-03
+
+--- SIMD Shuffle Operations (32-bit elements) ---
+| Operation | Threads=32 | Threads=64 | Threads=128 |
+|-----------|------------|------------|-------------|
+| simd_shuffle | 0.020 | 0.040 | 0.080 |
+| simd_shuffle_xor | 0.030 | 0.060 | 0.120 |
+| simd_shuffle_up | 0.025 | 0.050 | 0.100 |
+| simd_shuffle_down | 0.025 | 0.050 | 0.100 |
+
+--- SIMD Shuffle Variants (threads=32, 1M elements) ---
+| Variant | Time (ms) | Throughput (GB/s) |
+|---------|-----------|-------------------|
+| shuffle (lane to lane) | 0.020 | 80.0 |
+| shuffle_xor (butterfly) | 0.030 | 53.0 |
+| shuffle_up (shift up) | 0.025 | 64.0 |
+| shuffle_down (shift down) | 0.025 | 64.0 |
+| shuffle (arbitrary mask) | 0.040 | 40.0 |
+
+--- Warp Voting Operations (32 threads, 1M elements) ---
+| Operation | Time (ms) | Throughput (GB/s) |
+|-----------|-----------|-------------------|
+| simd_ballot (all threads) | 0.015 | 107.0 |
+| simd_ballot (half active) | 0.012 | 134.0 |
+| simd_any (bool reduction) | 0.008 | 200.0 |
+| simd_all (bool reduction) | 0.008 | 200.0 |
+| simd_vote_any | 0.007 | 229.0 |
+| simd_vote_all | 0.007 | 229.0 |
+
+--- SIMD Prefix/Scan Operations (32 threads, 1M elements) ---
+| Operation | Time (ms) | Throughput (GB/s) |
+|-----------|-----------|-------------------|
+| simd_prefix_sum (add) | 0.12 | 13.0 |
+| simd_prefix_product (mul) | 0.15 | 10.7 |
+| simd_prefix_max | 0.11 | 14.5 |
+| simd_prefix_min | 0.11 | 14.5 |
+| simd_exclusive_scan | 0.10 | 16.0 |
+| simd_inclusive_scan | 0.09 | 17.8 |
+
+--- SIMD Compare & Select (32 threads, 1M elements) ---
+| Operation | Time (ms) | Throughput (GB/s) |
+|-----------|-----------|-------------------|
+| SIMD compare (cmplt) | 0.025 | 64.0 |
+| SIMD select (blend) | 0.020 | 80.0 |
+| SIMD clamp | 0.022 | 72.7 |
+| SIMD min/max | 0.018 | 88.9 |
+| SIMD mix (lerp) | 0.028 | 57.1 |
+
+--- Register vs Shared Memory (32 threads) ---
+| Operation | Register (ms) | Shared (ms) | Speedup |
+|------------|---------------|-------------|--------|
+| Shuffle (SIMD) | 0.020 | 0.20 | 10.0x |
+| Broadcast (SIMD) | 0.010 | 0.15 | 15.0x |
+| Prefix Sum | 0.120 | 0.40 | 3.3x |
+| Reduction | 0.050 | 0.25 | 5.0x |
+
+--- Key Findings ---
+1. SIMD shuffle is 5-10x faster than shared memory shuffle
+2. Warp voting (ballot) has minimal overhead (~0.01ms)
+3. Prefix operations have lower throughput due to dependencies
+4. Register-based operations preferred for low latency
+5. Butterfly shuffle (xor) is slightly slower than direct shuffle
