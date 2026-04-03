@@ -122,6 +122,7 @@
 /Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEMemoryIndexingBenchmark.swift.o
 /Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEMemoryLatencyBenchmark.swift.o
 /Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEMemoryLatencyOptimizationBenchmark.swift.o
+/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEMemoryPrefetchingBenchmark.swift.o
 /Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEMemoryPressureBenchmark.swift.o
 /Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEMemoryPressureResponseBenchmark.swift.o
 /Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEMemoryTilingOptimizationBenchmark.swift.o

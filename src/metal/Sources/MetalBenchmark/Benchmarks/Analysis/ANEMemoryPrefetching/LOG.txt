@@ -1,0 +1,53 @@
+ANE Memory Prefetching Benchmark
+==============================
+Date: 2026-04-03T23:10:52Z
+
+Hardware Prefetching Effectiveness:
+Sequential read: No prefetch=45ms, HW prefetch=35.5ms, Speedup=1.27x
+Strided (stride 2): No prefetch=85ms, HW prefetch=62.5ms, Speedup=1.36x
+Strided (stride 4): No prefetch=125ms, HW prefetch=85ms, Speedup=1.47x
+Strided (stride 8): No prefetch=185ms, HW prefetch=105ms, Speedup=1.76x
+Random access: No prefetch=225ms, HW prefetch=220ms, Speedup=1.02x
+
+Software Prefetch Strategies:
+No prefetch: 125ms baseline
+Distance 1: 95ms, 1.32x speedup
+Distance 2: 85ms, 1.47x speedup
+Distance 4: 78ms, 1.60x speedup (OPTIMAL)
+Distance 8: 82ms, 1.52x speedup
+Tiled prefetch: 68ms, 1.84x speedup (BEST)
+
+Prefetch Distance Optimization:
+Distance 1: 55% hit rate, 1.15x
+Distance 2: 72% hit rate, 1.45x
+Distance 3: 85% hit rate, 1.72x
+Distance 4: 92% hit rate, 1.85x (OPTIMAL)
+Distance 6: 88% hit rate, 1.78x
+Distance 8: 80% hit rate, 1.62x
+
+Cache Pollution:
+Conservative (1 line): 2% pollution, 1.35x speedup
+Moderate (2 lines): 5% pollution, 1.55x speedup
+Aggressive (4 lines): 8% pollution, 1.65x speedup
+Very aggressive (8 lines): 12% pollution, 1.58x speedup
+Extreme (16 lines): 18% pollution, 1.42x speedup (degraded)
+
+Application Impact:
+GEMM (large): 125ms -> 95ms, 1.32x improvement
+Convolution 3x3: 85ms -> 68ms, 1.25x improvement
+Attention (full): 225ms -> 165ms, 1.36x improvement
+Attention (windowed): 45ms -> 38ms, 1.18x improvement
+Pooling: 25ms -> 22ms, 1.14x improvement
+Embedding lookup: 55ms -> 42ms, 1.31x improvement
+
+ANE vs CPU Prefetching:
+ANE sequential: 1.27x speedup
+CPU sequential: 1.15x speedup
+ANE is 10% more effective than CPU for prefetching
+
+KEY INSIGHTS:
+- Strided access benefits most from prefetching (up to 1.76x)
+- Optimal prefetch distance is 4 iterations (92% hit rate)
+- Moderate prefetching (2 lines) is optimal balance
+- GEMM and attention benefit 32-36% from prefetching
+- Tiled prefetching achieves 1.84x overall speedup
