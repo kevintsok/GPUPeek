@@ -17089,6 +17089,7 @@ do { try ANEOperationInterleavingBenchmark(device: device, queue: queue).run() }
 do { try ANEMatrixTransposeBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPaddingOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERoundingModesBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEEntropyCodingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalKernelArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANELatencyComparisonBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }

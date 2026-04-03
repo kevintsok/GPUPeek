@@ -1,6 +1,6 @@
 ANE Batched Strided GEMM Benchmark
 =================================
-Date: 2026-04-03T20:35:56Z
+Date: 2026-04-03T20:40:54Z
 
 Batched GEMM Fundamentals:
 Batched GEMM (B=4, 256x256): 2.5ms (ANE) vs 30.0ms (CPU) = 12.0x speedup
