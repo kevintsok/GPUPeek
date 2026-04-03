@@ -6,7 +6,7 @@ This research analyzes how ANE workloads interact with system memory resources, 
 
 ## Research Date
 
-- Date: 2026-03-31
+- Date: 2026-04-03
 - Device: Apple M2 (ANE: 15.8 TOPS)
 - Focus: Memory footprint, pressure levels, bandwidth competition, system impact
 
