@@ -17162,6 +17162,7 @@ do { try ANEHistogramWindowingBenchmark(device: device, queue: queue).run() } ca
 do { try ANELossGradientBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEDistanceSimilarityBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEClusteringAlgorithmsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEMonteCarloTreeSearchBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANELogicalBooleanBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPrefixSumWalshHadamardBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEGraphAnalyticsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
