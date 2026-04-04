@@ -188,6 +188,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEContinualIncrementalLearning/ANEContinualIncrementalLearningBenchmark.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEContinuousScheduling/ANEContinuousSchedulingBenchmark.swift"
         },
         {
@@ -1524,6 +1528,7 @@
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEComputeOperatorsBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEComputerVision3DPerceptionBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEComputerVisionImageSegmentationBenchmark.swift.o",
+        "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEContinualIncrementalLearningBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEContinuousSchedulingBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEContrastiveLearningBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEControlFlowBranchingBenchmark.swift.o",
@@ -2047,6 +2052,10 @@
         {
           "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEComputerVisionImageSegmentationBenchmark.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEContinualIncrementalLearningBenchmark.swift.o"
         },
         {
           "kind" : "file",
@@ -3380,6 +3389,7 @@
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEComputeOperators/ANEComputeOperatorsBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEComputerVision3DPerception/ANEComputerVision3DPerceptionBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEComputerVisionImageSegmentation/ANEComputerVisionImageSegmentationBenchmark.swift",
+        "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEContinualIncrementalLearning/ANEContinualIncrementalLearningBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEContinuousScheduling/ANEContinuousSchedulingBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEContrastiveLearning/ANEContrastiveLearningBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEControlFlowBranching/ANEControlFlowBranchingBenchmark.swift",
@@ -3759,6 +3769,7 @@
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEComputeOperators/ANEComputeOperatorsBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEComputerVision3DPerception/ANEComputerVision3DPerceptionBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEComputerVisionImageSegmentation/ANEComputerVisionImageSegmentationBenchmark.swift",
+      "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEContinualIncrementalLearning/ANEContinualIncrementalLearningBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEContinuousScheduling/ANEContinuousSchedulingBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEContrastiveLearning/ANEContrastiveLearningBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEControlFlowBranching/ANEControlFlowBranchingBenchmark.swift",
@@ -4319,6 +4330,10 @@
         {
           "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEComputerVisionImageSegmentation/ANEComputerVisionImageSegmentationBenchmark.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEContinualIncrementalLearning/ANEContinualIncrementalLearningBenchmark.swift"
         },
         {
           "kind" : "file",
@@ -5761,6 +5776,10 @@
         {
           "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEComputerVisionImageSegmentationBenchmark.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEContinualIncrementalLearningBenchmark.swift.o"
         },
         {
           "kind" : "file",

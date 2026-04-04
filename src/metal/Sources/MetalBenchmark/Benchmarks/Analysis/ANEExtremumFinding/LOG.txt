@@ -1,6 +1,6 @@
 ANE Extremum Finding Benchmark
 =============================
-Date: 2026-04-04T06:42:51Z
+Date: 2026-04-04T07:07:10Z
 
 Basic Min/Max (1M elements):
 Max: 0.85ms (ANE) vs 5.2ms (GPU) = 6.1x speedup
