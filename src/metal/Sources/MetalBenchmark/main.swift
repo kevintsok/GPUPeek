@@ -17105,6 +17105,7 @@ do { try ANEFlashDecodingBenchmark(device: device, queue: queue).run() } catch {
 do { try ANEMemoryCoalescingPatternsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEResidualConnectionOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEEmbeddingTableLookupBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+	do { try ANEEfficientAttentionMechanismsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANELocalitySensitiveHashingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANECrossLayerNormalizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERadixCountingSortBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
