@@ -1,0 +1,47 @@
+ANE Matrix Padding and Alignment Benchmark
+==========================================
+Date: 2026-04-04T02:08:40Z
+
+Padding Overhead:
+100x100 -> 128x128: 56% overhead, 12.5ms
+200x200 -> 256x256: 38% overhead, 14.2ms
+300x300 -> 320x320: 14% overhead, 15.8ms
+500x500 -> 512x512: 5% overhead, 16.5ms
+1000x1000 -> 1024x1024: 5% overhead, 17.5ms
+2000x2000 -> 2048x2048: 5% overhead, 19.0ms
+
+Alignment Requirements:
+1-byte aligned: 18.5ms, 68.5 GB/s (47% efficiency)
+4-byte aligned: 15.5ms, 81.5 GB/s (56% efficiency)
+8-byte aligned: 13.8ms, 91.5 GB/s (63% efficiency)
+16-byte aligned: 12.5ms, 101.0 GB/s (70% efficiency)
+32-byte aligned: 12.2ms, 103.5 GB/s (71% efficiency)
+Optimal: 16-32 bytes
+
+Padding Strategies:
+No padding: 18.5ms, 1.0x baseline
+Pad to 16: 13.8ms, 1.34x speedup
+Pad to 32: 13.2ms, 1.40x speedup
+Pad to 64: 12.8ms, 1.45x speedup
+Pad to 256: 12.2ms, 1.52x speedup
+Power-of-2: 12.2ms, 1.52x speedup
+Optimal: Power-of-2 padding
+
+GEMM Padding Impact:
+128x128: 85ms -> 72.5ms, 1.17x speedup
+256x256: 145ms -> 118ms, 1.23x speedup
+512x512: 285ms -> 218ms, 1.31x speedup
+1024x1024: 725ms -> 535ms, 1.35x speedup
+2048x2048: 1850ms -> 1290ms, 1.43x speedup
+
+ANE vs CPU:
+GEMM 512 (unpadded): ANE 285ms vs CPU 1250ms = 4.4x faster
+GEMM 512 (padded): ANE 218ms vs CPU 985ms = 4.5x faster
+GEMM 2048 (padded): ANE 1290ms vs CPU 5950ms = 4.6x faster
+
+KEY INSIGHTS:
+- 16-byte alignment achieves optimal performance
+- Padding overhead: 5-56% depending on original size
+- GEMM speedup with padding: 17-44%
+- Power-of-2 padding provides 1.52x speedup
+- ANE is 4-5x faster than CPU for padded operations

@@ -1,47 +1,47 @@
 === Data Type Memory Bandwidth Analysis ===
 
 --- Float Read Bandwidth ---
-Float4 (16B), 64K: 3.445 GB/s
-Float4 (16B), 256K: 12.579 GB/s
-Float4 (16B), 1024K: 48.982 GB/s
-Float2 (8B), 64K: 1.550 GB/s
-Float2 (8B), 256K: 6.223 GB/s
-Float2 (8B), 1024K: 24.242 GB/s
-Float1 (4B), 64K: 0.758 GB/s
-Float1 (4B), 256K: 3.122 GB/s
-Float1 (4B), 1024K: 13.297 GB/s
+Float4 (16B), 64K: 4.044 GB/s
+Float4 (16B), 256K: 12.432 GB/s
+Float4 (16B), 1024K: 40.083 GB/s
+Float2 (8B), 64K: 1.476 GB/s
+Float2 (8B), 256K: 5.557 GB/s
+Float2 (8B), 1024K: 18.917 GB/s
+Float1 (4B), 64K: 0.719 GB/s
+Float1 (4B), 256K: 2.477 GB/s
+Float1 (4B), 1024K: 9.170 GB/s
 
 --- Half Read Bandwidth ---
-Half4 (8B), 64K: 1.540 GB/s
-Half4 (8B), 256K: 6.199 GB/s
-Half4 (8B), 1024K: 24.606 GB/s
-Half1 (2B), 64K: 0.385 GB/s
-Half1 (2B), 256K: 1.535 GB/s
-Half1 (2B), 1024K: 6.089 GB/s
+Half4 (8B), 64K: 1.330 GB/s
+Half4 (8B), 256K: 5.148 GB/s
+Half4 (8B), 1024K: 18.659 GB/s
+Half1 (2B), 64K: 0.354 GB/s
+Half1 (2B), 256K: 1.358 GB/s
+Half1 (2B), 1024K: 4.951 GB/s
 
 --- UInt8 Read Bandwidth ---
-UInt8x4 (4B), 64K: 0.772 GB/s
-UInt8x4 (4B), 256K: 3.070 GB/s
-UInt8x4 (4B), 1024K: 12.070 GB/s
-UInt8x1 (1B), 64K: 0.190 GB/s
-UInt8x1 (1B), 256K: 0.761 GB/s
-UInt8x1 (1B), 1024K: 2.953 GB/s
+UInt8x4 (4B), 64K: 0.685 GB/s
+UInt8x4 (4B), 256K: 2.534 GB/s
+UInt8x4 (4B), 1024K: 8.938 GB/s
+UInt8x1 (1B), 64K: 0.167 GB/s
+UInt8x1 (1B), 256K: 0.630 GB/s
+UInt8x1 (1B), 1024K: 2.204 GB/s
 
 --- Write Bandwidth ---
-Float4 Write, 64K: 2.461 GB/s
-Float4 Write, 256K: 8.005 GB/s
-Float4 Write, 1024K: 20.397 GB/s
-Float1 Write, 64K: 0.735 GB/s
-Float1 Write, 256K: 2.561 GB/s
-Float1 Write, 1024K: 8.618 GB/s
+Float4 Write, 64K: 2.012 GB/s
+Float4 Write, 256K: 5.416 GB/s
+Float4 Write, 1024K: 12.475 GB/s
+Float1 Write, 64K: 0.607 GB/s
+Float1 Write, 256K: 2.069 GB/s
+Float1 Write, 1024K: 7.596 GB/s
 
 --- Access Pattern Impact ---
-Sequential, 256K: 12.195 GB/s
-Strided (stride=4), 256K: 13.070 GB/s
+Sequential, 256K: 11.300 GB/s
+Strided (stride=4), 256K: 11.402 GB/s
 
 --- Vectorization Benefit ---
-Float4 vs Float1: 3.68x
-Half4 vs Half1: 4.04x
+Float4 vs Float1: 4.37x
+Half4 vs Half1: 3.77x
 
 --- Key Findings ---
 1. Float4 vectorization provides 2-4x bandwidth benefit over Float1
