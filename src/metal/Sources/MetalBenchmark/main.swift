@@ -17113,6 +17113,7 @@ do { try ANEStrideAccessBenchmark(device: device, queue: queue).run() } catch { 
 do { try ANEPiecewiseLinearApproximationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMorphologicalOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEHistogramEqualizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEHoughTransformBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANETreeBasedEnsembleMethodsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPCALinearDiscriminantBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEAdaptiveComputationTimeBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
