@@ -10,26 +10,26 @@
 --- Division & Square Root ---
 | Instruction | GOPS | Relative to Add |
 |-------------|------|-----------------|
-| DIV | 0.33 | 1.00x |
-| SQRT | 0.51 | 1.57x |
-| RCP | 0.51 | 1.58x |
+| DIV | 0.32 | 0.98x |
+| SQRT | 0.54 | 1.66x |
+| RCP | 0.57 | 1.76x |
 
 --- Transcendental Functions ---
 | Instruction | GOPS | Relative to Add |
 |-------------|------|-----------------|
-| EXP | 0.52 | 1.60x |
-| LOG | 0.50 | 1.54x |
-| POW | 0.42 | 1.29x |
-| SIN | 0.30 | 0.93x |
-| COS | 0.34 | 1.05x |
-| TANH | 0.41 | 1.27x |
+| EXP | 0.59 | 1.81x |
+| LOG | 0.59 | 1.82x |
+| POW | 0.56 | 1.71x |
+| SIN | 0.50 | 1.53x |
+| COS | 0.44 | 1.36x |
+| TANH | 0.44 | 1.34x |
 
 --- Comparison & Selection ---
 | Instruction | GOPS | Relative to Add |
 |-------------|------|-----------------|
-| MIN/MAX | 0.27 | 0.84x |
+| MIN/MAX | 0.20 | 0.62x |
 | ABS | 0.50 | 1.53x |
-| SELECT | 0.29 | 0.89x |
+| SELECT | 0.28 | 0.85x |
 
 --- Cost Classification ---
 | Category | Instructions |

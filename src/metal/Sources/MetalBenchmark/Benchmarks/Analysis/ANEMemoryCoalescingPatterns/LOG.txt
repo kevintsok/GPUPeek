@@ -1,6 +1,6 @@
 ANE Memory Coalescing Patterns Benchmark
 ======================================
-Date: 2026-04-04T03:44:31Z
+Date: 2026-04-04T04:09:35Z
 
 Coalescing Efficiency:
 Perfect coalesced: 125 GB/s, 95% efficiency
