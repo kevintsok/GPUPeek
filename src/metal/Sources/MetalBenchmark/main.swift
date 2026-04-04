@@ -17205,6 +17205,7 @@ do { try ANENonnegativeMatrixFactorizationICABenchmark(device: device, queue: qu
 do { try ANEGraphNeuralNetworkRLBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEGraphNeuralNetworksRelationalBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEVideoProcessingInterpolationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEVideoFrameInterpolationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANECryptographyHashingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANECybersecurityNetworkAnalysisBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERemoteSensingSatelliteImageryBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
