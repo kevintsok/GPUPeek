@@ -17114,6 +17114,7 @@ do { try ANEPiecewiseLinearApproximationBenchmark(device: device, queue: queue).
 do { try ANEMorphologicalOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEBilateralFilteringBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEBoxFilterBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEImagePyramidsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEHistogramEqualizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEHoughTransformBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANETreeBasedEnsembleMethodsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
