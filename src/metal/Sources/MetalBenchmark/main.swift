@@ -17121,6 +17121,7 @@ do { try ANEContrastiveLearningBenchmark(device: device, queue: queue).run() } c
 do { try ANEPromptEngineeringOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEQuantizationINT8InferenceBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERegularizationOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANELayerNormRMSNormOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMatrixPaddingAlignmentBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMaskedUpdateBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANETreeStructuredReductionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
