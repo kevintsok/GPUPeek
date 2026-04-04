@@ -1,6 +1,6 @@
 ANE Residual Connection Optimization Benchmark
 ==============================================
-Date: 2026-04-04T06:37:39Z
+Date: 2026-04-04T06:42:51Z
 
 Residual Add Overhead:
 Conv only (baseline): 85ms

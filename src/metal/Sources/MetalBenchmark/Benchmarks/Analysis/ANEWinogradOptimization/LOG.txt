@@ -1,6 +1,6 @@
 ANE Winograd Optimization Benchmark
 =================================
-Date: 2026-04-04T06:37:39Z
+Date: 2026-04-04T06:42:51Z
 
 Winograd Algorithm Variants:
 F(2x2, 3x3): 4 mults vs 9 standard = 2.25x savings

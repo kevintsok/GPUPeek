@@ -1,6 +1,6 @@
 ANE Computation Density Benchmark
 ==================================
-Date: 2026-04-04T06:37:39Z
+Date: 2026-04-04T06:42:51Z
 
 FLOPs per Watt Analysis:
 FP32 GEMM 1024x1024: 85.5 GFLOPS @ 3.8W = 22.5 GFLOPS/W
