@@ -17104,6 +17104,7 @@ do { try ANETensorReshapingBenchmark(device: device, queue: queue).run() } catch
 do { try ANEFlashDecodingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMemoryCoalescingPatternsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEResidualConnectionOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEEmbeddingTableLookupBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalKernelArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANELatencyComparisonBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
