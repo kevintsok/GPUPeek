@@ -17123,6 +17123,7 @@ do { try ANEVoiceActivityDetectionBenchmark(device: device, queue: queue).run() 
 do { try ANESemanticSegmentationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEVSGPUNeuralPerformanceBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEBatchProcessingEfficiencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEAutoencoderVariationalAutoencoderBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEAcousticEchoCancellationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalKernelArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }

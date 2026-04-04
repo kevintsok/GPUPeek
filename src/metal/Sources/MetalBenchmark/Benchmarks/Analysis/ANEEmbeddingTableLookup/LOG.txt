@@ -1,6 +1,6 @@
 ANE Embedding Table Lookup Benchmark
 =====================================
-Date: 2026-04-04T05:13:14Z
+Date: 2026-04-04T05:37:13Z
 
 Vocabulary Size Impact:
 10K vocab: 8.5ms, 1.18M tokens/s

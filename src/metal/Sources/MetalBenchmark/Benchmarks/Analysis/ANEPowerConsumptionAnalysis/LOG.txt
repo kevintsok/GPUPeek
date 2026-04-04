@@ -1,6 +1,6 @@
 ANE Power Consumption Analysis
 ============================================
-Date: 2026-04-04T05:13:14Z
+Date: 2026-04-04T05:37:13Z
 
 Operation Type Power Intensity:
 Matrix Multiply (FP32): 385mW, 12.5ms, 4.81 mJ/op
