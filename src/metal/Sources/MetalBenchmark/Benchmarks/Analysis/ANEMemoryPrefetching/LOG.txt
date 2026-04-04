@@ -1,6 +1,6 @@
 ANE Memory Prefetching Benchmark
 ==============================
-Date: 2026-04-04T07:16:35Z
+Date: 2026-04-04T07:56:09Z
 
 Hardware Prefetching Effectiveness:
 Sequential read: No prefetch=45ms, HW prefetch=35.5ms, Speedup=1.27x
