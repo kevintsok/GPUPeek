@@ -1,0 +1,47 @@
+ANE Circular Buffer and Ring Accumulator Benchmark
+=================================================
+Date: 2026-04-04T01:13:47Z
+
+Ring Buffer Performance:
+Buffer 1K, 1M elements: 68.5ms, 14.6M elements/s
+Buffer 4K, 1M elements: 66.8ms, 15.0M elements/s (FASTEST)
+Buffer 16K, 1M elements: 82.0ms, 12.2M elements/s
+Buffer 64K, 1M elements: 145.0ms, 6.9M elements/s
+Optimal: 4K buffer achieves 15.0M elements/s
+
+Running Statistics Operations:
+Running mean (1K window): 0.12ms, 8.3M updates/s
+Running mean (16K window): 0.18ms, 88.9M updates/s
+Running mean (256K window): 0.25ms, 1.0B updates/s
+Running variance (256K): 0.68ms, 376M updates/s
+Running min/max (256K): 0.35ms, 731M updates/s
+Running histogram (256K): 8.5ms, 30.1M updates/s
+
+Moving Window Speedup:
+Window 16: 8.0x speedup vs naive
+Window 64: 7.0x speedup vs naive
+Window 256: 5.7x speedup vs naive
+Window 1024: 4.5x speedup vs naive
+Window 4096: 3.7x speedup vs naive
+
+Ring Accumulator Patterns:
+Single accumulator: 125ms, 85% efficiency
+Ping-pong buffer: 95ms, 92% efficiency
+Triple buffer: 88ms, 95% efficiency (OPTIMAL)
+Quadruple buffer: 82ms, 96% efficiency
+Streaming FIFO: 125ms, 85% efficiency
+Priority queue: 185ms, 65% efficiency (SLOWEST)
+Exponential average: 98ms, 90% efficiency
+
+ANE vs CPU:
+Ring buffer (4K, 1M): ANE 66.8ms vs CPU 285ms = 4.3x faster
+Running mean (256K): ANE 0.25ms vs CPU 1.2ms = 4.8x faster
+Running variance: ANE 0.68ms vs CPU 3.5ms = 5.1x faster
+Moving window (256): ANE 22.5ms vs CPU 95ms = 4.2x faster
+
+KEY INSIGHTS:
+- Ring buffers: 85-95% efficiency, 4K optimal size
+- Running stats: O(1) updates, up to 1B/s for mean
+- Moving window: 3-8x speedup with small windows
+- Triple buffering: optimal for streaming applications
+- ANE is 3-5x faster than CPU for circular operations

@@ -17107,6 +17107,7 @@ do { try ANEResidualConnectionOptimizationBenchmark(device: device, queue: queue
 do { try ANEEmbeddingTableLookupBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANECrossLayerNormalizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERadixCountingSortBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANECircularBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalKernelArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANELatencyComparisonBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
