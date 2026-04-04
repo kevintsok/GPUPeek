@@ -1,6 +1,6 @@
 ANE Flash Decoding Benchmark
 ===========================
-Date: 2026-04-04T12:45:49Z
+Date: 2026-04-04T13:04:24Z
 
 Sequential Decoding Performance:
 128 tokens: 45ms, 2.2 tokens/sec
