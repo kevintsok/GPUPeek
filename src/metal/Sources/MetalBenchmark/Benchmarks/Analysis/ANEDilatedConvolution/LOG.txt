@@ -1,6 +1,6 @@
 ANE Dilated Convolution Benchmark
 ==============================
-Date: 2026-04-04T14:07:22Z
+Date: 2026-04-04T14:35:05Z
 
 Dilation Rate Performance (3x3 kernel):
 Rate 1 (standard): 2.5ms, RF=3x3
