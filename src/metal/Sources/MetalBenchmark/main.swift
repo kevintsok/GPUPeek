@@ -17116,6 +17116,7 @@ do { try ANEHistogramEqualizationBenchmark(device: device, queue: queue).run() }
 do { try ANETreeBasedEnsembleMethodsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPCALinearDiscriminantBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEAdaptiveComputationTimeBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEMusicGenerationSynthesisBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMatrixPaddingAlignmentBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMaskedUpdateBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANETreeStructuredReductionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
