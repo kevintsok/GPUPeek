@@ -17178,7 +17178,8 @@ do { try ANESpatialOperationsBenchmark(device: device, queue: queue).run() } cat
 	do { try ANEInterpolationOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEKDTreeNearestNeighborBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEMatrixExponentialLogarithmBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
-do { try ANEPolynomialSpecialFunctionsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+	do { try ANEPolynomialSpecialFunctionsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+	do { try ANEOrthogonalProcrustesAnalysisBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESortingRankingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEScatterGatherBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEHistogramWindowingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
