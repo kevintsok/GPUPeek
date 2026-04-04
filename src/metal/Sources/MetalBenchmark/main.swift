@@ -17111,6 +17111,7 @@ do { try ANERadixCountingSortBenchmark(device: device, queue: queue).run() } cat
 do { try ANECircularBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEStrideAccessBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPiecewiseLinearApproximationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEMorphologicalOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMatrixPaddingAlignmentBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMaskedUpdateBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANETreeStructuredReductionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
