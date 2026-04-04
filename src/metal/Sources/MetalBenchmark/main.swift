@@ -17121,6 +17121,7 @@ do { try ANEImageDehazingDerainingBenchmark(device: device, queue: queue).run() 
 do { try ANEImageQualityAssessmentBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEVoiceActivityDetectionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESemanticSegmentationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEVSGPUNeuralPerformanceBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEAcousticEchoCancellationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalKernelArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
