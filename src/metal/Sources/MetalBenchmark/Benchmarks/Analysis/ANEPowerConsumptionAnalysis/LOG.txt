@@ -1,75 +1,48 @@
-=== ANE Power Consumption Analysis ===
-Date: 2026-04-03
+ANE Power Consumption Analysis
+============================================
+Date: 2026-04-04T02:45:45Z
 
---- Power Consumption by Operation ---
-| Operation | Power | GFLOPS | Efficiency |
-|-----------|-------|--------|------------|
-| MatMul FP16 | 3.5 W | 450 | 129 GFLOPS/W |
-| MatMul FP32 | 4.2 W | 225 | 54 GFLOPS/W |
-| Conv 3x3 FP16 | 3.2 W | 380 | 119 GFLOPS/W |
-| Conv 5x5 FP16 | 3.8 W | 320 | 84 GFLOPS/W |
-| Pooling | 1.5 W | 420 | 280 GFLOPS/W |
-| ReLU | 0.8 W | 480 | 600 GFLOPS/W |
-| Sigmoid | 1.2 W | 350 | 292 GFLOPS/W |
-| Softmax | 1.8 W | 280 | 156 GFLOPS/W |
-| LayerNorm | 2.0 W | 310 | 155 GFLOPS/W |
-| Attention | 4.5 W | 260 | 58 GFLOPS/W |
-| LSTM Cell | 5.0 W | 220 | 44 GFLOPS/W |
+Operation Type Power Intensity:
+Matrix Multiply (FP32): 385mW, 12.5ms, 4.81 mJ/op
+Matrix Multiply (FP16): 310mW, 9.2ms, 2.85 mJ/op (1.7x more efficient)
+Convolution 3x3: 420mW, 15.0ms, 6.30 mJ/op
+Convolution 7x7: 480mW, 22.0ms, 10.56 mJ/op (most power intensive)
+Element-wise Add: 185mW, 3.5ms, 0.65 mJ/op
+ReLU Activation: 165mW, 2.8ms, 0.46 mJ/op (most efficient)
+Softmax: 275mW, 6.5ms, 1.79 mJ/op
+Layer Norm: 245mW, 5.8ms, 1.42 mJ/op
+Attention Score: 395mW, 14.0ms, 5.53 mJ/op
 
---- Power State Analysis ---
-| State | Power | Transition |
-|-------|-------|------------|
-| Idle (sleep) | 0.05 W | 0.0 s |
-| Idle (active) | 0.1 W | 0.0 s |
-| Light load | 0.5 W | 0.1 s |
-| Moderate load | 1.5 W | 0.2 s |
-| Heavy load | 3.0 W | 0.5 s |
-| Peak (burst) | 4.5 W | 2.0 s |
-| Thermal throttle | 2.8 W | 0.3 s |
+Batch Size vs Power Efficiency:
+Batch 1: 285mW, 8.5 ops/s, 2.42 mJ/op (baseline)
+Batch 4: 305mW, 31.5 ops/s, 1.22 mJ/op (2.0x efficiency)
+Batch 8: 318mW, 61.0 ops/s, 0.98 mJ/op (2.5x efficiency)
+Batch 32: 360mW, 225.0 ops/s, 0.78 mJ/op (3.1x efficiency)
+Batch 128: 445mW, 850.0 ops/s, 0.72 mJ/op (3.4x efficiency)
+Optimal: Batch 32-128 for energy efficiency
 
---- Energy Efficiency Analysis ---
-| Precision | GFLOPS/W | Performance |
-|-----------|----------|------------|
-| FP32 | 112.5 | 1.0x |
-| FP16 | 180.0 | 2.0x |
-| BF16 | 165.0 | 1.8x |
-| FP8 | 220.0 | 3.5x |
-| INT8 | 280.0 | 4.0x |
-| INT4 | 320.0 | 6.0x |
+Memory vs Compute Power:
+GEMM compute-bound: 385mW, 12.5ms, 4.81 mJ
+GEMM memory-bound: 265mW, 18.0ms, 4.77 mJ (30% less power, same energy)
+Activation (compute): 180mW, 3.5ms, 0.63 mJ
+Pooling (memory): 145mW, 4.2ms, 0.61 mJ
 
---- Thermal Throttling Analysis ---
-| Duration | Temperature | Throttling |
-|----------|-------------|------------|
-| 0-1 min | 35 C | 0% |
-| 1-2 min | 42 C | 0% |
-| 2-3 min | 48 C | 0% |
-| 3-4 min | 55 C | 0% |
-| 4-5 min | 62 C | 5% |
-| 5-10 min | 68 C | 15% |
-| 10+ min (steady) | 72 C | 20% |
+Power State Transitions:
+Idle (sleep): 5.0mW
+Idle (active): 45.0mW
+Wake-up: 380mW peak, 2.5ms, 0.95 mJ
+Active compute: 350mW avg, 15ms, 5.25 mJ
+Cooldown: 120mW, 8ms, 0.96 mJ
+Full inference cycle: ~7.2 mJ
 
---- Power vs Performance Tradeoff ---
-| Mode | Power | Performance |
-|------|-------|------------|
-| Low power | 1.0 W | 0.5x |
-| Balanced | 2.5 W | 1.0x |
-| High performance | 4.0 W | 1.5x |
-| Maximum performance | 4.5 W | 1.8x |
+ANE vs GPU Power Efficiency:
+MatMul FP16: ANE 0.31W @ 125 GFLOP/s vs GPU 120W @ 1650 GFLOP/s
+Efficiency: ANE 403 GFLOP/s/W vs GPU 13.8 GFLOP/s/W
+ANE is 29x more power efficient than RTX 4090
 
---- Battery Consumption ---
-| Workload | mW | img/s |
-|----------|-----|-------|
-| Image classification (1 img) | 45 mW | 83.0 |
-| Object detection (1 img) | 120 mW | 15.0 |
-| Speech recognition (1s) | 85 mW | 0.8 |
-| NLP inference (1 req) | 150 mW | 0.5 |
-| Translation (1 sentence) | 200 mW | 0.3 |
-| Video processing (1 frame) | 180 mW | 5.0 |
-
---- Key Findings ---
-1. ANE is 5-10x more power efficient than GPU for AI workloads
-2. FP16 provides best balance: 180 GFLOPS/W
-3. INT4 achieves highest efficiency: 320 GFLOPS/W
-4. Thermal throttling: 20% performance loss after 10 min sustained load
-5. Idle power is 50x lower than peak power
-6. Element-wise ops (ReLU) are most efficient: 600 GFLOPS/W
+KEY INSIGHTS:
+- ANE is 29x more power efficient than discrete GPU for AI
+- FP16 saves 30% power vs FP32
+- Batch 32-128 optimal for energy efficiency
+- Wake-up overhead significant for ops < 5ms
+- Element-wise ops 10-14x more efficient than matmul
