@@ -17127,6 +17127,7 @@ do { try ANEAutoencoderVariationalAutoencoderBenchmark(device: device, queue: qu
 do { try ANERecurrentNeuralNetworkLSTMGRUBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEKnowledgeDistillationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANETabularDataClassificationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANECrossLayerOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEAcousticEchoCancellationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalKernelArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
