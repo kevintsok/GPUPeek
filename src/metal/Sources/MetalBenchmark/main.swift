@@ -17173,9 +17173,10 @@ do { try ANEAudioSignalProcessingBenchmark(device: device, queue: queue).run() }
 do { try ANESignalProcessingAudioProcessingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEAudioSourceSeparationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESpatialOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
-do { try ANEBinaryBitwiseOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+	do { try ANEBinaryBitwiseOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANETernaryWeightNetworksBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
-do { try ANEInterpolationOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+	do { try ANEInterpolationOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+	do { try ANEKDTreeNearestNeighborBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPolynomialSpecialFunctionsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESortingRankingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEScatterGatherBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
