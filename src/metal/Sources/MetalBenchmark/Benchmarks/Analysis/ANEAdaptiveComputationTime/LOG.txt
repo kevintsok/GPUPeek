@@ -1,6 +1,6 @@
 ANE Adaptive Computation Time Benchmark
 ======================================
-Date: 2026-04-04T14:35:05Z
+Date: 2026-04-04T15:04:20Z
 
 Mixture of Experts (MoE):
 MoE 8-expert (256 tokens): 5.5ms (ANE) vs 66.0ms (CPU) = 12.0x speedup
