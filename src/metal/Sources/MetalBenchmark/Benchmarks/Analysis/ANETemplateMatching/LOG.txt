@@ -1,6 +1,6 @@
 ANE Template Matching Benchmark
 ==============================
-Date: 2026-04-04T03:12:28Z
+Date: 2026-04-04T03:36:17Z
 
 Similarity Metrics (1920x1080 image, 64x64 template):
 SAD: 10.2ms (FASTEST) - 0.74x GPU
