@@ -1,6 +1,6 @@
 ANE Tree-Structured Reduction and Parallel Reduction Benchmark
 ============================================================
-Date: 2026-04-04T15:04:20Z
+Date: 2026-04-04T16:09:16Z
 
 Parallel Reduction Patterns:
 1K elements: Naive 8.5ms -> Tree 1.2ms (7.1x speedup)

@@ -17156,6 +17156,7 @@ do { try ANEFlashAttentionBenchmark(device: device, queue: queue).run() } catch 
 do { try ANEPagedAttentionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPruningBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESparseOperationsPruningBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANESparseOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEActivationFunctionsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEActivationReuseBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEDeviceTransferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }

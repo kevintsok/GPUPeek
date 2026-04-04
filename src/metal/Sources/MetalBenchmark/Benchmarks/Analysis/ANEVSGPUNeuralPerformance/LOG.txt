@@ -1,6 +1,6 @@
 ANE vs GPU Neural Network Performance Comparison
 =================================================
-Date: 2026-04-04T15:04:20Z
+Date: 2026-04-04T16:09:16Z
 
 CONVOLUTION PERFORMANCE (3x3 kernel):
 64x64, 32ch: ANE 2.5ms vs GPU 8.5ms = ANE 3.4x faster
