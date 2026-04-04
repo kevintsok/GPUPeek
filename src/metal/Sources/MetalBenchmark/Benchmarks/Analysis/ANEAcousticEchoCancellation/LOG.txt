@@ -1,6 +1,6 @@
 ANE Acoustic Echo Cancellation and Audio Noise Suppression Analysis
 =================================================================
-Date: 2026-04-04T13:37:39Z
+Date: 2026-04-04T14:04:18Z
 
 Acoustic Echo Cancellation (AEC) Algorithms:
 NLMS (32 taps): 1.2ms, 15 dB ERLE (fastest, basic)

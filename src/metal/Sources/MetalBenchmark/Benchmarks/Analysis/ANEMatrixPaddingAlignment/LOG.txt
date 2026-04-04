@@ -1,6 +1,6 @@
 ANE Matrix Padding and Alignment Benchmark
 ==========================================
-Date: 2026-04-04T13:37:39Z
+Date: 2026-04-04T14:04:18Z
 
 Padding Overhead:
 100x100 -> 128x128: 56% overhead, 12.5ms
