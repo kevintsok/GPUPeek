@@ -17283,6 +17283,7 @@ do { try ANEResolutionSensitivityBenchmark(device: device, queue: queue).run() }
 do { try ANEMemoryIndexingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEEmbeddingFFNBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEFp8PrecisionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEBFloat16PrecisionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEGradientComputationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 // do { try ANENormalizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANETensorCoreBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
