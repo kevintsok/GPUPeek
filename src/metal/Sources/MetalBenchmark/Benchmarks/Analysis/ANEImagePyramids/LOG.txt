@@ -1,6 +1,6 @@
 ANE Image Pyramids Benchmark
 ============================
-Date: 2026-04-05
+Date: 2026-04-04T20:47:49Z
 
 GAUSSIAN PYRAMID OPERATIONS:
 128x128: Down-sample=1.2ms, Up-sample=0.8ms, Build=3.5ms

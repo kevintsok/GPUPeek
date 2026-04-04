@@ -1,7 +1,7 @@
 # ANE Bilateral Filtering Benchmark Results
 
 ## Timestamp
-2026-04-04
+2026-04-04T20:47:49Z
 
 ## Hardware
 - Device: Apple M2
@@ -29,7 +29,7 @@
 
 ### Range Sigma Impact
 | Sigma Range | Edge Preservation | ANE (ms) | CPU (ms) |
-|-------------|-------------------|-----------|----------|
+|-------------|------------------|-----------|----------|
 | sigma=10 (low) | 85% | 4.5 | 8.0 |
 | sigma=25 (medium) | 88% | 7.2 | 12.0 |
 | sigma=50 (high) | 92% | 9.5 | 15.0 |
