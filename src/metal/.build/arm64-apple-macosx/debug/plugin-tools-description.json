@@ -100,6 +100,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBatchProcessingEfficiency/ANEBatchProcessingEfficiencyBenchmark.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBayesianInferenceProbabilistic/ANEBayesianInferenceProbabilisticBenchmark.swift"
         },
         {
@@ -1478,6 +1482,7 @@
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBFloat16PrecisionBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBatchEfficiencyBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBatchProcessingBenchmark.swift.o",
+        "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBatchProcessingEfficiencyBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBayesianInferenceProbabilisticBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBeamSearchSequenceDecodingBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBeamformingArrayProcessingBenchmark.swift.o",
@@ -1929,6 +1934,10 @@
         {
           "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBatchProcessingBenchmark.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBatchProcessingEfficiencyBenchmark.swift.o"
         },
         {
           "kind" : "file",
@@ -3304,6 +3313,7 @@
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBFloat16Precision/ANEBFloat16PrecisionBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBatchEfficiency/ANEBatchEfficiencyBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBatchProcessing/ANEBatchProcessingBenchmark.swift",
+        "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBatchProcessingEfficiency/ANEBatchProcessingEfficiencyBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBayesianInferenceProbabilistic/ANEBayesianInferenceProbabilisticBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBeamSearchSequenceDecoding/ANEBeamSearchSequenceDecodingBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBeamformingArrayProcessing/ANEBeamformingArrayProcessingBenchmark.swift",
@@ -3677,6 +3687,7 @@
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBFloat16Precision/ANEBFloat16PrecisionBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBatchEfficiency/ANEBatchEfficiencyBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBatchProcessing/ANEBatchProcessingBenchmark.swift",
+      "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBatchProcessingEfficiency/ANEBatchProcessingEfficiencyBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBayesianInferenceProbabilistic/ANEBayesianInferenceProbabilisticBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBeamSearchSequenceDecoding/ANEBeamSearchSequenceDecodingBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBeamformingArrayProcessing/ANEBeamformingArrayProcessingBenchmark.swift",
@@ -4165,6 +4176,10 @@
         {
           "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBatchProcessing/ANEBatchProcessingBenchmark.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBatchProcessingEfficiency/ANEBatchProcessingEfficiencyBenchmark.swift"
         },
         {
           "kind" : "file",
@@ -5579,6 +5594,10 @@
         {
           "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBatchProcessingBenchmark.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBatchProcessingEfficiencyBenchmark.swift.o"
         },
         {
           "kind" : "file",

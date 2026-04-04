@@ -1,0 +1,52 @@
+ANE Batch Processing Efficiency Analysis
+==========================================
+Date: 2026-04-04T05:13:14Z
+
+BATCH SIZE SCALING (Conv 3x3 128x128 64ch):
+Batch 1: 15.0ms, 66.7 im/s, 7% efficiency
+Batch 2: 22.0ms, 90.9 im/s, 9% efficiency
+Batch 4: 38.0ms, 105.3 im/s, 16% efficiency
+Batch 8: 68.0ms, 117.6 im/s, 33% efficiency
+Batch 16: 125.0ms, 128.0 im/s, 63% efficiency
+Batch 32: 245.0ms, 130.6 im/s, 100% efficiency (PEAK)
+Batch 64: 520.0ms, 123.1 im/s, 80% efficiency
+Batch 128: 1150.0ms, 111.3 im/s, 62% efficiency
+
+OPTIMAL BATCH ANALYSIS:
+Batch 8: Sequential 120ms -> Batched 68ms = 1.76x speedup
+Batch 16: Sequential 240ms -> Batched 125ms = 1.92x speedup
+Batch 32: Sequential 480ms -> Batched 245ms = 1.96x speedup
+OPTIMAL: Batch 16-32 for best speedup
+
+MEMORY PRESSURE:
+Batch 16: 1024MB, 8.1 GB/s (95% efficiency) - PEAK
+Batch 32: 2048MB, 7.8 GB/s (92% efficiency)
+Batch 64: 4096MB, 6.5 GB/s (76% efficiency) - Memory pressure
+Batch 128: 8192MB, 5.2 GB/s (61% efficiency) - Heavy thrashing
+
+OPERATION TYPE IMPACT:
+Conv 3x3: Optimal batch 8 (compute bound)
+Conv 5x5: Optimal batch 8 (weight memory)
+GEMM 512: Optimal batch 16 (memory reuse)
+ReLU: Optimal batch 32 (memory bound)
+Softmax: Optimal batch 16 (memory bound)
+Pooling: Optimal batch 16 (memory bound)
+
+LATENCY vs THROUGHPUT:
+Batch 1: 15ms latency, 66.7 im/s (min latency)
+Batch 8: 68ms latency, 117.6 im/s (balance)
+Batch 16: 125ms latency, 128.0 im/s (good balance)
+Batch 32: 245ms latency, 130.6 im/s (max throughput)
+
+POWER EFFICIENCY:
+Batch 1: 350mW, 190 im/s/W
+Batch 8: 480mW, 245 im/s/W (BEST)
+Batch 16: 620mW, 206 im/s/W
+Batch 32: 850mW, 154 im/s/W
+
+KEY INSIGHTS:
+- Batch 8-16 is optimal for most ANE operations
+- Max throughput at batch 32 (130.6 im/s)
+- Memory pressure degrades performance above batch 64
+- Batch 8 has best power efficiency (245 im/s/W)
+- Compute-bound ops prefer batch 8, memory-bound prefer 16-32

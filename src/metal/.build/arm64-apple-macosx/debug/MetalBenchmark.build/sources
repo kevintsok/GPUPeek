@@ -17,6 +17,7 @@
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBFloat16Precision/ANEBFloat16PrecisionBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBatchEfficiency/ANEBatchEfficiencyBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBatchProcessing/ANEBatchProcessingBenchmark.swift
+/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBatchProcessingEfficiency/ANEBatchProcessingEfficiencyBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBayesianInferenceProbabilistic/ANEBayesianInferenceProbabilisticBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBeamSearchSequenceDecoding/ANEBeamSearchSequenceDecodingBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBeamformingArrayProcessing/ANEBeamformingArrayProcessingBenchmark.swift
