@@ -17102,6 +17102,7 @@ do { try ANEWindowedAttentionBenchmark(device: device, queue: queue).run() } cat
 do { try ANEMemoryPrefetchingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANETensorReshapingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEFlashDecodingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEMemoryCoalescingPatternsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalKernelArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANELatencyComparisonBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
