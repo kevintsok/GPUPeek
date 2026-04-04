@@ -17111,6 +17111,7 @@ do { try ANECircularBufferBenchmark(device: device, queue: queue).run() } catch 
 do { try ANEStrideAccessBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPiecewiseLinearApproximationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMatrixPaddingAlignmentBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANEMaskedUpdateBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalKernelArgumentBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANELatencyComparisonBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }

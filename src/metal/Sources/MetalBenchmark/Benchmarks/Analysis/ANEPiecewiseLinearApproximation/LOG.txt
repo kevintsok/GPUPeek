@@ -1,6 +1,6 @@
 ANE Piecewise Linear Approximation and LUT Benchmark
 ==================================================
-Date: 2026-04-04T02:08:40Z
+Date: 2026-04-04T02:13:59Z
 
 LUT Size vs Accuracy:
 16 entries: 0.25ms, 85% accuracy, 25.0x speedup
