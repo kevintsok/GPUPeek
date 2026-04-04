@@ -188,6 +188,7 @@
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEQuantitativeFinance/ANEQuantitativeFinanceBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEQuantization/ANEQuantizationBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERadarLidarSignalProcessing/ANERadarLidarSignalProcessingBenchmark.swift
+/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERadixCountingSort/ANERadixCountingSortBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERandomSampling/ANERandomSamplingBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERayTracing/ANERayTracingBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERealWorldModelInference/ANERealWorldModelInferenceBenchmark.swift
