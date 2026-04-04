@@ -17385,6 +17385,7 @@ do { try ComputationalPhotographyBenchmark(device: device, queue: queue).run() }
 do { try OcclusionCullingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MeshShaderBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalGraphicsPipelineBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try MetalTripleBufferingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try FragmentDepthBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalDepthBufferBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try MetalRenderPipelineTBDRBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
