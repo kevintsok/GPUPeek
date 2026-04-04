@@ -1,6 +1,6 @@
 ANE Batch Processing Efficiency Analysis
 ==========================================
-Date: 2026-04-04T07:56:09Z
+Date: 2026-04-04T12:45:49Z
 
 BATCH SIZE SCALING (Conv 3x3 128x128 64ch):
 Batch 1: 15.0ms, 66.7 im/s, 7% efficiency
