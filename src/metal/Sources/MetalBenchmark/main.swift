@@ -17422,6 +17422,7 @@ do { try ANEObjectDetectionBenchmark(device: device, queue: queue).run() } catch
 do { try ANESegmentationTrackingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANESuperResolutionImageEnhancementBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPoseEstimationGestureRecognitionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+	do { try ANERandomWalkMarkovChainBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANENLPSpeechSynthesisBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try AudioSourceSeparationMusicProcessingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEMedicalImageAnalysisBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
