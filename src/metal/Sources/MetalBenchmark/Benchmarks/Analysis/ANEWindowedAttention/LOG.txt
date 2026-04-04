@@ -1,6 +1,6 @@
 ANE Windowed Attention Benchmark
 ==============================
-Date: 2026-04-04T07:07:10Z
+Date: 2026-04-04T07:16:35Z
 
 Window Size Performance:
 4x4 window: 2.5ms, 125MB memory
