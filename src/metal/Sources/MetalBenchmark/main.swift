@@ -17379,6 +17379,7 @@ do { try ANEKernelFusionBenchmark(device: device, queue: queue).run() } catch { 
 	do { try ANEChannelAttentionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANECholeskyDecompositionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEChebyshevApproximationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+	do { try ANEBSplineInterpolationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEAutoregressiveGenerationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEvsGPULatencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEvsCPUPerformanceBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
