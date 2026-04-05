@@ -1,6 +1,6 @@
 ANE Discrete Cosine Transform (DCT) Performance Analysis
 =========================================================
-Date: 2026-04-05T04:23:03Z
+Date: 2026-04-05T04:32:59Z
 
 1D DCT Size Scaling:
 Size 8: 0.12ms, 66.7 M samples/s (fastest)

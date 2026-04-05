@@ -2,37 +2,37 @@
 
 --- Buffer Copy Performance (BlitEngine) ---
 64KB: 0.03 GB/s
-256KB: 0.10 GB/s
-1MB: 0.32 GB/s
-4MB: 0.78 GB/s
-16MB: 1.37 GB/s
+256KB: 0.09 GB/s
+1MB: 0.31 GB/s
+4MB: 0.77 GB/s
+16MB: 1.36 GB/s
 
 --- Asynchronous Copy (Non-blocking) ---
 64KB: 0.06 GB/s
 256KB: 0.30 GB/s
-1MB: 1.16 GB/s
-4MB: 2.03 GB/s
-16MB: 1.99 GB/s
+1MB: 1.10 GB/s
+4MB: 1.97 GB/s
+16MB: 1.97 GB/s
 
 --- Synchronous Copy (Blocking) ---
 64KB: 0.00 GB/s
 256KB: 0.05 GB/s
 1MB: 0.16 GB/s
-4MB: 0.38 GB/s
-16MB: 0.70 GB/s
+4MB: 0.39 GB/s
+16MB: 0.71 GB/s
 
 --- Fill Operation Performance ---
 64KB: 0.01 GB/s
 256KB: 0.04 GB/s
-1MB: 0.17 GB/s
-4MB: 0.51 GB/s
-16MB: 1.26 GB/s
+1MB: 0.16 GB/s
+4MB: 0.48 GB/s
+16MB: 1.21 GB/s
 
 --- Batch Copy (4 operations per command buffer) ---
-64KB: 0.05 GB/s
-256KB: 0.15 GB/s
-1MB: 0.37 GB/s
-4MB: 0.88 GB/s
+64KB: 0.04 GB/s
+256KB: 0.14 GB/s
+1MB: 0.46 GB/s
+4MB: 0.86 GB/s
 16MB: 0.93 GB/s
 
 --- Key Findings ---
