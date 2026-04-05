@@ -596,6 +596,12 @@
     "swiftmodule": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEGeometricTransformOperationsBenchmark~partial.swiftmodule",
     "swift-dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEGeometricTransformOperationsBenchmark.swiftdeps"
   },
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGradientAccumulation/ANEGradientAccumulationBenchmark.swift": {
+    "dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEGradientAccumulationBenchmark.d",
+    "object": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEGradientAccumulationBenchmark.swift.o",
+    "swiftmodule": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEGradientAccumulationBenchmark~partial.swiftmodule",
+    "swift-dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEGradientAccumulationBenchmark.swiftdeps"
+  },
   "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGradientCheckpointing/ANEGradientCheckpointingBenchmark.swift": {
     "dependencies": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEGradientCheckpointingBenchmark.d",
     "object": "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEGradientCheckpointingBenchmark.swift.o",
