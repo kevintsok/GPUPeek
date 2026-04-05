@@ -17360,6 +17360,8 @@ do { try ANEKernelFusionBenchmark(device: device, queue: queue).run() } catch { 
 	do { try ANEOptimalTransportDistanceBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANESparseMatrixGraphProcessingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEMemoryBoundComputeBoundBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+	do { try ANEBatchSizeOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+	do { try ANEPointwise11ConvolutionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEvsGPULatencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEvsCPUPerformanceBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPowerEfficiencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
