@@ -1,0 +1,43 @@
+ANE Tensor Reshaping Operations Analysis
+=====================================
+Date: 2026-04-05T14:15:00Z
+
+RESHAPE OPERATIONS:
+View (same stride), 1M elements: Time=0.05μs, Throughput=20000 M/s
+View (contiguous), 1M elements: Time=0.08μs, Throughput=12500 M/s
+Reshape (copy needed), 1M elements: Time=12.5μs, Throughput=80 M/s
+Flatten (row-major), 1M elements: Time=15.0μs, Throughput=66.7 M/s
+Squeeze, 1M elements: Time=0.06μs, Throughput=16667 M/s
+Expand dims, 1M elements: Time=0.07μs, Throughput=14286 M/s
+
+TRANSPOSE OPERATIONS:
+2D Transpose 256x256: Time=125μs, BW=51.2 GB/s
+2D Transpose 512x512: Time=485μs, BW=54.2 GB/s
+2D Transpose 1024x1024: Time=1920μs, BW=55.1 GB/s
+Channel Transpose NCHW→NHWC 64x64x64: Time=285μs, BW=58.5 GB/s
+Channel Transpose NCHW→NHWC 128x64x64: Time=545μs, BW=61.2 GB/s
+
+PERMUTE OPERATIONS:
+NCHW→NHWC 32x64x32x32: Time=1850μs, Overhead=2.9x copy
+NCHW→NHWC 64x128x32x32: Time=3450μs, Overhead=3.5x copy
+NHWC→NCHW 32x64x32x32: Time=1920μs, Overhead=3.0x copy
+
+VIEW OPERATIONS:
+View (same stride), 1M elements: Time=0.05μs, Copy=No
+View (different shape), 1M elements: Time=0.08μs, Copy=No
+Contiguous (row-major), 1M elements: Time=45.0μs, Copy=Yes
+Contiguous (non-contig), 1M elements: Time=85.0μs, Copy=Yes
+
+CHAINED RESHAPE:
+1 operation: Total=0.85μs, Amortized=0.85μs
+2 operations: Total=1.65μs, Amortized=0.83μs
+4 operations: Total=3.20μs, Amortized=0.80μs
+5 operations: Total=3.95μs, Amortized=0.79μs
+10 operations: Total=7.75μs, Amortized=0.78μs
+
+KEY INSIGHTS:
+- View is essentially free (<1μs)
+- Reshape with copy: 12-15μs for 1M elements
+- NCHW↔NHWC costs 3x memory copy overhead
+- 2D transpose achieves ~50-55 GB/s bandwidth
+- Chained reshape amortizes to ~0.8μs per operation
