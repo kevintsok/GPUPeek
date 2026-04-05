@@ -1,6 +1,6 @@
 ANE Voice Activity Detection Analysis
 ======================================
-Date: 2026-04-05T09:16:22Z
+Date: 2026-04-05T09:36:14Z
 
 VAD Algorithm Performance:
 Energy-based: 0.8ms, 78% accuracy (fastest)
