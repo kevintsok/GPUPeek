@@ -1220,6 +1220,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESLAM3DVisionPipeline/ANESLAM3DVisionBenchmark.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEScatterGatherOperations/ANEScatterGatherBenchmark.swift"
         },
         {
@@ -2166,6 +2170,7 @@
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANERoundingModesBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANERungeKuttaIntegrationBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANERunningStatisticsBenchmark.swift.o",
+        "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANESLAM3DVisionBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEScatterGatherBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANESchedulerEfficiencyBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEScientificComputingSimulationBenchmark.swift.o",
@@ -3562,6 +3567,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANESLAM3DVisionBenchmark.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEScatterGatherBenchmark.swift.o"
         },
         {
@@ -4502,6 +4511,7 @@
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERoundingModes/ANERoundingModesBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERungeKuttaIntegration/ANERungeKuttaIntegrationBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERunningStatisticsOperations/ANERunningStatisticsBenchmark.swift",
+        "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESLAM3DVisionPipeline/ANESLAM3DVisionBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEScatterGatherOperations/ANEScatterGatherBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESchedulerEfficiency/ANESchedulerEfficiencyBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEScientificComputingSimulation/ANEScientificComputingSimulationBenchmark.swift",
@@ -4977,6 +4987,7 @@
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERoundingModes/ANERoundingModesBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERungeKuttaIntegration/ANERungeKuttaIntegrationBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERunningStatisticsOperations/ANERunningStatisticsBenchmark.swift",
+      "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESLAM3DVisionPipeline/ANESLAM3DVisionBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEScatterGatherOperations/ANEScatterGatherBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESchedulerEfficiency/ANESchedulerEfficiencyBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEScientificComputingSimulation/ANEScientificComputingSimulationBenchmark.swift",
@@ -6407,6 +6418,10 @@
         {
           "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERunningStatisticsOperations/ANERunningStatisticsBenchmark.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESLAM3DVisionPipeline/ANESLAM3DVisionBenchmark.swift"
         },
         {
           "kind" : "file",
@@ -8233,6 +8248,10 @@
         {
           "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANERunningStatisticsBenchmark.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANESLAM3DVisionBenchmark.swift.o"
         },
         {
           "kind" : "file",
