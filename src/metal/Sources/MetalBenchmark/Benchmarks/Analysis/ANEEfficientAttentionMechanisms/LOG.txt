@@ -1,6 +1,6 @@
 ANE Efficient Attention Mechanisms Benchmark
 ===========================================
-Date: 2026-04-05T21:08:22Z
+Date: 2026-04-05T21:30:13Z
 
 STANDARD VS LINEAR ATTENTION:
 512 tokens: Standard=12.5ms, Linear=2.8ms, Performer=3.2ms
