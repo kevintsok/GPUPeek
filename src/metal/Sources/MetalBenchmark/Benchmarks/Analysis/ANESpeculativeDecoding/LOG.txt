@@ -1,6 +1,6 @@
 ANE Speculative Decoding Performance Analysis
 ==============================================
-Date: 2026-04-05T14:44:45Z
+Date: 2026-04-05T21:08:22Z
 
 Draft Model Performance (generates k candidate tokens):
 7M params: 2.5ms, 2.8M tokens/s (ultra-fast)

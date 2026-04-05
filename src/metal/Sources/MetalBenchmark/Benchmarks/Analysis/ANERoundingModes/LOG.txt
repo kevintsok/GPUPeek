@@ -1,6 +1,6 @@
 ANE Rounding Modes Benchmark
 ==========================
-Date: 2026-04-05T14:44:45Z
+Date: 2026-04-05T21:08:22Z
 
 Rounding Mode Performance (FP32):
 Round to nearest: 1.25ms (baseline)
