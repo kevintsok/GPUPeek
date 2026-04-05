@@ -1,6 +1,6 @@
 ANE Pattern Matching Benchmark
 ============================
-Date: 2026-04-05T08:15:16Z
+Date: 2026-04-05T08:36:02Z
 
 Lookup Table Performance:
 Hash lookup: 0.015ms (1K) to 0.055ms (4M) = 3.6x scaling
