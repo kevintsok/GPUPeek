@@ -17390,6 +17390,7 @@ do { try ANEKernelFusionBenchmark(device: device, queue: queue).run() } catch { 
 	do { try ANEStateSpaceModelsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEUncertaintyQuantificationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEPerformanceMicrobenchmarkingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+	do { try ANEApproximateComputingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEAutoregressiveGenerationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEvsGPULatencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEvsCPUPerformanceBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }

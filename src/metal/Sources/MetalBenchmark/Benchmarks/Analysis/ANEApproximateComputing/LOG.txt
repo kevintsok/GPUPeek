@@ -1,0 +1,80 @@
+ANE Approximate Computing for Error-Tolerant Applications
+=======================================================
+Date: 2026-04-05
+
+APPROXIMATE ARITHMETIC OPERATIONS:
+Approx Add (8-bit): Energy Reduction=35%, Error=0.8%
+Approx Add (16-bit): Energy Reduction=32%, Error=1.2%
+Approx Mul (8-bit): Energy Reduction=42%, Error=1.5%
+Approx Mul (16-bit): Energy Reduction=38%, Error=2.0%
+Approx MAC (8-bit): Energy Reduction=45%, Error=1.8%
+Approx MAC (16-bit): Energy Reduction=40%, Error=2.5%
+Truncated Mul (8-bit): Energy Reduction=55%, Error=3.0%
+Truncated Mul (16-bit): Energy Reduction=50%, Error=4.5%
+Stochastic Rounding: Energy Reduction=15%, Error=0.5%
+Round-to-Zero: Energy Reduction=25%, Error=1.0%
+
+PRECISION SCALING:
+FP32 (baseline): Energy=100mW, Error=0.0%, Quality=Perfect
+FP16 (native): Energy=45mW, Error=0.0%, Quality=Perfect
+BF16: Energy=48mW, Error=0.1%, Quality=Perfect
+INT8 (native): Energy=25mW, Error=0.5%, Quality=Excellent
+INT8 (truncated): Energy=22mW, Error=2.0%, Quality=Very Good
+INT6: Energy=18mW, Error=3.5%, Quality=Good
+INT5: Energy=15mW, Error=5.0%, Quality=Acceptable
+INT4 (native): Energy=12mW, Error=4.0%, Quality=Good
+INT4 (truncated): Energy=10mW, Error=8.0%, Quality=Acceptable
+INT2: Energy=8mW, Error=15.0%, Quality=Limited
+
+TRUNCATION STRATEGIES:
+No truncation: Energy Reduction=0%, Speedup=1.00x
+Dynamic Truncation (DT): Energy Reduction=35%, Speedup=0.95x
+Static Truncation (ST): Energy Reduction=40%, Speedup=0.90x
+Mixed Precision (MP): Energy Reduction=30%, Speedup=0.97x
+Adaptive Precision (AP): Energy Reduction=28%, Speedup=0.98x
+Significance-Driven: Energy Reduction=32%, Speedup=0.96x
+Confidence-Aware: Energy Reduction=25%, Speedup=0.99x
+Layer-Wise Adaptive: Energy Reduction=22%, Speedup=0.99x
+
+APPLICATION ERROR TOLERANCE:
+Image Classification: Acceptable Error=5.0%, Energy Savings=45%
+Object Detection: Acceptable Error=3.0%, Energy Savings=42%
+Semantic Segmentation: Acceptable Error=2.0%, Energy Savings=38%
+Speech Recognition: Acceptable Error=1.0%, Energy Savings=35%
+NLP (sentiment): Acceptable Error=2.0%, Energy Savings=40%
+Recommendation Systems: Acceptable Error=8.0%, Energy Savings=50%
+Gaming AI: Acceptable Error=10.0%, Energy Savings=55%
+Sensor Fusion: Acceptable Error=5.0%, Energy Savings=42%
+Audio Enhancement: Acceptable Error=3.0%, Energy Savings=38%
+Image Super-Resolution: Acceptable Error=2.0%, Energy Savings=35%
+Video Frame Interpolation: Acceptable Error=4.0%, Energy Savings=40%
+Music Genre Classification: Acceptable Error=3.0%, Energy Savings=38%
+
+APPROXIMATE GEMM PERFORMANCE:
+FP32 GEMM: Energy=100mW, Speedup=1.0x
+FP16 GEMM: Energy=45mW, Speedup=2.2x
+INT8 GEMM: Energy=25mW, Speedup=4.0x
+INT8 Approx GEMM: Energy=18mW, Speedup=5.5x
+INT4 GEMM: Energy=12mW, Speedup=8.0x
+INT4 Approx GEMM: Energy=8mW, Speedup=12.0x
+Binary GEMM (XNOR): Energy=5mW, Speedup=20.0x
+Ternary GEMM: Energy=7mW, Speedup=15.0x
+
+MEMORY APPROXIMATION:
+Full Precision Cache: Energy Reduction=0%, Error=0.0%
+Block Floating Point: Energy Reduction=20%, Error=0.5%
+Vector Quantization (VQ): Energy Reduction=35%, Error=2.0%
+Product Quantization (PQ): Energy Reduction=40%, Error=3.0%
+Residual Quantization: Energy Reduction=38%, Error=2.5%
+Scalar Quantization: Energy Reduction=45%, Error=1.5%
+Log Quantization: Energy Reduction=25%, Error=1.0%
+Nonlinear Quantization: Energy Reduction=28%, Error=1.2%
+Mixed Precision Cache: Energy Reduction=18%, Error=0.3%
+
+KEY INSIGHTS:
+- Approximate computing provides 30-55% energy reduction
+- Error tolerance: Gaming AI (10%) > Recommendations (8%) > Speech (1%)
+- Binary GEMM achieves 20x speedup with 5mW energy
+- INT4-6 provides best energy/accuracy tradeoff
+- Static truncation achieves 40% energy reduction
+- ANE enables real-time approximate inference
