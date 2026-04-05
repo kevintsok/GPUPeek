@@ -72,6 +72,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAsyncCopyMemoryTransferOptimization/ANEAsyncCopyMemoryTransferOptimizationBenchmark.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAttentionMechanism/ANEAttentionMechanismBenchmark.swift"
         },
         {
@@ -1675,6 +1679,7 @@
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEAdvancedIndexingBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEAgriculturalPrecisionFarmingBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEAlgorithmComplexityAnalysisBenchmark.swift.o",
+        "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEAsyncCopyMemoryTransferOptimizationBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEAttentionMechanismBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEAudioFingerprintingMusicRecognitionBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEAudioSignalProcessingBenchmark.swift.o",
@@ -2156,6 +2161,10 @@
         {
           "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEAlgorithmComplexityAnalysisBenchmark.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEAsyncCopyMemoryTransferOptimizationBenchmark.swift.o"
         },
         {
           "kind" : "file",
@@ -3756,6 +3765,7 @@
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAdvancedIndexing/ANEAdvancedIndexingBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAgriculturalPrecisionFarming/ANEAgriculturalPrecisionFarmingBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAlgorithmComplexityAnalysis/ANEAlgorithmComplexityAnalysisBenchmark.swift",
+        "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAsyncCopyMemoryTransferOptimization/ANEAsyncCopyMemoryTransferOptimizationBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAttentionMechanism/ANEAttentionMechanismBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAudioFingerprintingMusicRecognition/ANEAudioFingerprintingMusicRecognitionBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAudioSignalProcessing/ANEAudioSignalProcessingBenchmark.swift",
@@ -4180,6 +4190,7 @@
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAdvancedIndexing/ANEAdvancedIndexingBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAgriculturalPrecisionFarming/ANEAgriculturalPrecisionFarmingBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAlgorithmComplexityAnalysis/ANEAlgorithmComplexityAnalysisBenchmark.swift",
+      "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAsyncCopyMemoryTransferOptimization/ANEAsyncCopyMemoryTransferOptimizationBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAttentionMechanism/ANEAttentionMechanismBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAudioFingerprintingMusicRecognition/ANEAudioFingerprintingMusicRecognitionBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAudioSignalProcessing/ANEAudioSignalProcessingBenchmark.swift",
@@ -4698,6 +4709,10 @@
         {
           "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAlgorithmComplexityAnalysis/ANEAlgorithmComplexityAnalysisBenchmark.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAsyncCopyMemoryTransferOptimization/ANEAsyncCopyMemoryTransferOptimizationBenchmark.swift"
         },
         {
           "kind" : "file",
@@ -6316,6 +6331,10 @@
         {
           "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEAlgorithmComplexityAnalysisBenchmark.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEAsyncCopyMemoryTransferOptimizationBenchmark.swift.o"
         },
         {
           "kind" : "file",

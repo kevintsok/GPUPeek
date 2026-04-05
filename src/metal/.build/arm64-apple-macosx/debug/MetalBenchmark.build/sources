@@ -10,6 +10,7 @@
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAdvancedIndexing/ANEAdvancedIndexingBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAgriculturalPrecisionFarming/ANEAgriculturalPrecisionFarmingBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAlgorithmComplexityAnalysis/ANEAlgorithmComplexityAnalysisBenchmark.swift
+/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAsyncCopyMemoryTransferOptimization/ANEAsyncCopyMemoryTransferOptimizationBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAttentionMechanism/ANEAttentionMechanismBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAudioFingerprintingMusicRecognition/ANEAudioFingerprintingMusicRecognitionBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAudioSignalProcessing/ANEAudioSignalProcessingBenchmark.swift
