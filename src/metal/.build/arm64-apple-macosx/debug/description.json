@@ -188,6 +188,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBrainComputerInterfaceNeuralSignalProcessing/ANEBrainComputerInterfaceBenchmark.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBroadcastingReshaping/ANEBroadcastingReshapingBenchmark.swift"
         },
         {
@@ -1900,6 +1904,7 @@
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBitonicSortNetworkBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBitwisePackingBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBoxFilterBenchmark.swift.o",
+        "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBrainComputerInterfaceBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBroadcastingReshapingBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANECTTomographyReconstructionBenchmark.swift.o",
         "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEChannelAttentionBenchmark.swift.o",
@@ -2517,6 +2522,10 @@
         {
           "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBoxFilterBenchmark.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBrainComputerInterfaceBenchmark.swift.o"
         },
         {
           "kind" : "file",
@@ -4226,6 +4235,7 @@
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBitonicSortNetwork/ANEBitonicSortNetworkBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBitwisePackingOperations/ANEBitwisePackingBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBoxFilter/ANEBoxFilterBenchmark.swift",
+        "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBrainComputerInterfaceNeuralSignalProcessing/ANEBrainComputerInterfaceBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBroadcastingReshaping/ANEBroadcastingReshapingBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECTTomographyReconstruction/ANECTTomographyReconstructionBenchmark.swift",
         "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEChannelAttention/ANEChannelAttentionBenchmark.swift",
@@ -4699,6 +4709,7 @@
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBitonicSortNetwork/ANEBitonicSortNetworkBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBitwisePackingOperations/ANEBitwisePackingBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBoxFilter/ANEBoxFilterBenchmark.swift",
+      "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBrainComputerInterfaceNeuralSignalProcessing/ANEBrainComputerInterfaceBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBroadcastingReshaping/ANEBroadcastingReshapingBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECTTomographyReconstruction/ANECTTomographyReconstructionBenchmark.swift",
       "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEChannelAttention/ANEChannelAttentionBenchmark.swift",
@@ -5353,6 +5364,10 @@
         {
           "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBoxFilter/ANEBoxFilterBenchmark.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBrainComputerInterfaceNeuralSignalProcessing/ANEBrainComputerInterfaceBenchmark.swift"
         },
         {
           "kind" : "file",
@@ -7171,6 +7186,10 @@
         {
           "kind" : "file",
           "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBoxFilterBenchmark.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/longxia/Projects/GPUPeek/src/metal/.build/arm64-apple-macosx/debug/MetalBenchmark.build/ANEBrainComputerInterfaceBenchmark.swift.o"
         },
         {
           "kind" : "file",
