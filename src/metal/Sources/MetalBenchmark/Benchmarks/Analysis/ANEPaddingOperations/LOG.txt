@@ -1,6 +1,6 @@
 ANE Padding Operations Benchmark
 ===============================
-Date: 2026-04-05T09:42:07Z
+Date: 2026-04-05T10:06:36Z
 
 Padding Mode Performance (512x512):
 Zero/Constant: 0.62ms, 1250 throughput (FASTEST)
