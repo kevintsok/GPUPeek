@@ -383,6 +383,7 @@
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalDoubleBuffering/MetalDoubleBufferingBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalFrameTimingPipeline/MetalFrameTimingPipelineBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalIndirectCommandBufferDispatch/MetalIndirectCommandBufferDispatchBenchmark.swift
+/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalKernelDispatchOptimization/MetalKernelDispatchBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalMemoryHierarchy/MetalMemoryHierarchyBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalPipelineBubbles/MetalPipelineBubblesBenchmark.swift
 /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalPipelineDepth/MetalPipelineDepthBenchmark.swift
