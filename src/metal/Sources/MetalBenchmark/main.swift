@@ -17365,6 +17365,7 @@ do { try ANEKernelFusionBenchmark(device: device, queue: queue).run() } catch { 
 	do { try ANETensorReshapingOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEROIPoolingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEComparisonSelectionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+	do { try ANEBatchGEMMOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEvsGPULatencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEvsCPUPerformanceBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEPowerEfficiencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
