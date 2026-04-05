@@ -1,6 +1,6 @@
 ANE Normalization Efficiency Benchmark
 =====================================
-Date: 2026-04-05T09:36:14Z
+Date: 2026-04-05T09:42:07Z
 
 Batch Normalization:
 Batch=1: 0.6-2.5ms (inference mode)
