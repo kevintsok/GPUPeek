@@ -1,6 +1,6 @@
 ANE Hough Transform Benchmark
 ============================
-Date: 2026-04-05T08:49:17Z
+Date: 2026-04-05T09:10:59Z
 
 HOUGH LINE TRANSFORM:
 256x256: ANE=2.5ms, CPU=30.0ms, GPU=8.0ms, speedup=12.0x
