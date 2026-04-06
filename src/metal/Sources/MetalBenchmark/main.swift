@@ -17532,6 +17532,7 @@ do { try ANETimeSeriesAnomalyDetectionBenchmark(device: device, queue: queue).ru
 do { try ANETimeSeriesForecastingAnomalyDetectionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEZeroShotFewShotLearningBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANEKVCacheOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try ANERoPEOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try testAsynchronousOverlap(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testMultiQueueParallelism(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testSharedEventSynchronization(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
