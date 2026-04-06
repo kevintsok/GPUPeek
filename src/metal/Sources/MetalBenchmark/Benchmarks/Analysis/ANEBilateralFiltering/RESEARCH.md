@@ -1,7 +1,7 @@
 # ANE Bilateral Filtering Benchmark Results
 
 ## Timestamp
-2026-04-06T09:38:57Z
+2026-04-06T14:07:58Z
 
 ## Hardware
 - Device: Apple M2
