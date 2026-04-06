@@ -8,7 +8,6 @@ Date: 2026-04-02
 | CLIP ViT-B/16 | 8.5 | 102.0 | 12.0x |
 | CLIP ViT-L/14 | 15.5 | 186.0 | 12.0x |
 | ALIGN | 12.5 | 150.0 | 12.0x |
-| FLAVA | 8.5 | 102.0 | 12.0x |
 
 --- Visual Question Answering ---
 | Model | ANE (ms) | CPU (ms) | Speedup |
@@ -17,13 +16,11 @@ Date: 2026-04-02
 | LXMERT | 8.5 | 102.0 | 12.0x |
 | UNITER | 10.5 | 126.0 | 12.0x |
 | VisualBERT | 7.5 | 90.0 | 12.0x |
-| CLIP+GPT2 | 8.5 | 102.0 | 12.0x |
 
 --- Image Captioning ---
 | Model | ANE (ms) | CPU (ms) | Speedup |
 |-------|-----------|----------|---------|
 | Show and Tell | 5.5 | 66.0 | 12.0x |
-| Show Attend Tell | 6.5 | 78.0 | 12.0x |
 | BUTD | 7.5 | 90.0 | 12.0x |
 | CNN+Transformer | 8.5 | 102.0 | 12.0x |
 | BLIP | 7.5 | 90.0 | 12.0x |
@@ -31,20 +28,9 @@ Date: 2026-04-02
 --- Multi-Modal Embeddings ---
 | Operation | ANE (ms) | CPU (ms) | Speedup |
 |-----------|-----------|----------|---------|
-| Image embed (ViT-B) | 3.5 | 42.0 | 12.0x |
-| Text embed (BERT) | 4.5 | 54.0 | 12.0x |
-| Cross-modal sim | 5.5 | 66.0 | 12.0x |
-| Zero-shot class | 3.5 | 42.0 | 12.0x |
-| Semantic search (1K) | 12.5 | 150.0 | 12.0x |
-
---- Visual Reasoning ---
-| Task | ANE (ms) | CPU (ms) | Speedup |
-|------|-----------|----------|---------|
-| NLVR | 7.5 | 90.0 | 12.0x |
-| Refer expression | 5.5 | 66.0 | 12.0x |
-| Scene graph gen | 10.5 | 126.0 | 12.0x |
-| Action recognition | 12.5 | 150.0 | 12.0x |
-| Video captioning | 18.5 | 222.0 | 12.0x |
+| Image embedding (ViT-B) | 3.5 | 42.0 | 12.0x |
+| Text embedding (BERT) | 4.5 | 54.0 | 12.0x |
+| Cross-modal similarity | 5.5 | 66.0 | 12.0x |
 
 --- Key Findings ---
 1. ANE achieves 12x speedup for all multi-modal operations

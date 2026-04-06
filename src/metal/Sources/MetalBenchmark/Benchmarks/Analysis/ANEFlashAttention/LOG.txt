@@ -3,7 +3,6 @@ Date: 2026-04-01
 
 --- Attention Memory Complexity ---
 | Sequence Length | Standard (MB) | Flash (MB) | Reduction |
-|-----------------|---------------|------------| ----------|
 | 128 | 8 | 2 | 75% |
 | 256 | 32 | 4 | 88% |
 | 512 | 128 | 8 | 94% |
@@ -13,7 +12,6 @@ Date: 2026-04-01
 
 --- Tile Size vs Performance ---
 | Tile Size | Time (ms) | Memory (MB) | Throughput |
-|-----------|-----------|-------------|------------|
 | 16 | 25.0 | 8 | 41.9 Gelem/s |
 | 32 | 18.0 | 10 | 58.3 Gelem/s |
 | 64 | 15.0 | 14 | 70.0 Gelem/s |
@@ -23,7 +21,6 @@ Date: 2026-04-01
 
 --- Sequence Length Scaling ---
 | Seq Length | Standard (ms) | Flash (ms) | Speedup |
-|------------|---------------|------------|---------|
 | 128 | 10 | 5 | 2.0x |
 | 256 | 35 | 15 | 2.3x |
 | 512 | 140 | 50 | 2.8x |
@@ -33,7 +30,6 @@ Date: 2026-04-01
 
 --- Batch Size Impact ---
 | Batch | Standard (ms) | Flash (ms) | Speedup |
-|-------|---------------|------------|--------|
 | 1 | 180 | 50 | 3.6x |
 | 2 | 320 | 95 | 3.4x |
 | 4 | 580 | 185 | 3.1x |
@@ -43,7 +39,6 @@ Date: 2026-04-01
 
 --- Key-Value Cache Efficiency ---
 | Cache % | Standard (ms) | Flash (ms) | Speedup |
-|---------|---------------|------------|--------|
 | 0% | 180 | 180 | 1.0x |
 | 25% | 155 | 135 | 1.15x |
 | 50% | 130 | 95 | 1.37x |

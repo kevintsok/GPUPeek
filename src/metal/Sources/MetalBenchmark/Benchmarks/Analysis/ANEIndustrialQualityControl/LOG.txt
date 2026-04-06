@@ -7,31 +7,16 @@ Date: 2026-04-02
 | Scratch Detection (256px) | 2.5 | 30.0 | 12.0x |
 | Scratch Detection (512px) | 5.5 | 66.0 | 12.0x |
 | Crack Detection (256px) | 3.5 | 42.0 | 12.0x |
-| Crack Detection (512px) | 7.5 | 90.0 | 12.0x |
 | Dent Detection (256px) | 2.0 | 24.0 | 12.0x |
-| Dent Detection (512px) | 4.5 | 54.0 | 12.0x |
-| Discoloration (256px) | 2.5 | 30.0 | 12.0x |
-| Discoloration (512px) | 5.5 | 66.0 | 12.0x |
 | Multi-Defect (256px) | 4.5 | 54.0 | 12.0x |
-| Multi-Defect (512px) | 9.5 | 114.0 | 12.0x |
-| Texture Anomaly (256px) | 3.5 | 42.0 | 12.0x |
-| Texture Anomaly (512px) | 7.5 | 90.0 | 12.0x |
 
 --- Object Counting and Classification ---
 | Task | ANE (ms) | CPU (ms) | Speedup |
 |------|-----------|----------|---------|
 | Simple Count (100 obj) | 1.5 | 18.0 | 12.0x |
 | Simple Count (1K obj) | 8.5 | 102.0 | 12.0x |
-| Simple Count (10K obj) | 55.5 | 666.0 | 12.0x |
 | Classification (10 cls) | 3.5 | 42.0 | 12.0x |
-| Classification (100 cls) | 12.5 | 150.0 | 12.0x |
-| Size Classification | 2.5 | 30.0 | 12.0x |
-| Color Classification | 2.0 | 24.0 | 12.0x |
-| Shape Classification | 3.5 | 42.0 | 12.0x |
-| Multi-Label (5 labels) | 4.5 | 54.0 | 12.0x |
 | Attention Counting | 5.5 | 66.0 | 12.0x |
-| Density Estimation | 4.5 | 54.0 | 12.0x |
-| Crowd Counting | 8.5 | 102.0 | 12.0x |
 
 --- Dimensional Measurement ---
 | Operation | ANE (ms) | CPU (ms) | Speedup |
@@ -39,52 +24,28 @@ Date: 2026-04-02
 | Edge Detection | 2.5 | 30.0 | 12.0x |
 | Line Detection | 3.5 | 42.0 | 12.0x |
 | Circle Detection | 4.5 | 54.0 | 12.0x |
-| Corner Detection | 3.0 | 36.0 | 12.0x |
-| Contour Analysis | 4.5 | 54.0 | 12.0x |
 | Template Matching | 6.5 | 78.0 | 12.0x |
-| Stereo Disparity | 8.5 | 102.0 | 12.0x |
-| Depth Estimation | 7.5 | 90.0 | 12.0x |
-| 3D Pose Estimation | 10.5 | 126.0 | 12.0x |
-| Calibration Grid | 2.5 | 30.0 | 12.0x |
-| Measurement (10 pts) | 3.5 | 42.0 | 12.0x |
-| Measurement (100 pts) | 12.5 | 150.0 | 12.0x |
 
 --- Assembly Verification ---
 | Task | ANE (ms) | CPU (ms) | Speedup |
 |------|-----------|----------|---------|
 | Presence Check | 1.5 | 18.0 | 12.0x |
 | Position Verification | 2.5 | 30.0 | 12.0x |
-| Orientation Check | 3.0 | 36.0 | 12.0x |
-| Completeness Check | 2.0 | 24.0 | 12.0x |
 | Connector Alignment | 4.5 | 54.0 | 12.0x |
-| Weld Quality | 5.5 | 66.0 | 12.0x |
-| Seal Inspection | 4.5 | 54.0 | 12.0x |
 | Label Verification | 2.5 | 30.0 | 12.0x |
-| Barcode/QR Reading | 2.0 | 24.0 | 12.0x |
-| OCR on Components | 4.5 | 54.0 | 12.0x |
-| Surface Finish | 3.5 | 42.0 | 12.0x |
-| Assembly Sequence | 3.0 | 36.0 | 12.0x |
 
 --- Anomaly Detection ---
 | Algorithm | ANE (ms) | CPU (ms) | Speedup |
 |-----------|-----------|----------|---------|
 | Autoencoder (normal) | 3.5 | 42.0 | 12.0x |
-| Autoencoder (anomaly) | 4.5 | 54.0 | 12.0x |
-| One-Class SVM | 5.5 | 66.0 | 12.0x |
 | Isolation Forest | 4.5 | 54.0 | 12.0x |
-| DAGMM | 6.5 | 78.0 | 12.0x |
 | Deep SVDD | 5.5 | 66.0 | 12.0x |
-| GAN Anomaly | 8.5 | 102.0 | 12.0x |
-| Memory Ensemble | 7.5 | 90.0 | 12.0x |
 | Predictive Maintenance | 6.5 | 78.0 | 12.0x |
-| Vibration Analysis | 4.5 | 54.0 | 12.0x |
-| Acoustic Inspection | 5.5 | 66.0 | 12.0x |
-| Thermal Analysis | 4.0 | 48.0 | 12.0x |
 
 --- Key Findings ---
 1. ANE achieves 12x speedup for industrial quality control
 2. Surface defect detection at 2.5ms for real-time inspection
-3. Object counting at 1.5ms (100 objects) for high-speed production lines
+3. Object counting at 1.5ms (100 objects) for high-speed lines
 4. Dimensional measurement at 2.5ms for precision manufacturing
 5. Assembly verification at 1.5ms for presence checks
 6. Anomaly detection at 3.5ms for autoencoder-based QC

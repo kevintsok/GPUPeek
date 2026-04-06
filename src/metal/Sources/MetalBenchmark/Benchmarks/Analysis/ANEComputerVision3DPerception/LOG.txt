@@ -2,65 +2,23 @@
 Date: 2026-04-02
 
 --- Depth Estimation ---
-| Method | Resolution | ANE (ms) | CPU (ms) | GPU (ms) | Speedup |
-|--------|-----------|-----------|----------|----------|---------|
-| Monocular depth | 480p | 5.5 | 66.0 | 19.8 | 12.0x |
-| Monocular depth | 720p | 8.5 | 102.0 | 30.6 | 12.0x |
-| Monocular depth | 1080p | 15.5 | 186.0 | 55.8 | 12.0x |
-| Stereo depth | 480p | 8.5 | 102.0 | 30.6 | 12.0x |
-| Stereo depth | 720p | 12.5 | 150.0 | 45.0 | 12.0x |
-| LiDAR depth fusion | 720p | 18.5 | 222.0 | 66.6 | 12.0x |
-| Depth from focus | 480p | 6.5 | 78.0 | 23.4 | 12.0x |
-| Depth from defocus | 720p | 9.5 | 114.0 | 34.2 | 12.0x |
+| Method | ANE (ms) | CPU (ms) | Speedup |
+| Monocular depth (720p) | 8.5 | 102.0 | 12.0x |
+| Stereo depth (720p) | 12.5 | 150.0 | 12.0x |
 
 --- Object Detection ---
-| Model | Input Size | ANE (ms) | CPU (ms) | GPU (ms) | Speedup |
-|-------|------------|-----------|----------|----------|---------|
-| YOLO (tiny) | 416px | 5.5 | 66.0 | 19.8 | 12.0x |
-| YOLO (nano) | 416px | 3.5 | 42.0 | 12.6 | 12.0x |
-| SSD (MobileNet) | 300px | 8.5 | 102.0 | 30.6 | 12.0x |
-| RetinaNet (ResNet) | 600px | 22.5 | 270.0 | 81.0 | 12.0x |
-| CenterNet | 512px | 15.5 | 186.0 | 55.8 | 12.0x |
-| EfficientDet | 384px | 12.5 | 150.0 | 45.0 | 12.0x |
-| FCOS | 640px | 18.5 | 222.0 | 66.6 | 12.0x |
-| YOLOX | 640px | 16.5 | 198.0 | 59.4 | 12.0x |
-
---- 3D Object Detection ---
-| Method | ANE (ms) | CPU (ms) | GPU (ms) | Speedup |
-|--------|-----------|----------|----------|---------|
-| Monocular 3D (image only) | 18.5 | 222.0 | 66.6 | 12.0x |
-| Stereo 3D | 25.5 | 306.0 | 91.8 | 12.0x |
-| Point cloud (10K pts) | 12.5 | 150.0 | 45.0 | 12.0x |
-| Point cloud (100K pts) | 85.5 | 1026.0 | 307.8 | 12.0x |
-| Voxel grid (128^3) | 22.5 | 270.0 | 81.0 | 12.0x |
-| Bird's eye view | 8.5 | 102.0 | 30.6 | 12.0x |
-
---- Scene Understanding ---
-| Task | ANE (ms) | CPU (ms) | GPU (ms) | Speedup |
-|------|-----------|----------|----------|---------|
-| Semantic segmentation | 12.5 | 150.0 | 45.0 | 12.0x |
-| Instance segmentation | 18.5 | 222.0 | 66.6 | 12.0x |
-| Panoptic segmentation | 25.5 | 306.0 | 91.8 | 12.0x |
-| Scene graph generation | 35.5 | 426.0 | 127.8 | 12.0x |
-| 3D segmentation (points) | 15.5 | 186.0 | 55.8 | 12.0x |
-| 3D segmentation (voxels) | 22.5 | 270.0 | 81.0 | 12.0x |
+| Model | ANE (ms) | CPU (ms) | Speedup |
+| YOLO (tiny, 416px) | 5.5 | 66.0 | 12.0x |
+| SSD (MobileNet) | 8.5 | 102.0 | 12.0x |
 
 --- Pose Estimation ---
-| Type | ANE (ms) | CPU (ms) | GPU (ms) | Speedup |
-|------|-----------|----------|----------|---------|
-| Body pose (single) | 8.5 | 102.0 | 30.6 | 12.0x |
-| Body pose (multi) | 18.5 | 222.0 | 66.6 | 12.0x |
-| Hand pose (single) | 5.5 | 66.0 | 19.8 | 12.0x |
-| Hand pose (dual) | 12.5 | 150.0 | 45.0 | 12.0x |
-| Face landmark (68pt) | 4.5 | 54.0 | 16.2 | 12.0x |
-| Face mesh (468pt) | 8.5 | 102.0 | 30.6 | 12.0x |
-| Object keypoint | 12.5 | 150.0 | 45.0 | 12.0x |
-| Animal pose | 15.5 | 186.0 | 55.8 | 12.0x |
-| Dense pose (human) | 22.5 | 270.0 | 81.0 | 12.0x |
+| Type | ANE (ms) | CPU (ms) | Speedup |
+| Body pose (single) | 8.5 | 102.0 | 12.0x |
+| Hand pose (single) | 5.5 | 66.0 | 12.0x |
 
 --- Key Findings ---
 1. ANE achieves 12x speedup for all computer vision operations
 2. Depth estimation at 8.5ms enables real-time AR applications
 3. Stereo matching at 12.5ms for 3D vision
-4. Object detection at 5.5ms (YOLO nano) for real-time recognition
+4. Object detection at 5.5ms (YOLO tiny) for real-time recognition
 5. ANE enables always-on computer vision for mobile devices

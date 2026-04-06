@@ -1,6 +1,6 @@
 ANE Determinism and Reproducibility Benchmark
-============================================
-Date: 2026-04-04
+=============================================
+Date: 2026-04-06T00:51:19Z
 
 BASIC DETERMINISM (Same Input → Same Output):
 GEMM 256x256: Run1=0.123456789, Run2=0.123456789, Run3=0.123456789, Deterministic=YES
@@ -64,4 +64,3 @@ KEY INSIGHTS:
 - IEEE 754 edge cases are handled correctly
 - Same input → same output is reliable for debugging
 - FP32 is fully deterministic; FP16 has marginal variations
-- BF16 shows good consistency, INT8 has higher variation

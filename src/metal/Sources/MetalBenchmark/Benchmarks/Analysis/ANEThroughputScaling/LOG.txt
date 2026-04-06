@@ -1,9 +1,7 @@
 === ANE vs GPU Throughput Scaling with Input Size Analysis ===
-Date: 2026-04-03
 
 --- Matrix Multiplication Throughput Scaling ---
 | Size | ANE (GFLOPS) | GPU (GFLOPS) | ANE/GPU |
-|------|-------------|-------------|---------|
 | 64x64 | 0.02 | 0.08 | 0.25x |
 | 128x128 | 0.08 | 0.15 | 0.53x |
 | 256x256 | 0.32 | 0.45 | 0.71x |
@@ -14,7 +12,6 @@ Date: 2026-04-03
 
 --- Convolution Operation Scaling ---
 | Input | ANE (GOPS) | GPU (GOPS) | Winner |
-|-------|-----------|-----------|--------|
 | 1x32x32 | 0.05 | 0.12 | GPU |
 | 1x64x64 | 0.20 | 0.35 | GPU |
 | 1x128x128 | 0.80 | 1.10 | GPU |
@@ -25,7 +22,6 @@ Date: 2026-04-03
 
 --- Element-wise Operation Scaling ---
 | Elements | ANE (GB/s) | GPU (GB/s) | Notes |
-|----------|-----------|-----------|-------|
 | 1K | 80 | 120 | Vector ops |
 | 4K | 120 | 180 | Vector ops |
 | 16K | 150 | 220 | Cache-bound |
@@ -35,7 +31,6 @@ Date: 2026-04-03
 
 --- Memory-bound Operation Scaling ---
 | Size | ANE (GB/s) | GPU (GB/s) | Ratio |
-|------|-----------|-----------|-------|
 | 4K | 45 | 80 | 0.56x |
 | 16K | 55 | 100 | 0.55x |
 | 64K | 60 | 120 | 0.50x |

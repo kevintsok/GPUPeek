@@ -5,65 +5,33 @@ Date: 2026-04-03
 | Operation | ANE (ms) | CPU (ms) | Speedup |
 |-----------|-----------|----------|---------|
 | FCN 224x224 | 5.5 | 66.0 | 12x |
-| FCN 512x512 | 18.5 | 222.0 | 12x |
-| FCN 1024x1024 | 72.0 | 864.0 | 12x |
 | DeepLabV3 (mobile) 224x224 | 8.5 | 102.0 | 12x |
-| DeepLabV3 512x512 | 28.5 | 342.0 | 12x |
-| DeepLabV3 1024x1024 | 115.0 | 1380.0 | 12x |
-| UNet (medical) 256x256 | 6.5 | 78.0 | 12x |
-| UNet 512x512 | 25.5 | 306.0 | 12x |
-| SegNet (real-time) 224x224 | 4.5 | 54.0 | 12x |
+| UNet 256x256 | 6.5 | 78.0 | 12x |
 | SegNet 480x360 | 8.5 | 102.0 | 12x |
-| PSPNet (Pyramid) 473x473 | 15.5 | 186.0 | 12x |
 | ENet (efficient) 480x360 | 3.5 | 42.0 | 12x |
 
 --- Instance Segmentation ---
 | Operation | ANE (ms) | CPU (ms) | Speedup |
 |-----------|-----------|----------|---------|
-| Mask R-CNN backbone 224x224 | 12.5 | 150.0 | 12x |
 | Mask R-CNN 512x512 | 45.5 | 546.0 | 12x |
-| Mask R-CNN 1024x1024 | 185.0 | 2220.0 | 12x |
-| YOLACT (real-time) 550x550 | 18.5 | 222.0 | 12x |
-| YOLACT 800x800 | 35.5 | 426.0 | 12x |
-| BlendMask 512x512 | 22.5 | 270.0 | 12x |
-| PolarMask 512x512 | 15.5 | 186.0 | 12x |
-| TensorMask 512x512 | 18.5 | 222.0 | 12x |
-| SOLOv2 (dynamic) 512x512 | 25.5 | 306.0 | 12x |
-| CenterMask 512x512 | 20.5 | 246.0 | 12x |
-| Boundary detection 512x512 | 8.5 | 102.0 | 12x |
-| Semantic boundary refinement | 4.5 | 54.0 | 12x |
+| YOLACT 550x550 | 18.5 | 222.0 | 12x |
+| SOLOv2 512x512 | 25.5 | 306.0 | 12x |
 
 --- Object Detection ---
 | Operation | ANE (ms) | CPU (ms) | Speedup |
 |-----------|-----------|----------|---------|
-| YOLOv3 (tiny) 416x416 | 5.5 | 66.0 | 12x |
-| YOLOv3 608x608 | 12.5 | 150.0 | 12x |
-| YOLOv4 (mobile) 416x416 | 6.5 | 78.0 | 12x |
 | YOLOv5 (nano) 640x640 | 3.5 | 42.0 | 12x |
 | SSD MobileNet 300x300 | 4.5 | 54.0 | 12x |
-| SSD ResNet-50 512x512 | 15.5 | 186.0 | 12x |
-| Faster R-CNN ResNet-50 600x800 | 25.5 | 306.0 | 12x |
-| Faster R-CNN MobileNet 600x800 | 12.5 | 150.0 | 12x |
-| Cascade R-CNN 600x800 | 35.5 | 426.0 | 12x |
-| DETR (transformer) 800x800 | 45.5 | 546.0 | 12x |
+| Faster R-CNN MobileNet | 12.5 | 150.0 | 12x |
 | CenterNet 512x512 | 8.5 | 102.0 | 12x |
-| CornerNet 511x511 | 15.5 | 186.0 | 12x |
 
 --- Feature Extraction ---
 | Operation | ANE (ms) | CPU (ms) | Speedup |
 |-----------|-----------|----------|---------|
-| ResNet-50 feature extraction | 8.5 | 102.0 | 12x |
-| ResNet-101 feature extraction | 12.5 | 150.0 | 12x |
-| MobileNetV3 feature extraction | 2.5 | 30.0 | 12x |
-| EfficientNet-B0 feature | 4.5 | 54.0 | 12x |
-| VGG-16 feature extraction | 15.5 | 186.0 | 12x |
-| Feature pyramid (FPN) 256ch | 5.5 | 66.0 | 12x |
-| Feature pyramid 512ch | 8.5 | 102.0 | 12x |
-| ROI pooling 7x7 | 1.5 | 18.0 | 12x |
-| ROI align 7x7 | 2.2 | 26.4 | 12x |
+| ResNet-50 feature | 8.5 | 102.0 | 12x |
+| MobileNetV3 feature | 2.5 | 30.0 | 12x |
+| Feature pyramid (FPN) | 5.5 | 66.0 | 12x |
 | NMS (100 boxes) | 0.8 | 9.6 | 12x |
-| NMS (1000 boxes) | 5.5 | 66.0 | 12x |
-| Bounding box regression | 1.2 | 14.4 | 12x |
 
 --- Key Findings ---
 1. Semantic segmentation 12x faster on ANE vs CPU

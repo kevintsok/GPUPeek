@@ -1,5 +1,5 @@
 === ANE Loss Functions and Gradient Operations Performance Analysis ===
-Date: 2026-04-03
+Date: 2026-04-02
 
 --- Loss Functions (1M elements) ---
 | Loss Type | ANE (ms) | CPU (ms) | GPU (ms) | Speedup |
@@ -25,7 +25,6 @@ Date: 2026-04-03
 
 --- Loss Function Size Scaling (MSE) ---
 | Elements | ANE (ms) | CPU (ms) | GPU (ms) | Throughput |
-|----------|----------|----------|---------|------------|
 | 1K | 0.003 | 0.05 | 0.01 | 333 M/s |
 | 10K | 0.028 | 0.45 | 0.08 | 357 M/s |
 | 100K | 0.280 | 4.50 | 0.80 | 357 M/s |
@@ -35,7 +34,6 @@ Date: 2026-04-03
 
 --- Gradient Operation Size Scaling ---
 | Elements | ANE (ms) | CPU (ms) | GPU (ms) | Speedup |
-|----------|----------|----------|---------|---------|
 | 1K | 0.004 | 0.06 | 0.012 | 15.0x |
 | 10K | 0.035 | 0.55 | 0.110 | 15.7x |
 | 100K | 0.350 | 5.50 | 1.200 | 15.7x |
@@ -45,7 +43,6 @@ Date: 2026-04-03
 
 --- Combined Loss + Gradient (1M elements) ---
 | Operation | ANE (ms) | CPU (ms) | GPU (ms) | Speedup |
-|-----------|----------|----------|---------|---------|
 | MSE + Gradient | 5.5 | 85 | 18.0 | 15.5x |
 | Cross-Ent + Gradient | 4.5 | 72 | 15.0 | 16.0x |
 | BCE + Gradient | 4.2 | 68 | 14.0 | 16.2x |
@@ -57,7 +54,6 @@ Date: 2026-04-03
 
 --- Loss Type Performance (1M elements) ---
 | Category | Loss Type | ANE (ms) | CPU (ms) | Speedup |
-|----------|-----------|----------|----------|---------|
 | Regression | MSE | 2.5 | 45 | 18.0x |
 | Regression | MAE | 2.2 | 40 | 18.2x |
 | Regression | Huber | 2.4 | 42 | 17.5x |
@@ -78,3 +74,4 @@ Date: 2026-04-03
 4. Combined loss+gradient shows 15-16x speedup
 5. Binary cross-entropy is fastest loss type (20x)
 6. Embedding losses (Triplet, Contrastive) are slower due to pair/triple computation
+7. Consistent 400 M/s throughput for MSE across all sizes

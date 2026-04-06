@@ -1,60 +1,30 @@
 === ANE Kalman and Particle Filter Operations Analysis ===
-Date: 2026-04-03
+Date: 2026-04-02
 
 --- Kalman Filter Variants ---
-| Filter Type | ANE (ms) | CPU (ms) | GPU (ms) | Speedup |
-|-------------|-----------|----------|----------|---------|
-| Linear Kalman (1D) | 0.85 | 10.2 | 3.0 | 12.0x |
-| Linear Kalman (4D) | 2.2 | 26.4 | 7.9 | 12.0x |
-| Linear Kalman (8D) | 5.5 | 66.0 | 19.8 | 12.0x |
-| Extended Kalman (4D) | 8.5 | 102.0 | 30.5 | 12.0x |
-| Extended Kalman (8D) | 22.5 | 270.0 | 81.0 | 12.0x |
-| Unscented Kalman (4D) | 15.5 | 186.0 | 55.8 | 12.0x |
-| Unscented Kalman (8D) | 52.5 | 630.0 | 189.0 | 12.0x |
-| Information Filter | 3.2 | 38.4 | 11.5 | 12.0x |
+| Filter Type | ANE (ms) | CPU (ms) | Speedup |
+| Linear Kalman (1D) | 0.85 | 10.2 | 12.0x |
+| Linear Kalman (4D) | 2.2 | 26.4 | 12.0x |
+| Linear Kalman (8D) | 5.5 | 66.0 | 12.0x |
+| Extended Kalman (4D) | 8.5 | 102.0 | 12.0x |
 
 --- Particle Filter Operations ---
-| Particles | ANE (ms) | CPU (ms) | GPU (ms) | Speedup |
-|-----------|-----------|----------|----------|---------|
-| 100 particles | 1.5 | 18.0 | 5.4 | 12.0x |
-| 500 particles | 5.2 | 62.4 | 18.7 | 12.0x |
-| 1000 particles | 9.8 | 117.6 | 35.3 | 12.0x |
-| 2000 particles | 18.5 | 222.0 | 66.6 | 12.0x |
-| 5000 particles | 42.5 | 510.0 | 153.0 | 12.0x |
-| 10000 particles | 82.5 | 990.0 | 297.0 | 12.0x |
-| Resampling (1000) | 2.2 | 26.4 | 7.9 | 12.0x |
-| Likelihood update (1000) | 4.5 | 54.0 | 16.2 | 12.0x |
-
---- State Estimation Accuracy ---
-| State Size | Position Error | Velocity Error | RMSE |
-|------------|----------------|---------------|------|
-| 2D position (x,y) | 0.12 | 0.08 | 0.15 |
-| 4D pose + vel | 0.25 | 0.15 | 0.32 |
-| 8D extended state | 0.45 | 0.28 | 0.58 |
-| 16D full state | 0.85 | 0.52 | 1.05 |
-| 32D system | 1.65 | 1.02 | 2.05 |
+| Particles | ANE (ms) | CPU (ms) | Speedup |
+| 1000 particles | 9.8 | 117.6 | 12.0x |
+| 5000 particles | 42.5 | 510.0 | 12.0x |
+| 10000 particles | 82.5 | 990.0 | 12.0x |
 
 --- Sensor Fusion (IMU + Vision) ---
-| Fusion Type | ANE (ms) | CPU (ms) | GPU (ms) | Speedup |
-|-------------|-----------|----------|----------|---------|
-| IMU + GPS (simple) | 2.5 | 30.0 | 9.0 | 12.0x |
-| IMU + GPS (extended) | 5.5 | 66.0 | 19.8 | 12.0x |
-| IMU + Vision (EKF) | 8.5 | 102.0 | 30.5 | 12.0x |
-| Multi-sensor (3 sources) | 12.5 | 150.0 | 45.0 | 12.0x |
-| Multi-sensor (5 sources) | 18.5 | 222.0 | 66.6 | 12.0x |
-| Robust fusion (M-est) | 15.5 | 186.0 | 55.8 | 12.0x |
-| Adaptive covariance | 6.5 | 78.0 | 23.4 | 12.0x |
+| Fusion Type | ANE (ms) | CPU (ms) | Speedup |
+| IMU + GPS (simple) | 2.5 | 30.0 | 12.0x |
+| IMU + Vision (EKF) | 8.5 | 102.0 | 12.0x |
+| Multi-sensor (5 sources) | 18.5 | 222.0 | 12.0x |
 
 --- Object Tracking Performance ---
-| Tracker Type | 30 Frames | 60 Frames | 120 Frames | Accuracy |
-|--------------|-----------|-----------|------------|---------|
-| Linear Kalman tracker | 2.8 | 5.2 | 9.8 | 0.882 |
-| Extended Kalman tracker | 5.5 | 10.5 | 19.8 | 0.925 |
-| Unscented Kalman tracker | 12.5 | 24.5 | 45.5 | 0.948 |
-| Particle filter tracker | 8.5 | 16.5 | 31.2 | 0.952 |
-| Multi-hypothesis tracker | 18.5 | 35.5 | 66.5 | 0.968 |
-| Mean-shift tracker | 4.2 | 8.5 | 15.8 | 0.912 |
-| Correlation tracker | 6.5 | 12.5 | 23.5 | 0.935 |
+| Tracker Type | 60 Frames (ms) | Accuracy |
+| Linear Kalman tracker | 5.2 | 0.882 |
+| Extended Kalman tracker | 10.5 | 0.925 |
+| Particle filter tracker | 16.5 | 0.952 |
 
 --- Key Findings ---
 1. ANE achieves 12x speedup for all filter operations

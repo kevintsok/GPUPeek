@@ -3,7 +3,6 @@ Date: 2026-04-02
 
 --- Random Number Generation (1M numbers) ---
 | Distribution | ANE (ms) | CPU (ms) | GPU (ms) | Speedup |
-|-------------|-----------|----------|----------|---------|
 | Uniform (0-1) | 8.5 | 95.0 | 28.0 | 11.2x |
 | Uniform (int) | 7.2 | 82.0 | 24.0 | 11.4x |
 | Gaussian | 15.5 | 185.0 | 55.0 | 11.9x |
@@ -13,7 +12,6 @@ Date: 2026-04-02
 
 --- Hash Function Performance ---
 | Hash Type | ANE (ms) | CPU (ms) | GPU (ms) | Speedup |
-|-----------|-----------|----------|----------|---------|
 | CRC32 (64B) | 8.5 | 95.0 | 28.0 | 11.2x |
 | xxHash | 7.8 | 88.0 | 25.0 | 11.3x |
 | MurmurHash3 | 9.2 | 105.0 | 30.0 | 11.4x |
@@ -22,14 +20,12 @@ Date: 2026-04-02
 
 --- Dropout Operation Performance ---
 | Dropout Rate | ANE (ms) | CPU (ms) | GPU (ms) | Speedup |
-|--------------|-----------|----------|----------|---------|
 | Dropout 0.0 | 5.5 | 65.0 | 18.0 | 11.8x |
 | Dropout 0.5 | 8.2 | 95.0 | 28.0 | 11.6x |
 | Dropout 0.9 | 10.5 | 125.0 | 38.0 | 11.9x |
 
 --- Random Shuffle Performance ---
 | Size | ANE (ms) | CPU (ms) | GPU (ms) | Speedup |
-|------|-----------|----------|----------|---------|
 | 1K elements | 2.5 | 28.0 | 8.5 | 11.2x |
 | 10K elements | 18.5 | 220.0 | 65.0 | 11.9x |
 | 100K elements | 165.0 | 1950.0 | 580.0 | 11.8x |

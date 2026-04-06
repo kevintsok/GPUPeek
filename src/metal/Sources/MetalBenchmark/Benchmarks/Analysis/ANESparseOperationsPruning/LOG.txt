@@ -19,13 +19,7 @@ Date: 2026-04-02
 | Sparse matmul (90%) | 8.0 | 2.0 | 4.0x |
 | Sparse conv (50%) | 12.0 | 6.6 | 1.8x |
 | Sparse conv (70%) | 12.0 | 4.8 | 2.5x |
-| Sparse conv (90%) | 12.0 | 3.0 | 4.0x |
 | Sparse attention (50%) | 6.0 | 3.3 | 1.8x |
-| Sparse attention (70%) | 6.0 | 2.4 | 2.5x |
-| Sparse attention (90%) | 6.0 | 1.5 | 4.0x |
-| Sparse LSTM (50%) | 7.0 | 3.9 | 1.8x |
-| Sparse LSTM (70%) | 7.0 | 2.8 | 2.5x |
-| Sparse LSTM (90%) | 7.0 | 1.8 | 3.9x |
 
 --- Key Findings ---
 1. 50% sparsity provides 1.8x speedup with 50% memory savings

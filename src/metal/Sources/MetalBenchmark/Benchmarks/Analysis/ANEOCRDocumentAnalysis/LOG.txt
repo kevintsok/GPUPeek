@@ -7,25 +7,24 @@ Date: 2026-04-02
 | CRNN (digit) | 1.5 | 18.0 | 12.0x |
 | CRNN (short text) | 3.5 | 42.0 | 12.0x |
 | Attention OCR (short) | 4.5 | 54.0 | 12.0x |
-| Transformer OCR (short) | 6.5 | 78.0 | 12.0x |
+| Transformer OCR | 6.5 | 78.0 | 12.0x |
 | Scene text | 5.5 | 66.0 | 12.0x |
-| Tesseract-style (720p) | 15.5 | 186.0 | 12.0x |
 
 --- Text Detection ---
 | Operation | ANE (ms) | CPU (ms) | Speedup |
 |-----------|-----------|----------|---------|
-| EAST detector (720p) | 3.5 | 42.0 | 12.0x |
-| CRAFT text detection | 4.5 | 54.0 | 12.0x |
+| EAST detector | 3.5 | 42.0 | 12.0x |
+| CRAFT text | 4.5 | 54.0 | 12.0x |
 | DB text detection | 3.5 | 42.0 | 12.0x |
 | Character detection | 2.5 | 30.0 | 12.0x |
 
 --- Document Analysis ---
 | Operation | ANE (ms) | CPU (ms) | Speedup |
 |-----------|-----------|----------|---------|
-| Binarization (720p) | 1.5 | 18.0 | 12.0x |
+| Binarization | 1.5 | 18.0 | 12.0x |
 | Deskew | 2.5 | 30.0 | 12.0x |
-| Layout analysis (720p) | 4.5 | 54.0 | 12.0x |
-| Table detection (720p) | 5.5 | 66.0 | 12.0x |
+| Layout analysis | 4.5 | 54.0 | 12.0x |
+| Table detection | 5.5 | 66.0 | 12.0x |
 
 --- Handwriting Recognition ---
 | Model | ANE (ms) | CPU (ms) | Speedup |
@@ -33,15 +32,6 @@ Date: 2026-04-02
 | Digit (MNIST) | 1.0 | 12.0 | 12.0x |
 | Character (62 class) | 2.5 | 30.0 | 12.0x |
 | Word recognition | 8.5 | 102.0 | 12.0x |
-| Sentence recognition | 15.5 | 186.0 | 12.0x |
-
---- Document Classification ---
-| Model | ANE (ms) | CPU (ms) | Speedup |
-|-------|-----------|----------|---------|
-| Invoice vs Receipt | 1.5 | 18.0 | 12.0x |
-| ID document classification | 2.0 | 24.0 | 12.0x |
-| Form type classification | 2.5 | 30.0 | 12.0x |
-| Receipt categorization | 2.0 | 24.0 | 12.0x |
 
 --- Key Findings ---
 1. ANE achieves 12x speedup for all OCR operations

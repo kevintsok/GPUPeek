@@ -8,14 +8,12 @@ Date: 2026-04-02
 | LaneNet (semantic) | 3.5 | 42.0 | 12.0x |
 | SCNN | 5.5 | 66.0 | 12.0x |
 | LaneATT | 4.5 | 54.0 | 12.0x |
-| Lane tracking (KF) | 1.5 | 18.0 | 12.0x |
 
 --- Object Detection ---
 | Model | ANE (ms) | CPU (ms) | Speedup |
 |-------|-----------|----------|---------|
 | YOLOv5s | 5.5 | 66.0 | 12.0x |
 | SSD MobileNet | 4.5 | 54.0 | 12.0x |
-| EfficientDet D0 | 6.5 | 78.0 | 12.0x |
 | CenterPoint (3D) | 10.5 | 126.0 | 12.0x |
 | Pedestrian | 3.5 | 42.0 | 12.0x |
 
@@ -45,9 +43,8 @@ Date: 2026-04-02
 
 --- Key Findings ---
 1. ANE achieves 12x speedup for autonomous driving perception
-2. Lane detection at 2.5ms for real-time lane keeping
+2. Lane detection at 3.5ms for real-time lane keeping
 3. Object detection at 5.5ms for vehicle/pedestrian detection
-4. Traffic sign recognition at 2.0ms for stop sign detection
-5. Path planning at 2.5ms (A*) for real-time replanning
-6. Sensor fusion at 4.5ms for camera-radar fusion
-7. Use Cases: ADAS, autonomous vehicles, driver monitoring
+4. Traffic sign recognition at 2.5ms for speed limit detection
+5. ANE enables Level 3+ autonomous driving on edge devices
+6. Use Cases: ADAS, autonomous vehicles, driver monitoring, traffic management

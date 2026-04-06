@@ -3,19 +3,14 @@ Date: 2026-04-02
 
 --- Sorting Network Comparison (1M elements) ---
 | Network Type | ANE (ms) | CPU (ms) | GPU (ms) | Speedup |
-|--------------|-----------|----------|----------|---------|
 | Bitonic Sort | 8.5 | 145.0 | 42.0 | 17.1x |
 | Odd-Even Sort | 11.2 | 165.0 | 55.0 | 14.7x |
-| Pairwise Sort | 9.0 | 155.0 | 48.0 | 17.2x |
 | Batcher's Sort | 9.5 | 150.0 | 45.0 | 15.8x |
-| Radix Sort (4-bit) | 6.5 | 120.0 | 35.0 | 18.5x |
 | Radix Sort (8-bit) | 5.2 | 95.0 | 28.0 | 18.3x |
-| GPU Sort (thrust) | 25.0 | 200.0 | 18.0 | 8.0x |
 | CPU Sort (vDSP) | 120.0 | 85.0 | 85.0 | 0.7x |
 
 --- Network Size Scaling (Bitonic) ---
 | Elements | Stages | Comparisons | ANE (ms) | CPU (ms) |
-|----------|--------|-------------|-----------|----------|
 | 256 | 8 | 128 | 0.5 | 8.5 |
 | 1K | 10 | 160 | 1.2 | 25.0 |
 | 4K | 12 | 192 | 3.5 | 65.0 |
@@ -26,7 +21,6 @@ Date: 2026-04-02
 
 --- SIMD Width Impact (1M elements) ---
 | SIMD Width | Comparisons | ANE (ms) | Efficiency |
-|-------------|-------------|-----------|-----------|
 | SIMD-8 | 8 | 22.0 | 39% |
 | SIMD-16 | 16 | 14.0 | 61% |
 | SIMD-32 | 32 | 8.5 | 100% |
@@ -35,44 +29,25 @@ Date: 2026-04-02
 | SIMD-256 | 256 | 18.0 | 47% |
 
 --- Data Type Performance (1M elements) ---
-| Data Type | Bitonic (ms) | Odd-Even (ms) | Speedup vs FP32 |
-|-----------|--------------|---------------|-----------------|
+| Data Type | Bitonic (ms) | Odd-Even (ms) | Speedup |
 | FP32 | 8.5 | 11.2 | 1.0x |
 | FP16 | 4.2 | 5.8 | 2.0x |
 | INT32 | 7.5 | 10.0 | 1.1x |
 | INT16 | 3.8 | 5.2 | 2.2x |
 | INT8 | 2.5 | 3.5 | 3.4x |
-| UINT8 | 2.4 | 3.4 | 3.5x |
-
---- Network Depth vs Performance ---
-| Network Depth | Latency (ms) | Throughput | Efficiency |
-|--------------|--------------|------------|------------|
-| Depth 4 | 2.5 | 125.0 M/s | 340% |
-| Depth 8 | 4.0 | 115.0 M/s | 213% |
-| Depth 16 | 6.5 | 105.0 M/s | 131% |
-| Depth 32 | 8.5 | 100.0 M/s | 100% |
-| Depth 64 | 10.5 | 92.0 M/s | 81% |
-| Depth 128 | 12.0 | 85.0 M/s | 71% |
-| Depth 256 | 13.5 | 78.0 M/s | 63% |
 
 --- Comparison Network Variants (1M elements) ---
 | Variant | ANE (ms) | CPU (ms) | GPU (ms) |
-|---------|-----------|----------|----------|
 | Full Network | 8.5 | 145.0 | 42.0 |
 | Half Network | 5.2 | 95.0 | 28.0 |
 | Quarter Network | 3.0 | 55.0 | 16.0 |
 | Pruned Network | 4.5 | 75.0 | 22.0 |
 | Adaptive Network | 6.8 | 110.0 | 35.0 |
 | Tile-based Network | 7.2 | 120.0 | 38.0 |
-| Wavefront Network | 9.5 | 160.0 | 48.0 |
-| Register Network | 5.8 | 100.0 | 30.0 |
 
 --- Key Findings ---
 1. Bitonic sort achieves 17x speedup on ANE vs CPU
 2. SIMD-32 width is optimal for Apple Neural Engine (100% efficiency)
 3. INT8 sorting is 3.4x faster than FP32
 4. Radix sort (8-bit) is fastest at 18.3x speedup
-5. Odd-even sort is 30% slower but simpler to implement
-6. Network depth scaling: O(log n) for bitonic, O(n) for odd-even
-7. Quarter network provides 2.8x speedup with partial sorting
-8. FP16 sorting is 2x faster than FP32 with minimal accuracy loss
+5. Network depth scaling: O(log n) bitonic, O(n) odd-even

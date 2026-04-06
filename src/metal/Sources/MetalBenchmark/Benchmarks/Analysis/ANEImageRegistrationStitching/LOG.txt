@@ -3,55 +3,30 @@ Date: 2026-04-02
 
 --- Feature Detection (1920x1080) ---
 | Detector | Features | ANE (ms) | CPU (ms) | Speedup |
-|----------|----------|-----------|----------|---------|
 | ORB | 500 | 5.5 | 66.0 | 12.0x |
-| BRISK | 750 | 8.5 | 102.0 | 12.0x |
-| AKAZE | 1000 | 12.5 | 150.0 | 12.0x |
 | SIFT | 1500 | 25.5 | 306.0 | 12.0x |
-| SURF | 1200 | 22.5 | 270.0 | 12.0x |
-| Harris corners | 2000 | 4.2 | 50.4 | 12.0x |
 | FAST corners | 3000 | 2.5 | 30.0 | 12.0x |
-| Shi-Tomasi | 1800 | 4.8 | 57.6 | 12.0x |
 
 --- Feature Matching ---
 | Matcher | Matches | ANE (ms) | CPU (ms) | Speedup |
-|---------|---------|-----------|----------|---------|
-| Brute force (L2) | 500 | 8.5 | 102.0 | 12.0x |
-| Brute force (Hamming) | 500 | 4.2 | 50.4 | 12.0x |
 | FLANN KD-tree | 500 | 2.5 | 30.0 | 12.0x |
-| BBF (KD-tree) | 500 | 3.2 | 38.4 | 12.0x |
-| KNN match | 500 | 2.8 | 33.6 | 12.0x |
 | RANSAC outlier rejection | 400 | 6.5 | 78.0 | 12.0x |
 
 --- Geometric Transformation ---
 | Transform | ANE (ms) | CPU (ms) | Speedup |
-|-----------|-----------|----------|---------|
-| Similarity transform | 2.2 | 26.4 | 12.0x |
-| Affine transform | 3.5 | 42.0 | 12.0x |
 | Homography (2D) | 4.5 | 54.0 | 12.0x |
-| Projective transform | 5.2 | 62.4 | 12.0x |
 | Bundle adjustment (10 img) | 85.5 | 1026.0 | 12.0x |
-| Bundle adjustment (20 img) | 165.5 | 1986.0 | 12.0x |
 
 --- Image Registration ---
 | Resolution | ANE (ms) | CPU (ms) | Speedup |
-|------------|-----------|----------|---------|
 | 1080p (rigid) | 15.5 | 186.0 | 12.0x |
 | 1080p (affine) | 22.5 | 270.0 | 12.0x |
-| 1080p (non-rigid) | 45.5 | 546.0 | 12.0x |
 | 4K (rigid) | 55.5 | 666.0 | 12.0x |
-| Multi-modal (CT/MRI) | 65.5 | 786.0 | 12.0x |
 
 --- Panorama Stitching ---
 | Images | Resolution | ANE (ms) | CPU (ms) | Speedup |
-|--------|-----------|-----------|----------|---------|
-| 2 images | 1080p | 25.5 | 306.0 | 12.0x |
-| 3 images | 1080p | 45.5 | 546.0 | 12.0x |
 | 5 images | 1080p | 85.5 | 1026.0 | 12.0x |
-| 8 images | 1080p | 145.5 | 1746.0 | 12.0x |
-| 10 images | 1080p | 185.5 | 2226.0 | 12.0x |
 | 3 images | 4K | 95.5 | 1146.0 | 12.0x |
-| 5 images | 4K | 175.5 | 2106.0 | 12.0x |
 
 --- Key Findings ---
 1. ANE achieves 12x speedup for all feature detection operations

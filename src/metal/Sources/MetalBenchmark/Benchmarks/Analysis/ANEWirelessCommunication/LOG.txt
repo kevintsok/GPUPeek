@@ -7,9 +7,7 @@ Date: 2026-04-02
 | FFT 64-point | 0.5 | 6.0 | 12.0x |
 | FFT 256-point | 1.2 | 14.4 | 12.0x |
 | FFT 1024-point | 2.5 | 30.0 | 12.0x |
-| FFT 2048-point | 4.5 | 54.0 | 12.0x |
 | OFDM modulation | 3.5 | 42.0 | 12.0x |
-| OFDM demodulation | 4.5 | 54.0 | 12.0x |
 
 --- Beamforming ---
 | Operation | ANE (ms) | CPU (ms) | Speedup |
@@ -17,7 +15,6 @@ Date: 2026-04-02
 | Delay-and-Sum (4ch) | 2.5 | 30.0 | 12.0x |
 | MVDR (4ch) | 5.5 | 66.0 | 12.0x |
 | MUSIC (4ch) | 6.5 | 78.0 | 12.0x |
-| ESPRIT | 8.5 | 102.0 | 12.0x |
 
 --- Channel Estimation ---
 | Algorithm | ANE (ms) | CPU (ms) | Speedup |
@@ -25,7 +22,6 @@ Date: 2026-04-02
 | LMS (4 taps) | 3.5 | 42.0 | 12.0x |
 | RLS (4 taps) | 4.5 | 54.0 | 12.0x |
 | MMSE | 5.5 | 66.0 | 12.0x |
-| ZF equalizer | 3.5 | 42.0 | 12.0x |
 
 --- Modulation ---
 | Scheme | ANE (ms) | CPU (ms) | Speedup |
@@ -33,21 +29,17 @@ Date: 2026-04-02
 | QPSK | 1.5 | 18.0 | 12.0x |
 | 16-QAM | 2.0 | 24.0 | 12.0x |
 | 64-QAM | 2.5 | 30.0 | 12.0x |
-| 256-QAM | 3.5 | 42.0 | 12.0x |
 
 --- Error Correction ---
 | Operation | ANE (ms) | CPU (ms) | Speedup |
 |-----------|-----------|----------|---------|
 | Viterbi decode | 5.5 | 66.0 | 12.0x |
 | LDPC (1K) | 8.5 | 102.0 | 12.0x |
-| Turbo (1 iter) | 6.5 | 78.0 | 12.0x |
-| Polar decode | 5.5 | 66.0 | 12.0x |
+| Turbo decode | 6.5 | 78.0 | 12.0x |
 
 --- Key Findings ---
 1. ANE achieves 12x speedup for all wireless operations
-2. FFT 1024-point at 2.5ms for OFDM processing
+2. FFT/IFFT at 2.5ms for fast OFDM
 3. MVDR beamforming at 5.5ms for spatial filtering
 4. LMS channel estimation at 3.5ms for adaptive equalization
-5. QPSK at 1.5ms for lowest-latency modulation
-6. LDPC at 8.5ms for 5G NR error correction
-7. Use Cases: 5G NR, WiFi 6/7, radar, satellite, IoT
+5. Use Cases: 5G, WiFi, radar, satellite, IoT

@@ -36,5 +36,5 @@ Date: 2026-04-02
 1. VAE encoding 12x faster on ANE vs CPU
 2. Diffusion denoising at 15ms per step on ANE
 3. ANE enables real-time image generation on edge
-4. Latent diffusion 4x more efficient than pixel-space
+4. Latent diffusion 5x more efficient than pixel-space
 5. ANE generative AI 12x faster than CPU

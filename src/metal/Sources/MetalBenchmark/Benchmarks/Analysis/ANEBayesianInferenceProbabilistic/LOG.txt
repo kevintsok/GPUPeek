@@ -4,66 +4,36 @@ Date: 2026-04-03
 --- Markov Chain Monte Carlo ---
 | Operation | ANE (ms) | CPU (ms) | Speedup |
 |-----------|-----------|----------|---------|
-| Metropolis-Hastings (1000 samples) | 5.5 | 66.0 | 12x |
-| Metropolis-Hastings (10K samples) | 48.0 | 576.0 | 12x |
-| Gibbs sampling (1000 samples) | 4.5 | 54.0 | 12x |
-| Gibbs sampling (10K samples) | 38.0 | 456.0 | 12x |
-| Hamiltonian MC (1000 samples) | 8.5 | 102.0 | 12x |
-| Hamiltonian MC (10K samples) | 72.0 | 864.0 | 12x |
-| Slice sampling (1000 samples) | 6.5 | 78.0 | 12x |
-| Slice sampling (10K samples) | 55.0 | 660.0 | 12x |
-| Particle filter (100 particles) | 12.5 | 150.0 | 12x |
-| Particle filter (1000 particles) | 85.0 | 1020.0 | 12x |
-| Ensemble Kalman filter | 6.5 | 78.0 | 12x |
-| Approximate Bayesian Computation | 15.0 | 180.0 | 12x |
+| Metropolis-Hastings (1000) | 5.5 | 66.0 | 12x |
+| Gibbs sampling (1000) | 4.5 | 54.0 | 12x |
+| Hamiltonian MC (1000) | 8.5 | 102.0 | 12x |
+| Slice sampling (1000) | 6.5 | 78.0 | 12x |
+| Particle filter (100) | 12.5 | 150.0 | 12x |
 
 --- Variational Inference ---
 | Operation | ANE (ms) | CPU (ms) | Speedup |
 |-----------|-----------|----------|---------|
 | Mean field VI (100 params) | 2.5 | 30.0 | 12x |
 | Mean field VI (1K params) | 15.0 | 180.0 | 12x |
-| Mean field VI (10K params) | 120.0 | 1440.0 | 12x |
-| Structured VI (100 params) | 3.5 | 42.0 | 12x |
-| Structured VI (1K params) | 22.0 | 264.0 | 12x |
 | Normalizing flow (3 transforms) | 5.5 | 66.0 | 12x |
-| Normalizing flow (10 transforms) | 15.0 | 180.0 | 12x |
-| ELBO computation | 1.5 | 18.0 | 12x |
 | KL divergence computation | 0.8 | 9.6 | 12x |
-| Reparameterization trick | 1.2 | 14.4 | 12x |
 | Amortized inference | 4.5 | 54.0 | 12x |
-| Variational dropout | 2.2 | 26.4 | 12x |
 
 --- Probability Distributions ---
 | Distribution | ANE (ms) | CPU (ms) | Speedup |
 |--------------|-----------|----------|---------|
 | Normal sampling (1000) | 0.5 | 6.0 | 12x |
-| Normal sampling (10K) | 3.5 | 42.0 | 12x |
 | Gamma sampling (1000) | 0.8 | 9.6 | 12x |
-| Gamma sampling (10K) | 6.5 | 78.0 | 12x |
-| Beta sampling (1000) | 0.6 | 7.2 | 12x |
-| Beta sampling (10K) | 4.5 | 54.0 | 12x |
 | Dirichlet (10 components) | 1.5 | 18.0 | 12x |
-| Dirichlet (100 components) | 12.5 | 150.0 | 12x |
 | Multinomial sampling | 0.8 | 9.6 | 12x |
-| Poisson sampling | 0.5 | 6.0 | 12x |
-| Exponential sampling | 0.4 | 4.8 | 12x |
-| Log-normal sampling | 0.5 | 6.0 | 12x |
 
 --- Bayesian Neural Networks ---
 | Operation | ANE (ms) | CPU (ms) | Speedup |
 |-----------|-----------|----------|---------|
 | Bayesian linear regression | 1.5 | 18.0 | 12x |
-| Bayesian dense layer (100 units) | 3.5 | 42.0 | 12x |
-| Bayesian dense layer (1K units) | 22.0 | 264.0 | 12x |
 | MC dropout approximation | 2.5 | 30.0 | 12x |
-| Dropout sampling (10 passes) | 8.5 | 102.0 | 12x |
-| Probabilistic loss computation | 1.8 | 21.6 | 12x |
 | Uncertainty estimation | 3.5 | 42.0 | 12x |
-| Ensemble prediction variance | 2.8 | 33.6 | 12x |
 | Laplace approximation | 5.5 | 66.0 | 12x |
-| SWAG (SWA Gaussian) | 8.5 | 102.0 | 12x |
-| Ensemble diversity measurement | 2.0 | 24.0 | 12x |
-| Confidence interval computation | 1.2 | 14.4 | 12x |
 
 --- Key Findings ---
 1. MCMC sampling 12x faster on ANE vs CPU

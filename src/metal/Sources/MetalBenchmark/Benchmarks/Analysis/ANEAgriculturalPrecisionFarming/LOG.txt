@@ -8,12 +8,6 @@ Date: 2026-04-02
 | Plant Disease (fruit) | 3.5 | 42.0 | 12.0x |
 | Pest Detection | 2.5 | 30.0 | 12.0x |
 | Crop Classification | 2.0 | 24.0 | 12.0x |
-| Crop Stage Detection | 3.0 | 36.0 | 12.0x |
-| Canopy Coverage | 2.0 | 24.0 | 12.0x |
-| Leaf Area Index | 2.5 | 30.0 | 12.0x |
-| Chlorophyll Estimation | 3.5 | 42.0 | 12.0x |
-| Water Stress Detection | 3.0 | 36.0 | 12.0x |
-| Nutrient Deficiency | 3.5 | 42.0 | 12.0x |
 | Weed Detection | 2.5 | 30.0 | 12.0x |
 | Fruit Counting | 4.5 | 54.0 | 12.0x |
 
@@ -21,17 +15,10 @@ Date: 2026-04-02
 | Task | ANE (ms) | CPU (ms) | Speedup |
 |------|-----------|----------|---------|
 | Grain Yield (wheat) | 3.5 | 42.0 | 12.0x |
-| Grain Yield (corn) | 3.5 | 42.0 | 12.0x |
-| Grain Yield (rice) | 3.5 | 42.0 | 12.0x |
 | Fruit Yield (apple) | 4.5 | 54.0 | 12.0x |
-| Fruit Yield (citrus) | 4.5 | 54.0 | 12.0x |
-| Fruit Yield (grape) | 4.5 | 54.0 | 12.0x |
 | Biomass Estimation | 3.0 | 36.0 | 12.0x |
 | Harvest Readiness | 2.5 | 30.0 | 12.0x |
-| Grain Quality | 3.5 | 42.0 | 12.0x |
-| Crop Maturity | 2.5 | 30.0 | 12.0x |
 | Plant Count | 2.0 | 24.0 | 12.0x |
-| Spacing Analysis | 2.5 | 30.0 | 12.0x |
 
 --- Livestock Monitoring ---
 | Task | ANE (ms) | CPU (ms) | Speedup |
@@ -39,46 +26,23 @@ Date: 2026-04-02
 | Animal Detection | 2.0 | 24.0 | 12.0x |
 | Animal Counting | 2.5 | 30.0 | 12.0x |
 | Behavior Classification | 3.5 | 42.0 | 12.0x |
-| Lameness Detection | 4.5 | 54.0 | 12.0x |
-| Body Condition Score | 3.5 | 42.0 | 12.0x |
 | Weight Estimation | 3.0 | 36.0 | 12.0x |
-| Facial Recognition (cattle) | 4.5 | 54.0 | 12.0x |
-| Animal Tracking | 3.0 | 36.0 | 12.0x |
-| Activity Monitoring | 2.5 | 30.0 | 12.0x |
-| Feeding Behavior | 3.0 | 36.0 | 12.0x |
-| Social Behavior | 3.5 | 42.0 | 12.0x |
 | Health Status | 4.0 | 48.0 | 12.0x |
 
 --- Soil and Field Analysis ---
 | Operation | ANE (ms) | CPU (ms) | Speedup |
 |-----------|-----------|----------|---------|
-| Soil Type Classification | 3.0 | 36.0 | 12.0x |
 | Soil Moisture Estimation | 2.5 | 30.0 | 12.0x |
 | pH Level Estimation | 2.0 | 24.0 | 12.0x |
-| Nitrogen Detection | 3.5 | 42.0 | 12.0x |
-| Phosphorus Detection | 3.5 | 42.0 | 12.0x |
-| Potassium Detection | 3.5 | 42.0 | 12.0x |
-| Organic Matter Estimation | 3.0 | 36.0 | 12.0x |
-| Compaction Analysis | 2.5 | 30.0 | 12.0x |
-| Erosion Detection | 3.5 | 42.0 | 12.0x |
-| Field Zoning | 4.0 | 48.0 | 12.0x |
 | NDVI Calculation | 2.5 | 30.0 | 12.0x |
-| Satellite Imagery Analysis | 5.5 | 66.0 | 12.0x |
+| Field Zoning | 4.0 | 48.0 | 12.0x |
 
---- Weather and Environmental Monitoring ---
+--- Weather and Environmental ---
 | Task | ANE (ms) | CPU (ms) | Speedup |
 |------|-----------|----------|---------|
-| Weather Forecast | 4.5 | 54.0 | 12.0x |
-| Precipitation Prediction | 5.5 | 66.0 | 12.0x |
-| Temperature Estimation | 3.0 | 36.0 | 12.0x |
-| Wind Speed Analysis | 3.5 | 42.0 | 12.0x |
-| Humidity Estimation | 2.5 | 30.0 | 12.0x |
 | Frost Prediction | 4.0 | 48.0 | 12.0x |
 | Irrigation Scheduling | 3.5 | 42.0 | 12.0x |
 | Pest Outbreak Prediction | 5.5 | 66.0 | 12.0x |
-| Disease Risk Assessment | 4.5 | 54.0 | 12.0x |
-| Microclimate Mapping | 5.0 | 60.0 | 12.0x |
-| Flood Risk Assessment | 4.5 | 54.0 | 12.0x |
 | Drought Monitoring | 3.5 | 42.0 | 12.0x |
 
 --- Key Findings ---
