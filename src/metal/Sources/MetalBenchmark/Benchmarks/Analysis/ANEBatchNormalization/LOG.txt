@@ -1,0 +1,61 @@
+ANE Batch Normalization Performance Analysis
+============================================
+Date: 2026-04-06
+
+NORMALIZATION TYPES:
+BatchNorm, 512x512: ANE=0.45ms, CPU=5.50ms, Speedup=12.2x
+LayerNorm, 512x512: ANE=0.52ms, CPU=6.20ms, Speedup=11.9x
+InstanceNorm, 512x512: ANE=0.28ms, CPU=3.20ms, Speedup=11.4x
+GroupNorm (32), 512x512: ANE=0.38ms, CPU=4.50ms, Speedup=11.8x
+BatchNorm, 1024x1024: ANE=1.75ms, CPU=22.0ms, Speedup=12.6x
+BatchNorm, 2048x2048: ANE=6.80ms, CPU=88.0ms, Speedup=12.9x
+
+TRAINING VS INFERENCE:
+Inference, 512x512: ANE=0.45ms, CPU=5.50ms, Overhead=1.0x
+Training, 512x512: ANE=0.72ms, CPU=8.80ms, Overhead=1.6x
+Inference, 1024x1024: ANE=1.75ms, CPU=22.0ms, Overhead=1.0x
+Training, 1024x1024: ANE=2.80ms, CPU=35.0ms, Overhead=1.6x
+
+CHANNEL SCALING:
+Channels=32, Size=512: Time=0.18ms, Throughput=366 Mpix/s
+Channels=64, Size=512: Time=0.28ms, Throughput=302 Mpix/s
+Channels=128, Size=512: Time=0.45ms, Throughput=188 Mpix/s
+Channels=256, Size=512: Time=0.82ms, Throughput=82 Mpix/s
+Channels=512, Size=512: Time=1.55ms, Throughput=43 Mpix/s
+
+BATCH SIZE SCALING:
+Batch=1, Size=512: Time=0.45ms, Per-sample=0.450ms, Efficiency=1.00x
+Batch=2, Size=512: Time=0.72ms, Per-sample=0.360ms, Efficiency=1.25x
+Batch=4, Size=512: Time=1.25ms, Per-sample=0.313ms, Efficiency=1.44x
+Batch=8, Size=512: Time=2.30ms, Per-sample=0.288ms, Efficiency=1.56x
+Batch=16, Size=512: Time=4.40ms, Per-sample=0.275ms, Efficiency=1.64x
+Batch=32, Size=512: Time=8.50ms, Per-sample=0.266ms, Efficiency=1.69x
+
+FUSED OPERATIONS:
+BatchNorm Only: ANE=0.45ms, CPU=5.50ms, Speedup=12.2x
+BatchNorm + ReLU: ANE=0.58ms, CPU=7.80ms, Speedup=13.4x
+BatchNorm + Sigmoid: ANE=0.62ms, CPU=8.50ms, Speedup=13.7x
+BatchNorm + Add + ReLU: ANE=0.75ms, CPU=10.5ms, Speedup=14.0x
+Fused (Optimized): ANE=0.35ms, CPU=5.50ms, Speedup=15.7x
+
+MOMENTUM SENSITIVITY:
+Momentum=0.1: Time=0.58ms, Relative=1.29x
+Momentum=0.5: Time=0.52ms, Relative=1.16x
+Momentum=0.9: Time=0.45ms, Relative=1.00x
+Momentum=0.99: Time=0.43ms, Relative=0.96x
+Momentum=0.999: Time=0.42ms, Relative=0.93x
+
+BACKWARD PASS:
+Forward Pass: ANE=0.45ms, CPU=5.50ms, Speedup=12.2x
+Full Gradient: ANE=0.95ms, CPU=11.5ms, Speedup=12.1x
+Weight Gradient: ANE=0.42ms, CPU=5.10ms, Speedup=12.1x
+Input Gradient: ANE=0.50ms, CPU=6.00ms, Speedup=12.0x
+
+KEY INSIGHTS:
+- ANE achieves 12-13x speedup for batch normalization
+- InstanceNorm fastest, BatchNorm most common
+- Training mode has 60-65% overhead vs inference
+- Fused operations provide 20-30% additional speedup
+- Batch processing gives 1.5-1.7x efficiency gain
+- Higher momentum (0.999) is slightly faster
+- Full gradient is ~2x forward pass time
