@@ -1,0 +1,967 @@
+version: "Apple Swift version 6.1.2 (swiftlang-6.1.2.1.2 clang-1700.0.13.5)"
+options: "c993eb51760426afd59380d5f281a27540a648ddf677f56fd6be02254a2c16ba"
+build_start_time: [1775493304, 256144000]
+build_end_time: [1775493477, 395941000]
+inputs:
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Algorithms/FFTSpectralOperations/FFTBenchmark.swift": [1774956770, 652871723]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Algorithms/GraphAlgorithms/GraphAlgorithmsBenchmark.swift"
+  : [1774935328, 730232164]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Algorithms/NBodyOptimization/NBodyOptimizationBenchmark.swift"
+  : [1774913853, 499554302]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Algorithms/SortingAlgorithms/SortingAlgorithmsBenchmark.swift"
+  : [1774931834, 932035180]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANE BatchedStridedGEMM/ANEBatchedStridedGEMMBenchmark.swift"
+  : [1775237958, 246625792]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAcousticEchoCancellation/ANEAcousticEchoCancellationBenchmark.swift"
+  : [1775277248, 885170216]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEActivationFunctions/ANEActivationFunctionsBenchmark.swift"
+  : [1775046984, 798756569]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEActivationReuse/ANEActivationReuseBenchmark.swift"
+  : [1775194839, 962533657]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEActivationSparsity/ANEActivationSparsityBenchmark.swift"
+  : [1775360358, 904127148]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAdaptiveComputationTime/ANEAdaptiveComputationTimeBenchmark.swift"
+  : [1775234409, 317590891]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAdvancedIndexing/ANEAdvancedIndexingBenchmark.swift"
+  : [1775071995, 544589611]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAgriculturalPrecisionFarming/ANEAgriculturalPrecisionFarmingBenchmark.swift"
+  : [1775135051, 986043819]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAlgorithmComplexityAnalysis/ANEAlgorithmComplexityAnalysisBenchmark.swift"
+  : [1775073953, 91462409]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEApproximateComputing/ANEApproximateComputingBenchmark.swift"
+  : [1775400098, 222640074]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAsyncCopyMemoryTransferOptimization/ANEAsyncCopyMemoryTransferOptimizationBenchmark.swift"
+  : [1775351129, 169170494]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAttentionMechanism/ANEAttentionMechanismBenchmark.swift"
+  : [1775004928, 92237927]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAudioFingerprintingMusicRecognition/ANEAudioFingerprintingMusicRecognitionBenchmark.swift"
+  : [1775343908, 145404812]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAudioSignalProcessing/ANEAudioSignalProcessingBenchmark.swift"
+  : [1775050379, 331477428]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAudioSourceSeparation/ANEAudioSourceSeparationBenchmark.swift"
+  : [1775133349, 621747162]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAutoencoderVariationalAutoencoder/ANEAutoencoderVariationalAutoencoderBenchmark.swift"
+  : [1775280870, 100455799]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAutonomousDriving/ANEAutonomousDrivingBenchmark.swift"
+  : [1775129595, 593594987]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEAutoregressiveGeneration/ANEAutoregressiveGenerationBenchmark.swift"
+  : [1775374432, 491347676]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBFloat16Precision/ANEBFloat16PrecisionBenchmark.swift"
+  : [1775234179, 960230870]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBSplineInterpolation/ANEBSplineInterpolationBenchmark.swift"
+  : [1775389231, 663376138]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBatchEfficiency/ANEBatchEfficiencyBenchmark.swift"
+  : [1774924713, 444637250]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBatchGEMMOptimization/ANEBatchGEMMOptimizationBenchmark.swift"
+  : [1775373042, 519997479]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBatchNormalization/ANEBatchNormalizationBenchmark.swift"
+  : [1775385763, 977450378]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBatchProcessing/ANEBatchProcessingBenchmark.swift"
+  : [1774984030, 494884625]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBatchProcessingEfficiency/ANEBatchProcessingEfficiencyBenchmark.swift"
+  : [1775279427, 395959840]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBatchSizeOptimization/ANEBatchSizeOptimizationBenchmark.swift"
+  : [1775367698, 731048353]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBayesianInferenceProbabilistic/ANEBayesianInferenceProbabilisticBenchmark.swift"
+  : [1775147564, 403040946]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBayesianNeuralNetwork/ANEBayesianNeuralNetworkBenchmark.swift"
+  : [1775415808, 203278235]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBeamSearchOptimization/ANEBeamSearchOptimizationBenchmark.swift"
+  : [1775437755, 385882718]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBeamSearchSequenceDecoding/ANEBeamSearchSequenceDecodingBenchmark.swift"
+  : [1775102566, 101024177]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBeamformingArrayProcessing/ANEBeamformingArrayProcessingBenchmark.swift"
+  : [1775273613, 802002193]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBilateralFiltering/ANEBilateralFilteringBenchmark.swift"
+  : [1775323971, 114996921]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBilateralSolver/ANEBilateralSolverBenchmark.swift"
+  : [1775394822, 819404328]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBinaryBitwiseOperations/ANEBinaryBitwiseOperationsBenchmark.swift"
+  : [1775052345, 432954011]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBioinformaticsGenomics/ANEBioinformaticsGenomicsBenchmark.swift"
+  : [1775136151, 855775811]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBiomedicalSignalProcessing/ANEBiomedicalSignalProcessingBenchmark.swift"
+  : [1775153239, 816393502]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBitonicSortNetwork/ANEBitonicSortNetworkBenchmark.swift"
+  : [1775356423, 395070991]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBitwisePackingOperations/ANEBitwisePackingBenchmark.swift"
+  : [1775092037, 740983725]
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBoxFilter/ANEBoxFilterBenchmark.swift": [1775325788, 229880815]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBrainComputerInterfaceNeuralSignalProcessing/ANEBrainComputerInterfaceBenchmark.swift"
+  : [1775401810, 209746842]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEBroadcastingReshaping/ANEBroadcastingReshapingBenchmark.swift"
+  : [1775070363, 292557614]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECTTomographyReconstruction/ANECTTomographyReconstructionBenchmark.swift"
+  : [1775342189, 762202808]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECapsuleNetwork/ANECapsuleNetworkBenchmark.swift"
+  : [1775410550, 440385307]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEChannelAttention/ANEChannelAttentionBenchmark.swift"
+  : [1775387034, 291736417]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEChannelSensitivity/ANEChannelSensitivityBenchmark.swift"
+  : [1775041604, 631896069]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEChebyshevApproximation/ANEChebyshevApproximationBenchmark.swift"
+  : [1775388876, 584869812]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECholeskyDecomposition/ANECholeskyDecompositionBenchmark.swift"
+  : [1775387980, 21678787]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECircularBufferOperations/ANECircularBufferBenchmark.swift"
+  : [1775265059, 858983305]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEClusteringAlgorithms/ANEClusteringAlgorithmsBenchmark.swift"
+  : [1775229009, 839251314]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEColorSpaceConversion/ANEColorSpaceConversionBenchmark.swift"
+  : [1775385187, 101836467]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEColorSpaceToneMapping/ANEColorSpaceToneMappingBenchmark.swift"
+  : [1775095584, 234447599]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECommandBufferParallelism/ANECommandBufferParallelismBenchmark.swift"
+  : [1775016459, 225105183]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEComparisonSelectionOperations/ANEComparisonSelectionBenchmark.swift"
+  : [1775372629, 59950589]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECompilationOptimization/ANECompilationOptimizationBenchmark.swift"
+  : [1774968200, 749686738]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECompilerOptimization/ANECompilerOptimizationBenchmark.swift"
+  : [1774976699, 686906249]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECompressionEncoding/ANECompressionEncodingBenchmark.swift"
+  : [1775064788, 21339353]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEComputationDensity/ANEComputationDensityBenchmark.swift"
+  : [1775242221, 493924109]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEComputationalReuse/ANEComputationalReuseBenchmark.swift"
+  : [1775360013, 9307335]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEComputeOperators/ANEComputeOperatorsBenchmark.swift"
+  : [1775115247, 432582522]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEComputeUnitThroughputEfficiency/ANEComputeUnitThroughputEfficiencyBenchmark.swift"
+  : [1775351359, 857393598]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEComputerVision3DPerception/ANEComputerVision3DPerceptionBenchmark.swift"
+  : [1775108087, 974087610]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEComputerVisionImageSegmentation/ANEComputerVisionImageSegmentationBenchmark.swift"
+  : [1775148208, 608663399]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEConnectedComponents/ANEConnectedComponentsBenchmark.swift"
+  : [1775381587, 502386080]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEContinualIncrementalLearning/ANEContinualIncrementalLearningBenchmark.swift"
+  : [1775286249, 993120209]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEContinuousScheduling/ANEContinuousSchedulingBenchmark.swift"
+  : [1774967790, 5351095]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEContrastiveLearning/ANEContrastiveLearningBenchmark.swift"
+  : [1775227234, 769849777]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEControlFlowBranching/ANEControlFlowBranchingBenchmark.swift"
+  : [1775077515, 116144453]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEConvolutionOperations/ANEConvolutionBenchmark.swift"
+  : [1774955138, 461111197]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECoreMLOptimization/ANECoreMLOptimizationBenchmark.swift"
+  : [1774989168, 653453834]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECrossLayerNormalization/ANECrossLayerNormalizationBenchmark.swift"
+  : [1775263136, 657417549]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECrossLayerOptimization/ANECrossLayerOptimizationBenchmark.swift"
+  : [1775284483, 411010448]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECryptographyHashing/ANECryptographyHashingBenchmark.swift"
+  : [1775106159, 434712816]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANECybersecurityNetworkAnalysis/ANECybersecurityNetworkAnalysisBenchmark.swift"
+  : [1775135397, 736401468]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDataFlowAnalysis/ANEDataFlowAnalysisBenchmark.swift"
+  : [1774992472, 59576087]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDataLayoutTransformation/ANEDataLayoutTransformationBenchmark.swift"
+  : [1775079178, 962132990]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDataLocalityOptimization/ANEDataLocalityOptimizationBenchmark.swift"
+  : [1775216315, 231043217]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDataTransferEfficiency/ANEDataTransferEfficiencyBenchmark.swift"
+  : [1775068561, 159826629]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDataTypeConversion/ANEDataTypeConversionBenchmark.swift"
+  : [1775255903, 776405227]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDataTypePerformance/ANEDataTypePerformanceBenchmark.swift"
+  : [1775085305, 268439841]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDeepEquilibriumModel/ANEDeepEquilibriumModelBenchmark.swift"
+  : [1775412203, 271564528]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDepthwiseSeparableConvolution/ANEDepthwiseSeparableConvolutionBenchmark.swift"
+  : [1775193255, 741761069]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDeterminismReproducibility/ANEDeterminismReproducibilityBenchmark.swift"
+  : [1775319271, 313499725]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDeviceTransferPerformance/ANEDeviceTransferBenchmark.swift"
+  : [1775196525, 265358463]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDifferentialEvolutionOptimization/ANEDifferentialEvolutionOptimizationBenchmark.swift"
+  : [1775336628, 68521174]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDilatedConvolution/ANEDilatedConvolutionBenchmark.swift"
+  : [1775250541, 965813806]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDiscreteCosineTransform/ANEDiscreteCosineTransformBenchmark.swift"
+  : [1775446714, 100776630]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDispatchOptimization/ANEDispatchOptimizationBenchmark.swift"
+  : [1774944379, 728691251]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDistanceMetrics/ANEDistanceMetricsBenchmark.swift"
+  : [1775387887, 75427187]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDistanceSimilarity/ANEDistanceSimilarityBenchmark.swift"
+  : [1775061198, 557478506]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDistanceTransformMorphology/ANEDistanceTransformMorphologyBenchmark.swift"
+  : [1775093586, 478791137]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDynamicNeuralEngine/ANEDynamicNeuralEngineBenchmark.swift"
+  : [1774990967, 763754845]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDynamicProgrammingSequenceAlignment/ANEDynamicProgrammingBenchmark.swift"
+  : [1775406893, 688204690]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDynamicProgrammingViterbi/ANEDynamicProgrammingViterbiBenchmark.swift"
+  : [1775439537, 389391197]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDynamicShapeHandling/ANEDynamicShapeHandlingBenchmark.swift"
+  : [1775032620, 465133921]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEDynamicShapes/ANEDynamicShapeBenchmark.swift"
+  : [1774963972, 262374468]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEEdgeDetection/ANEEdgeDetectionBenchmark.swift"
+  : [1775390603, 476193167]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEEfficientAttentionMechanisms/ANEEfficientAttentionMechanismsBenchmark.swift"
+  : [1775331318, 183542503]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEElementWiseOperations/ANEElementWiseBenchmark.swift"
+  : [1774953174, 734724108]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEEmbeddingFFN/ANEEmbeddingFFNBenchmark.swift"
+  : [1775007491, 257928665]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEEmbeddingLookup/ANEEmbeddingLookupBenchmark.swift"
+  : [1775081357, 384978097]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEEmbeddingOperations/ANEEmbeddingBenchmark.swift"
+  : [1774950664, 573453764]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEEmbeddingTableLookup/ANEEmbeddingTableLookupBenchmark.swift"
+  : [1775262853, 211838925]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEEndToEndModels/ANEEndToEndBenchmark.swift"
+  : [1774958743, 621543873]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEEnergyBasedModel/ANEEnergyBasedModelBenchmark.swift"
+  : [1775417807, 389615378]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEEntropyCoding/ANEEntropyCodingBenchmark.swift"
+  : [1775248691, 820760048]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEErrorHandling/ANEErrorHandlingBenchmark.swift"
+  : [1774968058, 688073112]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEExecutionUnit/ANEExecutionUnitBenchmark.swift"
+  : [1775068371, 346655229]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEExtremumFinding/ANEExtremumFindingBenchmark.swift"
+  : [1775250226, 750936367]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEFFTOptimization/ANEFFTOptimizationBenchmark.swift"
+  : [1775377101, 569833691]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEFFTPerformance/ANEFFTPerformanceBenchmark.swift"
+  : [1775038038, 503096292]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEFIRIIRFilters/ANEFIRIIRFiltersBenchmark.swift"
+  : [1775408688, 726830513]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEFacialExpressionRecognition/ANEFacialExpressionRecognitionBenchmark.swift"
+  : [1775363394, 409333851]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEFeatureMapAnalysis/ANEFeatureMapAnalysisBenchmark.swift"
+  : [1775220298, 982042062]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEFederatedLearningPrivacyPreserving/ANEFederatedLearningPrivacyPreservingBenchmark.swift"
+  : [1775142171, 505257477]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEFlashAttention/ANEFlashAttentionBenchmark.swift"
+  : [1775022040, 37169558]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEFlashAttention2Optimization/ANEFlashAttention2OptimizationBenchmark.swift"
+  : [1775304347, 507616644]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEFlashDecoding/ANEFlashDecodingBenchmark.swift"
+  : [1775259493, 494603566]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEFourierDescriptorContour/ANEFourierDescriptorContourBenchmark.swift"
+  : [1775100933, 453025704]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEFourierNeuralOperator/ANEFourierNeuralOperatorBenchmark.swift"
+  : [1775412499, 193325092]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEFp8Precision/ANEFp8PrecisionBenchmark.swift"
+  : [1775232841, 593919170]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGaborFilterBank/ANEGaborFilterBankBenchmark.swift"
+  : [1775392877, 683679823]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGaussianProcess/ANEGaussianProcessBenchmark.swift"
+  : [1775414015, 842927944]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGenerativeAIDiffusion/ANEGenerativeAIDiffusionBenchmark.swift"
+  : [1775113368, 548277266]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGenerativeAIDiffusionModels/ANEGenerativeAIDiffusionModelsBenchmark.swift"
+  : [1775140738, 32845130]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGeometricTransformOperations/ANEGeometricTransformOperationsBenchmark.swift"
+  : [1775075574, 145920455]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGradientAccumulation/ANEGradientAccumulationBenchmark.swift"
+  : [1775356607, 648812725]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGradientCheckpointing/ANEGradientCheckpointingBenchmark.swift"
+  : [1775025527, 957638296]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGradientComputation/ANEGradientComputationBenchmark.swift"
+  : [1775011110, 830758717]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGradientDescentOptimization/ANEGradientDescentOptimizationBenchmark.swift"
+  : [1775221912, 834843745]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGraphAnalytics/ANEGraphAnalyticsBenchmark.swift"
+  : [1775126220, 728372172]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGraphNeuralNetwork/ANEGraphNeuralNetworkBenchmark.swift"
+  : [1775414215, 97776628]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGraphNeuralNetworkRL/ANEGraphNeuralNetworkRLBenchmark.swift"
+  : [1775102868, 261847010]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGraphNeuralNetworksRelational/ANEGraphNeuralNetworksRelationalBenchmark.swift"
+  : [1775146261, 449204687]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGraphOperations/ANEGraphOperationsBenchmark.swift"
+  : [1775066571, 731441005]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGraphShortestPathNetworkFlow/ANEGraphShortestPathNetworkFlowBenchmark.swift"
+  : [1775338642, 478778098]
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGridSample/ANEGridSampleBenchmark.swift": [1775324218, 831319863]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGroupQueryAttention/ANEGroupQueryAttentionBenchmark.swift"
+  : [1775354648, 403637602]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEGroupedQueryAttention/ANEGroupedQueryAttentionBenchmark.swift"
+  : [1775436250, 45435009]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEHardwareArchitecture/ANEHardwareArchitectureBenchmark.swift"
+  : [1774989331, 348748782]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEHardwareCounters/ANEHardwareCountersBenchmark.swift"
+  : [1774978546, 59868058]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEHardwareSchedulingInstructionPipelining/ANEHardwareSchedulingInstructionPipeliningBenchmark.swift"
+  : [1775349574, 441108677]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEHardwareUtilization/ANEHardwareUtilizationBenchmark.swift"
+  : [1774946224, 586446226]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEHarrisCornerDetection/ANEHarrisCornerDetectionBenchmark.swift"
+  : [1775445933, 225699366]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEHashingRandomGeneration/ANEHashingRandomBenchmark.swift"
+  : [1775090303, 192881457]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEHiddenMarkovModelViterbi/ANEHiddenMarkovModelViterbiBenchmark.swift"
+  : [1775228658, 551006828]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEHierarchicalTiling/ANEHierarchicalTilingBenchmark.swift"
+  : [1775241749, 756067440]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEHistogramComputation/ANEHistogramComputationBenchmark.swift"
+  : [1775378369, 24719010]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEHistogramEqualization/ANEHistogramEqualizationBenchmark.swift"
+  : [1775232331, 699884498]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEHistogramWindowing/ANEHistogramWindowingBenchmark.swift"
+  : [1775059375, 636379417]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEHoughTransform/ANEHoughTransformBenchmark.swift"
+  : [1775320973, 399501400]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEHyperparameterTuning/ANEHyperparameterBenchmark.swift"
+  : [1774967577, 35615012]
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEIOPipeline/ANEIOPipelineBenchmark.swift": [1774973242, 453739505]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEImageDehazingDeraining/ANEImageDehazingDerainingBenchmark.swift"
+  : [1775274105, 262602256]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEImageDenoisingNonLocalMeans/ANEImageDenoisingNonLocalMeansBenchmark.swift"
+  : [1775342006, 281213503]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEImageFusionPanSharpening/ANEImageFusionPanSharpeningBenchmark.swift"
+  : [1775344136, 429940785]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEImagePyramids/ANEImagePyramidsBenchmark.swift"
+  : [1775381938, 994875737]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEImageQualityAssessment/ANEImageQualityAssessmentBenchmark.swift"
+  : [1775275608, 554968581]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEImageRegistrationStitching/ANEImageRegistrationStitchingBenchmark.swift"
+  : [1775099145, 756301805]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEIndustrialQualityControl/ANEIndustrialQualityControlBenchmark.swift"
+  : [1775132649, 285633785]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEInstructionScheduling/ANEInstructionSchedulingBenchmark.swift"
+  : [1775179221, 153347781]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEInstructionThroughput/ANEInstructionThroughputBenchmark.swift"
+  : [1774965770, 204080572]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEIntegerArithmeticBitManipulation/ANEIntegerArithmeticBitManipulationBenchmark.swift"
+  : [1775405430, 541602150]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEIntegralImage/ANEIntegralImageBenchmark.swift"
+  : [1775394305, 294778945]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEInterpolationOperations/ANEInterpolationOperationsBenchmark.swift"
+  : [1775054111, 414508857]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEKDTreeNearestNeighbor/ANEKDTreeNearestNeighborBenchmark.swift"
+  : [1775327899, 345266275]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEKVCacheEviction/ANEKVCacheEvictionBenchmark.swift"
+  : [1775358614, 970352365]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEKVCacheOptimization/ANEKVCacheOptimizationBenchmark.swift"
+  : [1775447367, 715403157]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEKVCacheQuantization/ANEKVCacheQuantizationBenchmark.swift"
+  : [1775433392, 122372171]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEKalmanParticleFilter/ANEKalmanParticleFilterBenchmark.swift"
+  : [1775098977, 462141185]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEKernelCompilation/ANEKernelCompilationBenchmark.swift"
+  : [1775322169, 954005986]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEKernelFusion/ANEKernelFusionBenchmark.swift"
+  : [1774968644, 500676598]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEKernelMethodsGaussianProcess/ANEKernelMethodsGaussianProcessBenchmark.swift"
+  : [1775223225, 489217176]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEKernelOptimization/ANEKernelOptimizationBenchmark.swift"
+  : [1774992082, 139638136]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEKnowledgeDistillation/ANEKnowledgeDistillationBenchmark.swift"
+  : [1775282671, 332860061]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEKroneckerTensorOperations/ANEKroneckerTensorOperationsBenchmark.swift"
+  : [1775338504, 80788390]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELanczosEigenvalue/ANELanczosEigenvalueBenchmark.swift"
+  : [1775332985, 70225341]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELatencyComparison/ANELatencyComparisonBenchmark.swift"
+  : [1774921553, 365900847]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELatencyHiding/ANELatencyHidingBenchmark.swift"
+  : [1775252840, 550987123]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELayerAnalysis/ANELayerAnalysisBenchmark.swift"
+  : [1774941185, 483849191]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELayerFusion/ANELayerFusionBenchmark.swift"
+  : [1775000289, 361986898]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELayerNormRMSNormOptimization/ANELayerNormRMSNormOptimizationBenchmark.swift"
+  : [1775304202, 226868028]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELayerNormSoftmax/ANELayerNormSoftmaxBenchmark.swift"
+  : [1775169476, 913852889]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELayerWiseAdaptivePrecision/ANELayerWiseAdaptivePrecisionBenchmark.swift"
+  : [1775353350, 887387604]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELinearSystemSolvers/ANELinearSystemSolversBenchmark.swift"
+  : [1775216081, 371420542]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELoRALowRankAdaptation/ANELoRALowRankAdaptationBenchmark.swift"
+  : [1775424279, 403514000]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELocalitySensitiveHashing/ANELocalitySensitiveHashingBenchmark.swift"
+  : [1775236101, 80589088]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELogicalBooleanOperations/ANELogicalBooleanBenchmark.swift"
+  : [1775061564, 736715305]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELossGradientOperations/ANELossGradientBenchmark.swift"
+  : [1775059501, 211187298]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANELossMarginRanking/ANELossMarginRankingBenchmark.swift"
+  : [1775072111, 77623326]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMaskedUpdateOperations/ANEMaskedUpdateBenchmark.swift"
+  : [1775268664, 212058537]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMathApproximation/ANEMathApproximationBenchmark.swift"
+  : [1775252005, 682347544]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMatrixExponentialLogarithm/ANEMatrixExponentialLogarithmBenchmark.swift"
+  : [1775329580, 625026209]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMatrixFactorizationDecomposition/ANEMatrixFactorizationDecompositionBenchmark.swift"
+  : [1775097397, 652630420]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMatrixInversionDeterminant/ANEMatrixInversionDeterminantBenchmark.swift"
+  : [1775340371, 235639848]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMatrixMultiplication/ANEMatrixMultiplicationBenchmark.swift"
+  : [1775070173, 592897174]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMatrixPaddingAlignment/ANEMatrixPaddingAlignmentBenchmark.swift"
+  : [1775268347, 929097321]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMatrixTranspose/ANEMatrixTransposeBenchmark.swift"
+  : [1775246587, 170673987]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMedicalImageAnalysis/ANEMedicalImageAnalysisBenchmark.swift"
+  : [1775122394, 946326727]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMemoryAccess/ANEMemoryAccessBenchmark.swift"
+  : [1774960517, 686942039]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMemoryAccessPatterns/ANEMemoryAccessPatternsBenchmark.swift"
+  : [1774998569, 867620958]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMemoryAccessPatternsCache/ANEMemoryAccessPatternsCacheBenchmark.swift"
+  : [1775084578, 169502106]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMemoryBandwidth/ANEMemoryBandwidthBenchmark.swift"
+  : [1775027432, 946774096]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMemoryBoundComputeBoundAnalysis/ANEMemoryBoundComputeBoundBenchmark.swift"
+  : [1775367247, 244730266]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMemoryCoalescing/ANEMemoryCoalescingBenchmark.swift"
+  : [1774976567, 210875473]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMemoryCoalescingPatterns/ANEMemoryCoalescingPatternsBenchmark.swift"
+  : [1775260997, 313708233]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMemoryIndexing/ANEMemoryIndexingBenchmark.swift"
+  : [1775005723, 796417361]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMemoryLatency/ANEMemoryLatencyBenchmark.swift"
+  : [1775179080, 202784719]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMemoryLatencyOptimization/ANEMemoryLatencyOptimizationBenchmark.swift"
+  : [1774991810, 89098667]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMemoryPrefetching/ANEMemoryPrefetchingBenchmark.swift"
+  : [1775257683, 431575630]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMemoryPressure/ANEMemoryPressureBenchmark.swift"
+  : [1774967934, 476745571]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMemoryPressureResponse/ANEMemoryPressureResponseBenchmark.swift"
+  : [1775239895, 511993589]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMemoryTilingOptimization/ANEMemoryTilingOptimizationBenchmark.swift"
+  : [1775091814, 629766601]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMetaLearning/ANEMetaLearningBenchmark.swift"
+  : [1775416013, 262788124]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMixtureOfExperts/ANEMixtureOfExpertsBenchmark.swift"
+  : [1775354868, 345441937]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEModelArchitectureComparison/ANEModelArchitectureBenchmark.swift"
+  : [1775407171, 993738347]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEModelInference/ANEModelInferenceBenchmark.swift"
+  : [1774929953, 389578371]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEModelPerformanceProfiling/ANEModelPerformanceProfilingBenchmark.swift"
+  : [1774991548, 656651541]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEModelPredictiveControl/ANEModelPredictiveControlBenchmark.swift"
+  : [1775221450, 578804819]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMonteCarloMethods/ANEMonteCarloMethodsBenchmark.swift"
+  : [1775334781, 52494306]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMonteCarloSimulation/ANEMonteCarloSimulationBenchmark.swift"
+  : [1775151365, 810203320]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMonteCarloTreeSearch/ANEMonteCarloTreeSearchBenchmark.swift"
+  : [1775237667, 907840319]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMorphologicalOperations/ANEMorphologicalOperationsBenchmark.swift"
+  : [1775230749, 709018916]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMultiCoreScaling/ANEMultiCoreScalingBenchmark.swift"
+  : [1774968331, 914712948]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMultiModalLearning/ANEMultiModalLearningBenchmark.swift"
+  : [1775127822, 628248425]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMultiModelConcurrency/ANEMultiModelBenchmark.swift"
+  : [1774964442, 108907653]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEMusicGenerationSynthesis/ANEMusicGenerationSynthesisBenchmark.swift"
+  : [1775225846, 303180180]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANENLPSpeechSynthesis/ANENLPSpeechSynthesisBenchmark.swift"
+  : [1775120576, 191917242]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANENaturalLanguageProcessingText/ANENaturalLanguageProcessingTextBenchmark.swift"
+  : [1775109760, 440276881]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANENeuralArchitectureSearch/ANENeuralArchitectureSearchBenchmark.swift"
+  : [1775284789, 383325706]
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANENeuralODE/ANENeuralODEBenchmark.swift": [1775410658, 161301693]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANENeuralRadianceFieldNeRF/ANENeuralRadianceFieldBenchmark.swift"
+  : [1775409196, 157469654]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANENeuralTangentKernel/ANENeuralTangentKernelBenchmark.swift"
+  : [1775419408, 416708777]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANENgramCounting/ANENgramCountingBenchmark.swift"
+  : [1775442574, 974920063]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANENonMaximumSuppression/ANENonMaximumSuppressionBenchmark.swift"
+  : [1775443517, 269819622]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANENonnegativeMatrixFactorizationICA/ANENonnegativeMatrixFactorizationICABenchmark.swift"
+  : [1775102704, 137720924]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANENormalizationEfficiency/ANENormalizationEfficiencyBenchmark.swift"
+  : [1775243503, 539626035]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANENormalizationOperations/ANENormalizationBenchmark.swift"
+  : [1774951557, 848073594]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANENormalizationStatistics/ANENormalizationStatisticsBenchmark.swift"
+  : [1775081006, 513420713]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANENormalizingFlow/ANENormalizingFlowBenchmark.swift"
+  : [1775417601, 570270309]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANENumericalIntegrationDifferentiation/ANENumericalIntegrationDifferentiationBenchmark.swift"
+  : [1775340208, 218383490]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANENumericalPrecision/ANENumericalPrecisionBenchmark.swift"
+  : [1774966074, 235556130]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANENumericalStability/ANENumericalStabilityBenchmark.swift"
+  : [1774946020, 612403413]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANENumericalStabilityAnalysis/ANENumericalStabilityAnalysisBenchmark.swift"
+  : [1774992343, 51418012]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEOCRDocumentAnalysis/ANEOCRDocumentAnalysisBenchmark.swift"
+  : [1775126492, 588615277]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEObjectDetection/ANEObjectDetectionBenchmark.swift"
+  : [1775117074, 775922217]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEObjectDetectionTracking/ANEObjectDetectionTrackingBenchmark.swift"
+  : [1775364110, 876571136]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEOperationBenchmarking/ANEOperationBenchmarkingBenchmark.swift"
+  : [1774969383, 273877562]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEOperationChaining/ANEOperationChainingBenchmark.swift"
+  : [1775322378, 925587071]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEOperationFusion/ANEOperationFusionBenchmark.swift"
+  : [1775030876, 255750187]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEOperationInterleaving/ANEOperationInterleavingBenchmark.swift"
+  : [1775245137, 656472807]
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEOperations/ANEOperationsBenchmark.swift": [1774938668, 221214322]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEOperatorFusion/ANEOperatorFusionBenchmark.swift"
+  : [1774962829, 127487663]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEOpticalFlowMotionEstimation/ANEOpticalFlowMotionEstimationBenchmark.swift"
+  : [1775097281, 800725335]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEOptimalTransport/ANEOptimalTransportBenchmark.swift"
+  : [1775218373, 394090596]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEOptimalTransportDistance/ANEOptimalTransportDistanceBenchmark.swift"
+  : [1775365416, 370506504]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEOptimizationOperationsResearch/ANEOptimizationOperationsResearchBenchmark.swift"
+  : [1775149824, 663801282]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEOrthogonalProcrustesAnalysis/ANEOrthogonalProcrustesAnalysisBenchmark.swift"
+  : [1775329923, 911163938]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPCALinearDiscriminant/ANEPCALinearDiscriminantBenchmark.swift"
+  : [1775230485, 800480856]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPaddingOperations/ANEPaddingOperationsBenchmark.swift"
+  : [1775246860, 707791199]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPagedAttention/ANEPagedAttentionBenchmark.swift"
+  : [1775235861, 892146258]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEParallelismScheduling/ANEParallelismSchedulingBenchmark.swift"
+  : [1775082770, 153033803]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPatternMatching/ANEPatternMatchingBenchmark.swift"
+  : [1775255614, 399640844]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPerceptualImageHashing/ANEPerceptualImageHashingBenchmark.swift"
+  : [1775396366, 4074027]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPerformanceMicrobenchmarking/ANEPerformanceMicrobenchmarkingBenchmark.swift"
+  : [1775399670, 331735065]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPermutationTransposition/ANEPermutationTranspositionBenchmark.swift"
+  : [1775380393, 468034203]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPerspectiveTransform/ANEPerspectiveTransformBenchmark.swift"
+  : [1775383408, 23240293]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPiecewiseLinearApproximation/ANEPiecewiseLinearApproximationBenchmark.swift"
+  : [1775266808, 417189021]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPipelineParallelism/ANEPipelineParallelismBenchmark.swift"
+  : [1775218129, 744110313]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPointCloudProcessing/ANEPointCloudProcessingBenchmark.swift"
+  : [1775347903, 204592713]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPointwise11Convolution/ANEPointwise11ConvolutionBenchmark.swift"
+  : [1775369370, 674974204]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPolynomialSpecialFunctions/ANEPolynomialSpecialFunctionsBenchmark.swift"
+  : [1775055791, 245564896]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPoolingOperations/ANEPoolingBenchmark.swift"
+  : [1774953345, 988364044]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPoolingOperations/ANEPoolingOperationsBenchmark.swift"
+  : [1775081392, 804195741]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPoseEstimationGestureRecognition/ANEPoseEstimationGestureRecognitionBenchmark.swift"
+  : [1775119090, 27655758]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPowerConsumption/ANEPowerConsumptionBenchmark.swift"
+  : [1775038143, 174894302]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPowerConsumptionAnalysis/ANEPowerConsumptionAnalysisBenchmark.swift"
+  : [1775270582, 136904352]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPowerEfficiency/ANEPowerEfficiencyBenchmark.swift"
+  : [1774971288, 931127404]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPowerStateThermal/ANEPowerStateThermalBenchmark.swift"
+  : [1774974767, 605792635]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPrecisionAnalysis/ANEPrecisionAnalysisBenchmark.swift"
+  : [1774991191, 798096223]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPrecisionPerformanceTradeoffs/ANEPrecisionPerformanceTradeoffsBenchmark.swift"
+  : [1775014775, 166892767]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPrefillDecodeAnalysis/ANEPrefillDecodeAnalysisBenchmark.swift"
+  : [1775289757, 411569624]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPrefixSumScan/ANEPrefixSumScanBenchmark.swift"
+  : [1775379796, 588333415]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPrefixSumWalshHadamard/ANEPrefixSumWalshHadamardBenchmark.swift"
+  : [1775062965, 102768115]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPrivacyPreservingFederated/ANEPrivacyPreservingFederatedBenchmark.swift"
+  : [1775107964, 294945473]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEProfilingBottlenecks/ANEProfilingBottlenecksBenchmark.swift"
+  : [1774972971, 653363420]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPromptEngineeringOptimization/ANEPromptEngineeringOptimizationBenchmark.swift"
+  : [1775300799, 82853076]
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEPruning/ANEPruningBenchmark.swift": [1775023955, 584291590]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEQoSScheduling/ANEQoSSchedulingBenchmark.swift"
+  : [1774974920, 600447321]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEQuantitativeFinance/ANEQuantitativeFinanceBenchmark.swift"
+  : [1775129873, 673837464]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEQuantization/ANEQuantizationBenchmark.swift"
+  : [1774985586, 691525118]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEQuantizationINT8Inference/ANEQuantizationINT8InferenceBenchmark.swift"
+  : [1775302410, 416769869]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEROIPoolingPerformance/ANEROIPoolingBenchmark.swift"
+  : [1775371248, 697024659]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERadarLidarSignalProcessing/ANERadarLidarSignalProcessingBenchmark.swift"
+  : [1775124182, 629418385]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERadixCountingSort/ANERadixCountingSortBenchmark.swift"
+  : [1775264711, 292569864]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERandomNumberGeneration/ANERandomNumberGenerationBenchmark.swift"
+  : [1775383745, 392563572]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERandomSampling/ANERandomSamplingBenchmark.swift"
+  : [1775063080, 345196683]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERandomWalkMarkovChain/ANERandomWalkMarkovChainBenchmark.swift"
+  : [1775331470, 394278277]
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERayTracing/ANERayTracingBenchmark.swift": [1775027022, 168901398]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERealTimeSpeechEnhancement/ANERealTimeSpeechEnhancementBenchmark.swift"
+  : [1775345927, 982621989]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERealWorldModelInference/ANERealWorldModelInferenceBenchmark.swift"
+  : [1775082976, 503147027]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERecommendationCollaborativeFiltering/ANERecommendationCollaborativeFilteringBenchmark.swift"
+  : [1775111564, 609530840]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERecommendationSystemsCollaborativeFiltering/ANERecommendationSystemsCollaborativeFilteringBenchmark.swift"
+  : [1775141633, 729895113]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERecommendationSystemsRanking/ANERecommendationSystemsRankingBenchmark.swift"
+  : [1775122713, 199784797]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERecurrentNeuralNetworkLSTMGRU/ANERecurrentNeuralNetworkLSTMGRUBenchmark.swift"
+  : [1775281187, 440667582]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERecurrentNeuralNetworkOperations/ANERecurrentNeuralNetworkBenchmark.swift"
+  : [1775171038, 66803804]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERecurrentNeuralNetworkOperations/ANERecurrentNeuralNetworkOperationsBenchmark.swift"
+  : [1775137119, 901491224]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERecurrentOperations/ANERecurrentBenchmark.swift"
+  : [1774948106, 884778068]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEReductionAccumulation/ANEReductionAccumulationBenchmark.swift"
+  : [1775079301, 438756498]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEReductionOperations/ANEReductionOperationsBenchmark.swift"
+  : [1775066871, 695293802]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERegularizationOptimization/ANERegularizationOptimizationBenchmark.swift"
+  : [1775302631, 208680103]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEReinforcementLearningGameAI/ANEReinforcementLearningGameAIBenchmark.swift"
+  : [1775113504, 471464265]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERemoteSensingSatelliteImagery/ANERemoteSensingSatelliteImageryBenchmark.swift"
+  : [1775135874, 611010363]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEResidualConnectionOptimization/ANEResidualConnectionOptimizationBenchmark.swift"
+  : [1775261340, 853581309]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEResidualOperations/ANEResidualBenchmark.swift"
+  : [1774957129, 283063673]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEResolutionSensitivity/ANEResolutionSensitivityBenchmark.swift"
+  : [1775039995, 46200345]
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERoPE/ANERoPEBenchmark.swift": [1775436607, 27370651]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERoPEOptimization/ANERoPEOptimizationBenchmark.swift"
+  : [1775448456, 843233319]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERoboticsEmbeddedControl/ANERoboticsEmbeddedControlBenchmark.swift"
+  : [1775151166, 162386938]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERooflineAnalysis/ANERooflineBenchmark.swift"
+  : [1774962746, 752317194]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERoundingModes/ANERoundingModesBenchmark.swift"
+  : [1775248392, 830629050]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERungeKuttaIntegration/ANERungeKuttaIntegrationBenchmark.swift"
+  : [1775391172, 470841158]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANERunningStatisticsOperations/ANERunningStatisticsBenchmark.swift"
+  : [1775089997, 529034609]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESLAM3DVisionPipeline/ANESLAM3DVisionBenchmark.swift"
+  : [1775405179, 585131374]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEScatterGatherOperations/ANEScatterGatherBenchmark.swift"
+  : [1775057622, 179979641]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESchedulerEfficiency/ANESchedulerEfficiencyBenchmark.swift"
+  : [1775019984, 496469433]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEScientificComputingSimulation/ANEScientificComputingSimulationBenchmark.swift"
+  : [1775106284, 287243433]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESegmentationTracking/ANESegmentationTrackingBenchmark.swift"
+  : [1775117379, 927961364]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESeismicSignalProcessing/ANESeismicSignalProcessingBenchmark.swift"
+  : [1775345696, 516237132]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESemanticSegmentation/ANESemanticSegmentationBenchmark.swift"
+  : [1775277551, 619073951]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESequenceLengthSensitivity/ANESequenceLengthSensitivityBenchmark.swift"
+  : [1774993727, 652009803]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESequentialDependency/ANESequentialDependencyBenchmark.swift"
+  : [1775043418, 168685681]
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEShapeOperations/ANEShapeBenchmark.swift": [1774958576, 287247955]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESignalCorrelationMatchedFiltering/ANESignalCorrelationMatchedFilteringBenchmark.swift"
+  : [1775336814, 772087271]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESignalProcessingAudioProcessing/ANESignalProcessingAudioProcessingBenchmark.swift"
+  : [1775142262, 771941001]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESimulatedAnnealingOptimization/ANESimulatedAnnealingOptimizationBenchmark.swift"
+  : [1775214666, 583739487]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESoftmaxAttention/ANESoftmaxBenchmark.swift"
+  : [1774954974, 330687479]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESortingNetworkPerformance/ANESortingNetworkBenchmark.swift"
+  : [1775086766, 38845662]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESortingRanking/ANESortingRankingBenchmark.swift"
+  : [1775056039, 917822478]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESparseAttentionMechanism/ANESparseAttentionMechanismBenchmark.swift"
+  : [1775088889, 952550011]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESparseComputation/ANESparseComputationBenchmark.swift"
+  : [1774987366, 408711829]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESparseMatrixGraphProcessing/ANESparseMatrixGraphProcessingBenchmark.swift"
+  : [1775365624, 811213544]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESparseNeuralNetworkLottery/ANESparseNeuralNetworkLotteryBenchmark.swift"
+  : [1775223448, 851151895]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESparseOperations/ANESparseOperationsBenchmark.swift"
+  : [1775318687, 689356983]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESparseOperationsPruning/ANESparseOperationsPruningBenchmark.swift"
+  : [1775138862, 211547811]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESparseQuantized/ANESparseQuantizedBenchmark.swift"
+  : [1774960368, 232580110]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESpatialOperations/ANESpatialOperationsBenchmark.swift"
+  : [1775050544, 199070570]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESpeculativeDecoding/ANESpeculativeDecodingBenchmark.swift"
+  : [1775272185, 16634445]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESpeechSynthesisRecognition/ANESpeechSynthesisRecognitionBenchmark.swift"
+  : [1775100795, 24907859]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEStateManagement/ANEStateManagementBenchmark.swift"
+  : [1774994872, 301694324]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEStateSpaceModels/ANEStateSpaceModelsBenchmark.swift"
+  : [1775398075, 365145354]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEStreamingInference/ANEStreamingBenchmark.swift"
+  : [1774964294, 462526319]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEStrideAccessPerformance/ANEStrideAccessBenchmark.swift"
+  : [1775266455, 786196396]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEStringTextProcessing/ANEStringTextBenchmark.swift"
+  : [1775065046, 163608488]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESuffixArrayConstruction/ANESuffixArrayConstructionBenchmark.swift"
+  : [1775439210, 900594771]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESuperResolutionImageEnhancement/ANESuperResolutionImageEnhancementBenchmark.swift"
+  : [1775118790, 14240017]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESuperpixelSegmentation/ANESuperpixelSegmentationBenchmark.swift"
+  : [1775396020, 457260456]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANESwarmIntelligenceOptimization/ANESwarmIntelligenceOptimizationBenchmark.swift"
+  : [1775335850, 28583125]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETabularDataClassification/ANETabularDataClassificationBenchmark.swift"
+  : [1775283046, 509548254]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETailLatencyAnalysis/ANETailLatencyBenchmark.swift"
+  : [1775018162, 993470612]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETemplateMatching/ANETemplateMatchingBenchmark.swift"
+  : [1775244811, 286102733]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETensorContraction/ANETensorContractionBenchmark.swift"
+  : [1775358205, 261476011]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETensorCoreEmulation/ANETensorCoreBenchmark.swift"
+  : [1774965918, 635233675]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETensorDataFlow/ANETensorDataFlowBenchmark.swift"
+  : [1774971374, 251381342]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETensorDecompositionMethods/ANETensorDecompositionMethodsBenchmark.swift"
+  : [1775333144, 795120705]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETensorGeneration/ANETensorGenerationBenchmark.swift"
+  : [1775073792, 207413125]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETensorMemoryLayout/ANETensorMemoryLayoutBenchmark.swift"
+  : [1775178923, 278833738]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETensorReshaping/ANETensorReshapingBenchmark.swift"
+  : [1775259212, 972120655]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETensorReshapingOperations/ANETensorReshapingOperationsBenchmark.swift"
+  : [1775370816, 523985683]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETernaryWeightNetworks/ANETernaryWeightNetworksBenchmark.swift"
+  : [1775327700, 930560020]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEThermalPower/ANEThermalPowerBenchmark.swift"
+  : [1774987544, 757603520]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEThresholdBoundaryAnalysis/ANEThresholdBoundaryAnalysisBenchmark.swift"
+  : [1775075699, 14603266]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEThroughputAnalysis/ANEThroughputAnalysisBenchmark.swift"
+  : [1774991347, 852442496]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEThroughputScaling/ANEThroughputScalingBenchmark.swift"
+  : [1775014359, 488642826]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETimeSeriesAnomalyDetection/ANETimeSeriesAnomalyDetectionBenchmark.swift"
+  : [1775124492, 848039597]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETimeSeriesForecastingAnalysis/ANETimeSeriesForecastingAnalysisBenchmark.swift"
+  : [1775111698, 707214141]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETimeSeriesForecastingAnomalyDetection/ANETimeSeriesForecastingAnomalyDetectionBenchmark.swift"
+  : [1775144498, 142270717]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETokenBatchingOptimization/ANETokenBatchingOptimizationBenchmark.swift"
+  : [1775450055, 581609872]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETopKSelectionRanking/ANETopKBenchmark.swift"
+  : [1775198248, 965873335]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETrainingvsInferenceOptimization/ANETrainingvsInferenceOptimizationBenchmark.swift"
+  : [1775353034, 557714552]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETransferLearning/ANETransferLearningBenchmark.swift"
+  : [1775401429, 173711711]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETransformerOptimization/ANETransformerOptimizationBenchmark.swift"
+  : [1774968489, 169190654]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETreeBasedEnsembleMethods/ANETreeBasedEnsembleMethodsBenchmark.swift"
+  : [1775226833, 173081216]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANETreeStructuredReduction/ANETreeStructuredReductionBenchmark.swift"
+  : [1775270109, 980661008]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEUncertaintyQuantification/ANEUncertaintyQuantificationBenchmark.swift"
+  : [1775398855, 213413232]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEVSGPUNeuralPerformance/ANEVSGPUNeuralPerformanceBenchmark.swift"
+  : [1775279032, 340954994]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEVideoActionRecognition/ANEVideoActionRecognitionBenchmark.swift"
+  : [1775286814, 480367299]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEVideoFrameInterpolation/ANEVideoFrameInterpolationBenchmark.swift"
+  : [1775322416, 708868752]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEVideoFrameRateUpconversion/ANEVideoFrameRateUpconversionBenchmark.swift"
+  : [1775347557, 616156866]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEVideoObjectTrackingMultiObjectTracking/ANEVideoObjectTrackingMultiObjectTrackingBenchmark.swift"
+  : [1775350111, 883327174]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEVideoProcessingInterpolation/ANEVideoProcessingInterpolationBenchmark.swift"
+  : [1775105287, 22069875]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEVoiceActivityDetection/ANEVoiceActivityDetectionBenchmark.swift"
+  : [1775276007, 305342516]
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEWarmupTime/ANEWarmupBenchmark.swift": [1774964134, 18423866]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEWaveletTransform/ANEWaveletTransformBenchmark.swift"
+  : [1775093740, 415826994]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEWeightLoading/ANEWeightLoadingBenchmark.swift"
+  : [1775189252, 581771300]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEWeightOnlyQuantization/ANEWeightOnlyQuantizationBenchmark.swift"
+  : [1775437451, 961898835]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEWindowedAttention/ANEWindowedAttentionBenchmark.swift"
+  : [1775257397, 381605507]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEWindowedSparseAttention/ANEWindowedSparseAttentionBenchmark.swift"
+  : [1775217888, 757553395]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEWinogradOptimization/ANEWinogradOptimizationBenchmark.swift"
+  : [1775254216, 832083054]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEWirelessCommunication/ANEWirelessCommunicationBenchmark.swift"
+  : [1775128154, 733697495]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEZeroShotFewShotLearning/ANEZeroShotFewShotLearningBenchmark.swift"
+  : [1775288039, 589482605]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEvsCPUPerformance/ANEvsCPUPerformanceBenchmark.swift"
+  : [1775029025, 136166391]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEvsGPUInference/ANEvsGPUInferenceBenchmark.swift"
+  : [1774984190, 744276991]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/ANEvsGPULatency/ANEvsGPULatencyBenchmark.swift"
+  : [1774969571, 909060982]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/AudioSourceSeparationMusicProcessing/AudioSourceSeparationMusicProcessingBenchmark.swift"
+  : [1775120885, 39293804]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/AudioSpeechProcessingVoice/AudioSpeechProcessingVoiceBenchmark.swift"
+  : [1775109892, 74765544]
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/CoreMLVsMetal/CoreMLVsMetalBenchmark.swift": [1774926277, 286462971]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/GPUFamilyComparison/GPUFamilyComparisonBenchmark.swift"
+  : [1774929778, 90727557]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalAtomicMemoryOrdering/MetalAtomicMemoryOrderingBenchmark.swift"
+  : [1774981962, 307180261]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalBranchDivergence/MetalBranchDivergenceBenchmark.swift"
+  : [1774983887, 438742673]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalDoubleBuffering/MetalDoubleBufferingBenchmark.swift"
+  : [1775028793, 711542163]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalFrameTimingPipeline/MetalFrameTimingPipelineBenchmark.swift"
+  : [1774983762, 447523183]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalIndirectCommandBufferDispatch/MetalIndirectCommandBufferDispatchBenchmark.swift"
+  : [1775143979, 64687583]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalKernelDispatchOptimization/MetalKernelDispatchBenchmark.swift"
+  : [1775403356, 747431072]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalMemoryHierarchy/MetalMemoryHierarchyBenchmark.swift"
+  : [1774980162, 474865161]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalPipelineBubbles/MetalPipelineBubblesBenchmark.swift"
+  : [1775131553, 766416874]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalPipelineDepth/MetalPipelineDepthBenchmark.swift"
+  : [1774982099, 108939168]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalPrecisionAutotuning/MetalPrecisionAutotuningBenchmark.swift"
+  : [1775253907, 673897686]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalTextureCacheBehavior/MetalTextureCacheBehaviorBenchmark.swift"
+  : [1774982303, 397040917]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalThreadgroupSIMD/MetalThreadgroupSIMDBenchmark.swift"
+  : [1774978474, 232922568]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/MetalWarpEfficiency/MetalWarpEfficiencyBenchmark.swift"
+  : [1775030581, 395463055]
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Analysis/TextureSampler.swift": [1774907048, 485080187]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/ArgumentBufferPerformance/ArgumentBufferBenchmark.swift"
+  : [1775001999, 78996711]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/AsyncCopyOptimization/AsyncCopyOptimizationBenchmark.swift"
+  : [1774931572, 206788314]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/CommandBufferParallelism/CommandBufferParallelismBenchmark.swift"
+  : [1774998177, 576087069]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/FFTOptimization/FFTOptimizationBenchmark.swift"
+  : [1774909799, 976819099]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/GEMMOptimization/GEMMOptimizationBenchmark.swift"
+  : [1774943200, 970442994]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/InstructionThroughput/InstructionThroughputBenchmark.swift"
+  : [1774919003, 345159072]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/KernelLaunchOverhead/KernelLaunchOverheadBenchmark.swift"
+  : [1774996541, 604743358]
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/MPSComparison/Benchmark.swift": [1774907048, 485681522]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/MetalAsyncComputeDataTransfer/MetalAsyncComputeDataTransferBenchmark.swift"
+  : [1775149363, 45762431]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/MetalDualCommandBuffer/MetalDualCommandBufferBenchmark.swift"
+  : [1775039629, 481193591]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/MetalDynamicStaticBufferPerformance/MetalDynamicStaticBufferBenchmark.swift"
+  : [1775225478, 10943489]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/MetalGatherScatterPerformance/MetalGatherScatterBenchmark.swift"
+  : [1775199851, 84572110]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/MetalGraphAnalyticsTraversal/MetalGraphAnalyticsTraversalBenchmark.swift"
+  : [1775140363, 842821668]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/MetalHashingRandomGeneration/MetalHashingRandomGenerationBenchmark.swift"
+  : [1775138578, 514275687]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/MetalKernelArgumentBuffer/MetalKernelArgumentBufferBenchmark.swift"
+  : [1775198016, 276833167]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/MetalKernelFusionOptimization/MetalKernelFusionOptimizationBenchmark.swift"
+  : [1775136783, 738586291]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/MetalMatrixTranspose/MetalMatrixTransposeBenchmark.swift"
+  : [1775052190, 896270011]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/MetalPrefixSumStreamCompaction/MetalPrefixSumStreamCompactionBenchmark.swift"
+  : [1775048590, 719887814]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/MetalSIMDGroupPerformance/MetalSIMDGroupPerformanceBenchmark.swift"
+  : [1775190906, 385630069]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/MetalSIMDGroupReduction/MetalSIMDGroupReductionBenchmark.swift"
+  : [1775041383, 747203152]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/MetalStencilOperations/MetalStencilOperationsBenchmark.swift"
+  : [1775053973, 351130531]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/OccupancyOptimization/OccupancyOptimizationBenchmark.swift"
+  : [1774920780, 887214948]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/ReductionOptimization/ReductionOptimizationBenchmark.swift"
+  : [1774915692, 389822466]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/SIMDGroupPrimitives/SIMDGroupPrimitivesBenchmark.swift"
+  : [1774962194, 618344751]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/SparseMatrixOperations/SparseMatrixBenchmark.swift"
+  : [1774940615, 572823937]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Compute/ThreadgroupScheduling/ThreadgroupSchedulingBenchmark.swift"
+  : [1775010781, 828845065]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/ComputationalPhotography/ComputationalPhotographyBenchmark.swift"
+  : [1775019798, 533640096]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/FragmentDepthTesting/FragmentDepthBenchmark.swift"
+  : [1774962491, 798033255]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/FramePacingAnalysis/FramePacingBenchmark.swift"
+  : [1775016246, 334770817]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MeshShaderPerformance/MeshShaderBenchmark.swift"
+  : [1775023535, 123797349]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalDepthBufferPerformance/MetalDepthBufferBenchmark.swift"
+  : [1775194517, 648092746]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalGraphicsPipeline/MetalGraphicsPipelineBenchmark.swift"
+  : [1775032387, 524514693]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalIndirectCommandExecution/MetalIndirectCommandExecutionBenchmark.swift"
+  : [1775045195, 933548446]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalRenderPassDependency/MetalRenderPassDependencyBenchmark.swift"
+  : [1775046798, 559161413]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalRenderPipelineTBDR/MetalRenderPipelineTBDRBenchmark.swift"
+  : [1775145759, 721871432]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalTextureGatherPerformance/MetalTextureGatherBenchmark.swift"
+  : [1775196232, 712222443]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalTextureLODPerformance/MetalTextureLODBenchmark.swift"
+  : [1775088360, 464655903]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalTimestampQueryPerformance/MetalTimestampQueryBenchmark.swift"
+  : [1775192734, 944358871]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalTimestampResolution/MetalTimestampResolutionBenchmark.swift"
+  : [1775219643, 47030462]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalTripleBuffering/MetalTripleBufferingBenchmark.swift"
+  : [1775320506, 947941451]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalVertexCacheOptimization/MetalVertexCacheOptimizationBenchmark.swift"
+  : [1775191224, 832057277]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalVertexIndexPerformance/MetalVertexIndexBenchmark.swift"
+  : [1775077395, 806057502]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/MetalVertexProcessingEfficiency/MetalVertexProcessingEfficiencyBenchmark.swift"
+  : [1775044980, 12489553]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/OcclusionCullingPerformance/OcclusionCullingBenchmark.swift"
+  : [1775003845, 822265314]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/PostProcessingEffects/PostProcessingBenchmark.swift"
+  : [1775002170, 304424718]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/PrimitiveAssembly/PrimitiveAssemblyBenchmark.swift"
+  : [1775012907, 953097473]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/RenderPipelineOptimization/RenderPipelineBenchmark.swift"
+  : [1774944190, 784623570]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/TessellationPerformance/TessellationBenchmark.swift"
+  : [1775017994, 40433170]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Graphics/TextureOptimization/TextureOptimizationBenchmark.swift"
+  : [1774947918, 897452128]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Memory/BankConflictAnalysis/BankConflictAnalysisBenchmark.swift"
+  : [1774994654, 480888712]
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Memory/BlitEngine/BlitEngineBenchmark.swift": [1774911879, 944588962]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Memory/DataTypeBandwidth/DataTypeBandwidthBenchmark.swift"
+  : [1774910040, 326159671]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Memory/MemoryCoalescingPatterns/MemoryCoalescingBenchmark.swift"
+  : [1775007192, 544605436]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Memory/MemoryPoolOptimization/MemoryPoolBenchmark.swift"
+  : [1774949580, 471120694]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Memory/MemoryTransaction/MemoryTransactionBenchmark.swift"
+  : [1774917230, 365371699]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Memory/MetalBufferAliasing/MetalBufferAliasingBenchmark.swift"
+  : [1775086429, 144910119]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Memory/MetalHeapAllocation/MetalHeapAllocationBenchmark.swift"
+  : [1775000174, 78072255]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Memory/SharedMemoryAccess/SharedMemoryAccessBenchmark.swift"
+  : [1774928142, 653740803]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Synchronization/AtomicMemoryOrdering/AtomicMemoryOrderingBenchmark.swift"
+  : [1775008980, 271450929]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Synchronization/MemoryFenceBarrier/MemoryFenceBarrierBenchmark.swift"
+  : [1774962348, 471266037]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Synchronization/MetalMemoryFenceSynchronization/MetalMemoryFenceSynchronizationBenchmark.swift"
+  : [1775043306, 712844187]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Synchronization/SIMDGroupVoteBallot/SIMDGroupVoteBallotBenchmark.swift"
+  : [1775095378, 493024680]
+  ? "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/Benchmarks/Synchronization/SimdGroupPrimitives/SimdGroupBenchmark.swift"
+  : [1774951368, 875836378]
+  "/Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark/main.swift": [1775450063, 775679630]
