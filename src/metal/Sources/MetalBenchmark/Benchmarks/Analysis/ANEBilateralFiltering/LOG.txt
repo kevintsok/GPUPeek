@@ -1,6 +1,6 @@
 ANE Bilateral Filtering Benchmark
 ================================
-Date: 2026-04-06T05:40:53Z
+Date: 2026-04-06T07:34:58Z
 
 FILTER SIZE SCALING:
 3x3: ANE=2.5ms, CPU=35.0ms, GPU=8.0ms, speedup=14.0x
