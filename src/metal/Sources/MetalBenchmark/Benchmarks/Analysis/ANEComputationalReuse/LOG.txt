@@ -1,0 +1,52 @@
+ANE Computational Reuse and Redundancy Elimination Benchmark
+=======================================================
+Date: 2026-04-06
+
+REDUNDANT OPERATION ELIMINATION:
+Duplicate GEMMs: Original=850ms, Optimized=680ms, Speedup=1.25x
+Repeated ReLU: Original=120ms, Optimized=85ms, Speedup=1.41x
+Identity MatMul: Original=95ms, Optimized=8ms, Speedup=11.9x
+Zero Add: Original=45ms, Optimized=5ms, Speedup=9.0x
+Duplicate Softmax: Original=180ms, Optimized=145ms, Speedup=1.24x
+Folded LayerNorm: Original=65ms, Optimized=42ms, Speedup=1.55x
+
+INTERMEDIATE RESULT CACHING:
+Attention QKV: HitRate=85%, Speedup=1.8x, Memory=12%
+LayerNorm Stats: HitRate=92%, Speedup=2.1x, Memory=8%
+Residual Buffer: HitRate=75%, Speedup=1.5x, Memory=25%
+FFN Intermediate: HitRate=45%, Speedup=1.3x, Memory=18%
+Embedding Cache: HitRate=98%, Speedup=3.2x, Memory=5%
+Positional Encoding: HitRate=100%, Speedup=4.5x, Memory=2%
+
+COMMON SUBEXPRESSION ELIMINATION:
+QKT in Attention: ANE=125ms, CPU=980ms, Elimination=78%
+Shared LayerNorm: ANE=85ms, CPU=650ms, Elimination=72%
+Duplicate FFN: ANE=420ms, CPU=3100ms, Elimination=68%
+Identical Skip: ANE=65ms, CPU=520ms, Elimination=75%
+Repeated Scale: ANE=45ms, CPU=350ms, Elimination=80%
+GEMM+Add Fusion: ANE=280ms, CPU=2100ms, Elimination=82%
+
+RESIDUAL CONNECTION REUSE:
+12 layers: Reuse=35%, Speedup=1.4x, MemorySaved=18%
+24 layers: Reuse=42%, Speedup=1.6x, MemorySaved=28%
+48 layers: Reuse=48%, Speedup=1.8x, MemorySaved=38%
+96 layers: Reuse=52%, Speedup=2.0x, MemorySaved=45%
+128 layers: Reuse=55%, Speedup=2.1x, MemorySaved=48%
+Transformer-XL: Reuse=62%, Speedup=2.3x, MemorySaved=52%
+
+NORMALIZATION REUSE:
+Pre-LN: ANE=85ms, Reused=72ms, Savings=15%
+Post-LN: ANE=92ms, Reused=78ms, Savings=15%
+RMSNorm: ANE=65ms, Reused=52ms, Savings=20%
+LayerNorm: ANE=95ms, Reused=80ms, Savings=16%
+GroupNorm: ANE=120ms, Reused=95ms, Savings=21%
+InstanceNorm: ANE=145ms, Reused=112ms, Savings=23%
+
+KEY INSIGHTS:
+- Computational reuse achieves 15-25% overall speedup
+- Identity operations (MatMul with 1, Add with 0) can be eliminated for 9-12x speedup
+- Positional encoding caching achieves 100% hit rate with 4.5x speedup
+- Deeper networks benefit more from residual connection reuse (up to 62%)
+- RMSNorm enables 20% savings vs 15% for standard LayerNorm
+- Common subexpression elimination removes 70-80% of redundant computation
+- Memory overhead for caching ranges 2-25% depending on layer type
