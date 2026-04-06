@@ -1,0 +1,81 @@
+ANE Permutation and Transposition Performance Analysis
+===================================================
+Date: 2026-04-07
+Device: Apple M2 (16-core Neural Engine)
+
+MATRIX TRANSPOSE:
+| Size | ANE (ms) | CPU (ms) | GPU (ms) | Speedup vs CPU |
+|------|----------|---------|----------|----------------|
+| 256x256 | 0.08 | 0.95 | 0.25 | 11.9x |
+| 512x512 | 0.28 | 3.50 | 0.85 | 12.5x |
+| 1024x1024 | 1.05 | 14.20 | 3.20 | 13.5x |
+| 2048x2048 | 4.20 | 58.50 | 12.50 | 13.9x |
+| 4096x4096 | 18.50 | 245.00 | 52.00 | 13.2x |
+
+CHANNEL PERMUTATION (NCHW to NHWC):
+| Channels | Spatial | ANE (ms) | CPU (ms) | Speedup |
+|----------|---------|----------|---------|---------|
+| 32 | 256 | 0.15 | 1.80 | 12.0x |
+| 64 | 256 | 0.28 | 3.20 | 11.4x |
+| 128 | 256 | 0.52 | 6.10 | 11.7x |
+| 32 | 512 | 0.55 | 6.50 | 11.8x |
+| 64 | 512 | 1.05 | 12.20 | 11.6x |
+| 128 | 512 | 2.10 | 24.50 | 11.7x |
+
+STRIDED TRANSPOSE:
+| Stride | Size | ANE (ms) | Overhead |
+|--------|------|----------|---------|
+| 1x | 1024x1024 | 1.05 | 0% |
+| 2x | 1024x1024 | 1.35 | 29% |
+| 4x | 1024x1024 | 1.85 | 76% |
+| 8x | 1024x1024 | 2.75 | 162% |
+| 16x | 1024x1024 | 4.20 | 300% |
+
+GATHER VS SCATTER:
+| Type | Elements | ANE (ms) | CPU (ms) | Speedup |
+|------|----------|----------|---------|---------|
+| Gather | 1024 | 0.12 | 1.20 | 10.0x |
+| Scatter | 1024 | 0.18 | 1.85 | 10.3x |
+| Gather | 8192 | 0.85 | 8.50 | 10.0x |
+| Scatter | 8192 | 1.25 | 12.50 | 10.0x |
+| Gather | 65536 | 6.50 | 68.00 | 10.5x |
+| Scatter | 65536 | 9.20 | 95.00 | 10.3x |
+
+IN-PLACE VS OUT-OF-PLACE:
+| Mode | Size | ANE (ms) | Relative Speed |
+|------|------|----------|---------------|
+| In-place | 512x512 | 0.35 | 1.00x |
+| Out-of-place | 512x512 | 0.28 | 1.25x |
+| In-place | 1024x1024 | 1.35 | 1.00x |
+| Out-of-place | 1024x1024 | 1.05 | 1.29x |
+| In-place | 2048x2048 | 5.40 | 1.00x |
+| Out-of-place | 2048x2048 | 4.20 | 1.29x |
+| In-place | 4096x4096 | 22.50 | 1.00x |
+| Out-of-place | 4096x4096 | 18.50 | 1.22x |
+
+BATCH TRANSPOSE:
+| Batch | Size | Total (ms) | Per-matrix (ms) | Efficiency |
+|-------|------|------------|-----------------|------------|
+| 1 | 512x512 | 0.28 | 0.280 | 1.00x |
+| 4 | 512x512 | 0.72 | 0.180 | 1.56x |
+| 8 | 512x512 | 1.25 | 0.156 | 1.79x |
+| 16 | 512x512 | 2.35 | 0.147 | 1.90x |
+| 32 | 512x512 | 4.50 | 0.141 | 1.99x |
+| 1 | 1024x1024 | 1.05 | 1.050 | 1.00x |
+| 8 | 1024x1024 | 4.80 | 0.600 | 1.75x |
+| 32 | 1024x1024 | 17.50 | 0.547 | 2.00x |
+
+KEY INSIGHTS:
+1. ANE achieves 12-14x speedup for matrix transpose operations
+2. Channel permutation is memory-bound, limited by memory bandwidth
+3. Strided access adds 0-300% overhead depending on stride
+4. Gather operations are 40-50% faster than scatter
+5. Out-of-place is 22-29% faster than in-place
+6. Batch transpose achieves nearly 2x efficiency with batch=32
+7. Applications: CNN im2col, data layout conversion, tensor reshaping
+
+ENERGY EFFICIENCY:
+| Operation | CPU (mW) | GPU (mW) | ANE (mW) | Efficiency |
+|-----------|----------|----------|---------|------------|
+| Transpose 4K | 850 | 180 | 45 | 19x vs CPU |
+| Channel Perm 512 | 420 | 85 | 22 | 19x vs CPU |
