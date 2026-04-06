@@ -1,6 +1,6 @@
 ANE Semantic Segmentation Analysis
 =================================
-Date: 2026-04-06T08:34:45Z
+Date: 2026-04-06T08:38:51Z
 
 Segmentation Architecture Performance (512x512):
 FCN-8s (ResNet-50): 35.0ms, 72.5% mIoU
