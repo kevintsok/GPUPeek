@@ -1,7 +1,7 @@
 # ANE Batched Strided GEMM Benchmark Results
 
 ## Timestamp
-2026-04-06T07:34:47Z
+2026-04-06T07:41:51Z
 
 ## Hardware
 - Device: Apple M2
