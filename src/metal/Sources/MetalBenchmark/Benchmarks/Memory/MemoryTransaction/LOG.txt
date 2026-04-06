@@ -3,28 +3,28 @@
 --- Basic Read/Write Bandwidth ---
 | Size | Write (GB/s) | Read (GB/s) | ReadWrite (GB/s) |
 |------|--------------|-------------|------------------|
-| 64K | 2.881 | 2.722 | 6.736 |
-| 256K | 9.158 | 11.433 | 18.524 |
-| 1024K | 29.733 | 45.987 | 60.284 |
-| 4096K | 67.275 | 167.795 | 122.728 |
+| 64K | 2.840 | 2.578 | 5.425 |
+| 256K | 9.222 | 11.008 | 18.309 |
+| 1024K | 32.504 | 47.069 | 61.966 |
+| 4096K | 70.744 | 169.877 | 123.240 |
 
 --- Access Pattern Analysis ---
 | Pattern | Bandwidth (GB/s) | Relative to Sequential |
 |---------|------------------|----------------------|
-| Sequential | 10.785 | 1.00x |
-| Strided x4 | 11.054 | 0.98x |
-| Strided x16 | 11.265 | 0.96x |
-| Temporal (16x read same) | 11.189 | 0.96x |
+| Sequential | 10.967 | 1.00x |
+| Strided x4 | 10.776 | 1.02x |
+| Strided x16 | 11.608 | 0.94x |
+| Temporal (16x read same) | 10.834 | 1.01x |
 
 --- Read-Write Patterns ---
 | Pattern | Bandwidth (GB/s) |
 |---------|------------------|
-| Write-Read | 1.390 |
-| Read-Modify-Write | 1.428 |
-| Bidirectional | 22.025 |
+| Write-Read | 1.273 |
+| Read-Modify-Write | 1.346 |
+| Bidirectional | 21.458 |
 
 --- Atomic Operations ---
-Atomic increment: 0.155 GB/s effective
+Atomic increment: 0.139 GB/s effective
 
 --- Key Findings ---
 1. Read and write bandwidth differ on unified memory architecture
