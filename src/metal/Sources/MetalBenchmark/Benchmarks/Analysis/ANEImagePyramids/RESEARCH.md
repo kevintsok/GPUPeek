@@ -1,7 +1,7 @@
 # ANE Image Pyramids Benchmark Results
 
 ## Timestamp
-2026-04-06T02:47:33Z
+2026-04-06T03:06:37Z
 
 ## Hardware
 - Device: Apple M2
