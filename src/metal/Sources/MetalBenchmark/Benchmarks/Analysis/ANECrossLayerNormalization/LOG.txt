@@ -1,6 +1,6 @@
 ANE Cross-Layer Normalization and Parameter Reuse Benchmark
 ===========================================================
-Date: 2026-04-06T07:42:02Z
+Date: 2026-04-06T08:04:39Z
 
 Weight Reuse Efficiency:
 No reuse (baseline): 125ms, 1.0x speedup
