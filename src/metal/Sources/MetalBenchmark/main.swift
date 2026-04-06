@@ -17413,6 +17413,7 @@ do { try ANEKernelFusionBenchmark(device: device, queue: queue).run() } catch { 
 	do { try ANELoRALowRankAdaptationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEGroupedQueryAttentionBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEKVCacheQuantizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+	do { try ANERoPEBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEModelArchitectureBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEAutoregressiveGenerationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEvsGPULatencyBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
