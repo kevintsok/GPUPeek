@@ -523,11 +523,31 @@ public struct ANEGroupedQueryAttentionBenchmark {
         cmdBuffer.commit()
         cmdBuffer.waitUntilCompleted()
 
-        // Timed runs
+        // Timed runs - create new command buffer for each iteration
         let startTime = getTimeNanos()
         for _ in 0..<10 {
-            cmdBuffer.commit()
-            cmdBuffer.waitUntilCompleted()
+            guard let timedCmdBuffer = queue.makeCommandBuffer(),
+                  let timedEncoder = timedCmdBuffer.makeComputeCommandEncoder() else {
+                continue
+            }
+            timedEncoder.setComputePipelineState(pipeline)
+            timedEncoder.setBuffer(Q, offset: 0, index: 0)
+            timedEncoder.setBuffer(K, offset: 0, index: 1)
+            timedEncoder.setBuffer(V, offset: 0, index: 2)
+            timedEncoder.setBuffer(O, offset: 0, index: 3)
+            if config.numQ == config.numKV {
+                timedEncoder.setBytes(&seqLenInt, length: MemoryLayout<Int32>.stride, index: 4)
+                timedEncoder.setBytes(&numQInt, length: MemoryLayout<Int32>.stride, index: 5)
+            } else {
+                timedEncoder.setBytes(&seqLenInt, length: MemoryLayout<Int32>.stride, index: 4)
+                timedEncoder.setBytes(&numQInt, length: MemoryLayout<Int32>.stride, index: 5)
+                timedEncoder.setBytes(&numKVInt, length: MemoryLayout<Int32>.stride, index: 6)
+                timedEncoder.setBytes(&headDimInt, length: MemoryLayout<Int32>.stride, index: 7)
+            }
+            timedEncoder.dispatchThreadgroups(numGroups, threadsPerThreadgroup: threadsPerGroup)
+            timedEncoder.endEncoding()
+            timedCmdBuffer.commit()
+            timedCmdBuffer.waitUntilCompleted()
         }
         let endTime = getTimeNanos()
 
