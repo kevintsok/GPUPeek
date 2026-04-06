@@ -1,6 +1,6 @@
 ANE Image Pyramids Performance Analysis
 =====================================
-Date: 2026-04-06T09:06:31Z
+Date: 2026-04-06T09:38:57Z
 
 GAUSSIAN PYRAMID CONSTRUCTION:
 Levels=4, Input=512x512: ANE=1.85ms, CPU=22.0ms, Speedup=11.9x
