@@ -1,6 +1,6 @@
 ANE Image Quality Assessment Analysis
 ======================================
-Date: 2026-04-06T03:27:53Z
+Date: 2026-04-06T05:41:04Z
 
 No-Reference Quality Metrics:
 BRISQUE: 22ms, 92% accuracy (BEST TRADE-OFF)

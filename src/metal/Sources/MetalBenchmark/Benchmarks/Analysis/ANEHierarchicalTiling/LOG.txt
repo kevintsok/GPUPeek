@@ -1,6 +1,6 @@
 ANE Hierarchical Tiling Performance Benchmark
 ===========================================
-Date: 2026-04-06T03:27:53Z
+Date: 2026-04-06T05:40:42Z
 
 Single-Level Tile Performance:
 8x8 tile: 12.5ms (ANE) vs 150.0ms (CPU) = 12.0x speedup
