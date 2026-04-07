@@ -17410,6 +17410,7 @@ do { try ANEKernelFusionBenchmark(device: device, queue: queue).run() } catch { 
 	do { try ANESpikingNeuralNetworkBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEAutomaticDifferentiationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEPolynomialEvaluationRootFindingBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+	do { try ANEBatchedElementWiseOperationsBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEBayesianNeuralNetworkBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANEMetaLearningBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 	do { try ANENormalizingFlowBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
