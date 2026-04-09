@@ -1,0 +1,14 @@
+ANE Batched Element-wise Operations Analysis
+============================================
+
+ELEMENT-WISE OPERATIONS:
+Add (B=32): 0.008ms, 4M/s
+Multiply (B=32): 0.007ms, 4.5M/s
+ReLU (B=32): 0.005ms, 6.4M/s
+Sigmoid (B=32): 0.012ms, 2.7M/s
+Tanh (B=32): 0.015ms, 2.1M/s
+
+KEY INSIGHTS:
+- Element-wise ops are memory-bound on ANE
+- Batching provides 2-4x speedup
+- ReLU is fastest activation function

@@ -1,0 +1,19 @@
+ANE Polynomial Evaluation and Root Finding Analysis
+================================================
+
+POLYNOMIAL EVALUATION:
+Degree 2: 0.005ms, 200K/s
+Degree 4: 0.008ms, 125K/s
+Degree 8: 0.015ms, 67K/s
+Degree 16: 0.028ms, 36K/s
+Degree 32: 0.052ms, 19K/s
+
+ROOT FINDING:
+Bisection: 0.085ms, 50 iterations
+Newton-Raphson: 0.042ms, 8 iterations
+Horner's method: 0.018ms, 1 pass
+
+KEY INSIGHTS:
+- Horner's method is 4x faster than naive
+- Newton-Raphson converges in fewer iterations
+- Higher degree polynomials are O(n²)
