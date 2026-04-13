@@ -1,6 +1,6 @@
 ANE Beamforming and Array Processing Analysis
 ==============================================
-Date: 2026-04-06T21:43:18Z
+Date: 2026-04-07T01:39:36Z
 
 Array Size Scaling:
 4 elements: 0.85ms, 4.7M beams/s

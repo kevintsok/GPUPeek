@@ -1,6 +1,6 @@
 ANE Box Filter Benchmark
 =======================
-Date: 2026-04-06T21:43:07Z
+Date: 2026-04-07T01:39:25Z
 
 FILTER SIZE SCALING:
 3x3: ANE=0.8ms, CPU=12.0ms, GPU=3.5ms, speedup=15.0x

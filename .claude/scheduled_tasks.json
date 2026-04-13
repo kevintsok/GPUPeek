@@ -1,11 +1,3 @@
 {
-  "tasks": [
-    {
-      "id": "3eaa45bc",
-      "cron": "57 * * * *",
-      "prompt": "cd /Users/longxia/Projects/GPUPeek/src/metal/Sources/MetalBenchmark && ./reorganize_research.sh",
-      "createdAt": 1775696887510,
-      "recurring": true
-    }
-  ]
+  "tasks": []
 }
