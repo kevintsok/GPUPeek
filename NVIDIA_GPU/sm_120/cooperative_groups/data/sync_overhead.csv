@@ -1,0 +1,5 @@
+name,time_ms
+__syncthreads(),0.015
+thread_block.sync(),0.018
+grid.sync(),0.25
+multi_grid.sync(),2.5

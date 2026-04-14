@@ -1,0 +1,4 @@
+case,bandwidth_gbps,overhead_pct
+No Divergence,940.0,0.0
+50% Divergence,820.0,12.8
+Full Divergence,680.0,27.7

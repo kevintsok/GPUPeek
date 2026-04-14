@@ -1,0 +1,5 @@
+name,time_ms
+Naive Sequential,4.5
+Block-Level Reduce,0.85
+Grid-Level Reduce,0.62
+Warp-Level Reduce,0.15

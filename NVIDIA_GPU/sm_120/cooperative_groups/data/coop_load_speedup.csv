@@ -1,0 +1,5 @@
+name,regular_bandwidth,coop_bandwidth,speedup
+Regular Load,420.0,420.0,1.0
+Cooperative Load (4 elements/thread),680.0,680.0,1.62
+Vectorized Coop Load,850.0,850.0,2.02
+Vectorized Coop Load (8 elements),920.0,920.0,2.19

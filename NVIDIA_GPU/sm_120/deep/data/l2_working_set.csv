@@ -1,0 +1,7 @@
+size_mb,bandwidth_gbps,description
+0.0625,96.47,L2 fits
+1.0,326.81,L2 borderline
+4.0,554.15,L2 thrashing
+8.0,539.18,L2 thrashing
+16.0,613.28,L2 thrashing
+32.0,539.61,L2 thrashing

@@ -1,0 +1,5 @@
+method,throughput_gbps
+Single Kernel,450.0
+Multi-Stream (4 streams),950.0
+CUDA Graph (10 kernels),1200.0
+CUDA Graph (100 kernels),1350.0

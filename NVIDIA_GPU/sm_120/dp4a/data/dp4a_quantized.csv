@@ -1,0 +1,3 @@
+name,gops
+INT8 Quantized (DP4A),1750.0
+INT8 Block Scaling,1600.0

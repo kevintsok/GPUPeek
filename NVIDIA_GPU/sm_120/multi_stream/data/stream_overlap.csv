@@ -1,0 +1,6 @@
+configuration,bandwidth_gbps
+Single Stream (No Overlap),450.0
+2 Streams (Compute + Copy),820.0
+4 Streams (Compute + Copy),950.0
+2 Streams (Compute + Compute),680.0
+8 Streams (Mixed),880.0

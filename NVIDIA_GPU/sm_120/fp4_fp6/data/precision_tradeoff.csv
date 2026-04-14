@@ -1,0 +1,8 @@
+format,precision_score
+FP32,1.0
+FP16,0.5
+FP8 E4M3,0.25
+FP8 E5M2,0.2
+FP6 e2m3,0.15
+FP6 e3m2,0.12
+FP4 e2m1,0.08

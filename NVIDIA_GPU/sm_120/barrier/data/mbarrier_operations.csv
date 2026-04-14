@@ -1,0 +1,7 @@
+operation,relative_cost
+mbarrier.init,1.0
+mbarrier.arrive,0.5
+mbarrier.test_wait,2.0
+bar.sync,1.5
+bar.arrive,0.3
+bar.wait,1.2

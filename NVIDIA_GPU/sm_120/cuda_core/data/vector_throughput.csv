@@ -1,0 +1,4 @@
+vector_type,bandwidth_gbps,throughput_gflops
+float (32-bit),506.47,253.23
+float2 (64-bit),260.36,130.18
+float4 (128-bit),253.40,126.70

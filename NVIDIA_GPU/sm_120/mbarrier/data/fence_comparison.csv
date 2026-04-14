@@ -1,0 +1,4 @@
+name,time_ms,overhead_pct
+No Fence,0.12,0.0
+__threadfence_block,0.18,50.0
+__threadfence,0.22,83.3

@@ -1,0 +1,10 @@
+operation,time_ms_100iter,implementation
+Redux ADD (sequential loop),2.147,Sequential for-loop
+Redux MIN (sequential loop),1.858,Sequential for-loop
+Redux MAX (sequential loop),1.731,Sequential for-loop
+Redux AND (sequential loop),1.829,Sequential for-loop
+Redux OR (sequential loop),1.824,Sequential for-loop
+Redux XOR (sequential loop),1.729,Sequential for-loop
+TRUE redux.sync.add,0.945,__reduce_add_sync()
+TRUE redux.sync.min,0.991,__reduce_min_sync()
+TRUE redux.sync.max,0.899,__reduce_max_sync()

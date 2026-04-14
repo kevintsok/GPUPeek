@@ -1,0 +1,4 @@
+name,peak_gops
+DP4A Peak (4x INT8),2048.0
+WMMA INT8 Peak,2048.0
+FP32 FMA Peak,82.0

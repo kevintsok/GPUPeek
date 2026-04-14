@@ -1,0 +1,5 @@
+name,bandwidth_gbps
+Sequential Access,850.0
+Strided Access (64),420.0
+Random Access,180.0
+First Touch (fault),120.0

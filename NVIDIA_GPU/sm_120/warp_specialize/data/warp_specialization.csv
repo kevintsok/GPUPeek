@@ -1,0 +1,4 @@
+name,bandwidth_gbps,time_ms
+Standard Kernel,920.0,0.42
+Barrier Copy,880.0,0.44
+Warp Spec (prod/cons),850.0,0.46

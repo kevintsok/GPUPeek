@@ -1,0 +1,5 @@
+name,latency_us
+Page Fault (first),15.0
+GPU Prefetch,5.0
+CPU Prefetch,8.0
+Access Counter Update,2.0

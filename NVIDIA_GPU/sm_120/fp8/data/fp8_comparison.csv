@@ -1,0 +1,5 @@
+format,bits,relative_bandwidth,use_case
+FP32,32,1.0,Baseline
+FP16,16,2.0,High precision
+FP8 E4M3,8,4.0,Weights+Activations
+FP8 E5M2,8,4.0,Gradients/High DR

@@ -1,0 +1,4 @@
+name,bandwidth_gbps,speedup
+No Prefetch,680.0,1.0
+Explicit GPU Prefetch,820.0,1.21
+Read Mostly Advice,850.0,1.25

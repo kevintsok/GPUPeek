@@ -1,0 +1,4 @@
+name,bandwidth_gbps,relative
+Simple Producer/Consumer,720.0,1.0
+Block Spec (half prod/cons),680.0,0.94
+Warp Block Spec,750.0,1.04

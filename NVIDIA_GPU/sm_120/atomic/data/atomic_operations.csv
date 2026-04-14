@@ -1,0 +1,7 @@
+operation,bandwidth_gbps,description
+atomicAdd,850.0,FP32 add
+atomicMin,720.0,INT32 min
+atomicMax,715.0,INT32 max
+atomicCAS,380.0,Compare-and-swap
+atomicAnd,680.0,Bitwise AND
+atomicOr,690.0,Bitwise OR

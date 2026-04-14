@@ -1,0 +1,4 @@
+name,throughput_gbps
+No Pipeline,450.0
+2-Stage Pipeline,680.0
+4-Stage Pipeline,820.0

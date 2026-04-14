@@ -1,0 +1,7 @@
+dtype,measured_tflops,theoretical_tflops
+FP16,89.0,2048.0
+BF16,82.0,2048.0
+FP32 (TF32),39.0,512.0
+FP64,4.5,32.0
+INT8,178.0,2048.0
+INT4,356.0,4096.0

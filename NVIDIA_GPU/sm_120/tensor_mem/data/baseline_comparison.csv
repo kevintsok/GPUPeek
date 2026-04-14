@@ -1,0 +1,6 @@
+name,bandwidth_gbps
+Naive global load,420.0
+Shared memory load,680.0
+LDMATRIX,850.0
+cp.async baseline,620.0
+TMA baseline,950.0

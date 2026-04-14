@@ -1,0 +1,4 @@
+name,time_ms,overhead_pct
+First Touch (fault),2.5,150.0
+Cached Access,1.0,0.0
+Prefetched Access,0.9,-10.0

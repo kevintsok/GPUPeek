@@ -1,0 +1,4 @@
+operation,time_ms_100iter
+__any_sync,0.85
+__all_sync,0.82
+__ballot_sync,0.88

@@ -1,0 +1,5 @@
+operation,bytes
+Load A (FP16),512
+Load B (FP16),512
+MMA Compute,0
+Store D (FP32),1024

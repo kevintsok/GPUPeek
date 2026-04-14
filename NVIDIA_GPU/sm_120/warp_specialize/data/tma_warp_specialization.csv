@@ -1,0 +1,3 @@
+name,bandwidth_gbps,speedup
+Standard Copy,920.0,1.0
+TMA + Warp Spec,1150.0,1.25

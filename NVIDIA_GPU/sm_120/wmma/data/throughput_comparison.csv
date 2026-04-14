@@ -1,0 +1,4 @@
+mode,throughput_tflops
+FP32 CUDA (1 Thread),0.088
+FP16 WMMA (1 Warp),89.0
+FP16 WMMA (Theoretical Peak),2048.0

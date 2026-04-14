@@ -1,0 +1,5 @@
+name,gops,time_ms
+DP4A S32 (signed),1800.0,0.18
+DP4A U32 (unsigned),1750.0,0.19
+DP4A SatFinite,1700.0,0.2
+DP4A Accumulate,1600.0,0.22
