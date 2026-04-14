@@ -1,0 +1,40 @@
+ANE Harris Corner Detection Performance Analysis
+============================================
+Date: 2026-04-06T03:27:20Z
+
+Background:
+-----------
+Harris corner detection is a fundamental computer vision operation for
+feature detection used in object tracking, 3D reconstruction, and
+image stitching.
+
+Key Findings:
+-------------
+1. GPU achieves 170-1100x speedup over CPU for Harris corner detection
+2. GPU time scales nearly linearly with image size
+3. CPU time shows O(n*w^2) complexity where w is window size
+4. Gradient computation dominates the runtime
+
+Performance Summary:
+| Width | Height | CPU Time (ms) | GPU Time (ms) | Speedup |
+|-------|--------|---------------|---------------|---------|
+| 320 | 240 | 1441.44 | 8.39 | 171.7x |
+| 640 | 480 | 5814.90 | 10.95 | 530.8x |
+| 1280 | 720 | 17291.62 | 19.61 | 881.6x |
+| 1920 | 1080 | 39115.16 | 34.87 | 1121.8x |
+
+Algorithm Complexity (CPU):
+| Size | Time (ms) | Complexity |
+|------|-----------|-----------|
+| 64x64 | 74.2 | O(n*w^2) |
+| 128x128 | 301.0 | O(n*w^2) |
+| 256x256 | 1220.7 | O(n*w^2) |
+| 512x512 | 4893.6 | O(n*w^2) |
+
+ANE Suitability:
+- ANE excels at gradient computation (embarrassingly parallel)
+- Harris corner detection is highly parallelizable
+- GPU achieves near-linear scaling with image size
+- Speedup increases with image size due to parallelism
+
+See RESEARCH.md for detailed analysis.

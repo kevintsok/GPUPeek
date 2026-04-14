@@ -1,0 +1,6 @@
+=== 2. Shared Memory Bank Conflict Analysis ===
+
+No Conflict:     0.26 GOPS
+With Conflict:   0.16 GOPS
+Conflict Cost:   1.7x
+

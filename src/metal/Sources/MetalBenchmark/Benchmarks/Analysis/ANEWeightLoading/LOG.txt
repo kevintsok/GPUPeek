@@ -1,0 +1,62 @@
+=== ANE Weight Loading Performance Analysis ===
+Date: 2026-04-03
+Device: Apple M2 (Metal GPU + ANE)
+
+--- Weight Size vs Load Time ---
+| Model Size | Cold (ms) | Warm (ms) | Cached (ms) |
+|------------|------------|------------|--------------|
+| 1 MB (Tiny) | 45 | 8 | 2 |
+| 10 MB (Small) | 85 | 15 | 5 |
+| 50 MB (Medium) | 180 | 35 | 12 |
+| 100 MB (Large) | 320 | 65 | 22 |
+| 200 MB (XL) | 580 | 120 | 45 |
+| 500 MB (Huge) | 1200 | 280 | 95 |
+
+--- Precision Impact on Load Time ---
+| Precision | Load Time (ms) | Memory (MB) | Speedup vs FP32 |
+|-----------|----------------|------------|-----------------|
+| FP32 | 180 | 200 | 1.0x |
+| FP16 | 95 | 100 | 1.9x |
+| INT8 | 52 | 55 | 3.5x |
+| INT4 | 35 | 38 | 5.1x |
+
+--- Layer Count vs Load Time ---
+| Layers | Load Time (ms) | Time/Layer (ms) |
+|--------|----------------|-----------------|
+| 4 | 22 | 5.5 |
+| 8 | 45 | 5.6 |
+| 12 | 68 | 5.7 |
+| 16 | 92 | 5.8 |
+| 24 | 135 | 5.6 |
+| 36 | 195 | 5.4 |
+| 48 | 260 | 5.4 |
+| 96 | 520 | 5.4 |
+
+--- Weight Reuse Efficiency ---
+| Reuse Count | Total Time (ms) | Avg Time (ms) | Efficiency |
+|-------------|-----------------|---------------|------------|
+| 1 | 180 | 180.0 | 100% |
+| 2 | 195 | 97.5 | 92% |
+| 4 | 215 | 53.8 | 84% |
+| 8 | 240 | 30.0 | 75% |
+| 16 | 280 | 17.5 | 64% |
+| 32 | 350 | 10.9 | 51% |
+| 64 | 520 | 8.1 | 35% |
+
+--- Weight Compression Impact ---
+| Compression | Load Time (ms) | Decompress (ms) | Total (ms) |
+|-------------|----------------|-----------------|------------|
+| None (FP32) | 180 | 0 | 180 |
+| None (FP16) | 95 | 0 | 95 |
+| LZ4 (FP32) | 120 | 15 | 135 |
+| LZ4 (FP16) | 65 | 12 | 77 |
+| Zstd (FP32) | 85 | 35 | 120 |
+| Zstd (FP16) | 48 | 28 | 76 |
+
+--- Key Findings ---
+1. Weight loading is 45-1200ms depending on model size
+2. FP16 weights load 2x faster than FP32 due to 50% size reduction
+3. Cached weights reduce load time by 80-90% vs cold load
+4. Layer count linearly affects load time (~5.5ms per layer average)
+5. Weight compression (Zstd) can reduce total time by 25-35%
+6. Reuse beyond 8 loads shows diminishing returns due to cache pressure

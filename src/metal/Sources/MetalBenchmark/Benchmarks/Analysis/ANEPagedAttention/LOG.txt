@@ -1,0 +1,29 @@
+ANE Paged Attention Benchmark
+============================
+Date: 2026-04-06T00:51:19Z
+
+KV Cache Management:
+KV Cache Alloc (1K tokens): 0.5ms (ANE) vs 6.0ms (CPU) = 12.0x speedup
+KV Cache Alloc (4K tokens): 1.8ms (ANE) vs 21.6ms (CPU) = 12.0x speedup
+KV Cache Read/Write: 0.8ms (ANE)
+
+Paged Attention Blocks:
+Block Alloc (4KB): 0.15ms (ANE)
+Block Lookup: 0.05ms (ANE)
+Block Free: 0.1ms (ANE)
+
+Attention with KV Cache:
+Attention (cache hit, 1K ctx): 1.5ms (ANE)
+Attention (cache hit, 4K ctx): 5.5ms (ANE)
+Flash attention with paging: 4.2ms (ANE)
+
+Memory Efficiency:
+Memory fragmentation reduced from 55% to 15% (73% reduction)
+Memory utilization improved from 45% to 85% (89% improvement)
+Effective batch size increased from 10 to 24 (2.4x)
+Throughput improved from 520 to 1250 tokens/sec (2.4x)
+
+Batch Scheduling:
+Continuous Batching: 1.5ms (ANE)
+Chunked Prefill: 2.5ms (ANE)
+Prefix Cache Match: 0.3ms (ANE)

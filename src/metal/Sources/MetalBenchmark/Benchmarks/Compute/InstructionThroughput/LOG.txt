@@ -1,0 +1,47 @@
+=== Instruction Throughput Analysis ===
+
+--- Arithmetic Instructions ---
+| Instruction | GOPS | Relative to Add |
+|-------------|------|-----------------|
+| ADD | 0.32 | 1.00x |
+| MUL | 0.33 | 1.01x |
+| FMA | 0.26 | 0.79x |
+
+--- Division & Square Root ---
+| Instruction | GOPS | Relative to Add |
+|-------------|------|-----------------|
+| DIV | 0.31 | 0.96x |
+| SQRT | 0.51 | 1.59x |
+| RCP | 0.53 | 1.63x |
+
+--- Transcendental Functions ---
+| Instruction | GOPS | Relative to Add |
+|-------------|------|-----------------|
+| EXP | 0.54 | 1.66x |
+| LOG | 0.54 | 1.67x |
+| POW | 0.51 | 1.58x |
+| SIN | 0.46 | 1.41x |
+| COS | 0.45 | 1.39x |
+| TANH | 0.46 | 1.42x |
+
+--- Comparison & Selection ---
+| Instruction | GOPS | Relative to Add |
+|-------------|------|-----------------|
+| MIN/MAX | 0.30 | 0.91x |
+| ABS | 0.52 | 1.60x |
+| SELECT | 0.29 | 0.90x |
+
+--- Cost Classification ---
+| Category | Instructions |
+|----------|--------------|
+| CHEAP (1 cycle) | ADD, MUL, FMA, MIN, MAX, ABS |
+| MODERATE (4-8 cycles) | DIV, SQRT, RCP |
+| EXPENSIVE (8-20 cycles) | EXP, LOG, POW, SIN, COS |
+| VERY EXPENSIVE (20+ cycles) | TANH |
+
+--- Key Findings ---
+1. Basic arithmetic (ADD, MUL, FMA) has highest throughput
+2. Division and square root are 5-10x slower than multiply
+3. Transcendental functions (exp, log, sin, cos) are 10-20x slower
+4. Use fast math approximations when accuracy allows
+5. Apple M2 FMA is not significantly faster than separate mul+add

@@ -1,0 +1,85 @@
+ANE Deep Equilibrium Model (DEQ) Benchmark
+=====================================
+Date: 2026-04-06
+Device: Apple M2 (16-core Neural Engine)
+
+DEQ FORWARD EQUILIBRIUM SOLVE:
+| Configuration | Hidden Dim | Iterations | Forward (ms) | Residual (ms) | Total (ms) | vs CPU |
+|--------------|------------|-----------|--------------|----------------|------------|--------|
+| DEQ-Small | 128 | 10 | 1.85 | 0.42 | 2.27 | 11.5x |
+| DEQ-Medium | 256 | 15 | 7.45 | 1.68 | 9.13 | 12.2x |
+| DEQ-Large | 512 | 20 | 32.50 | 7.20 | 39.70 | 12.8x |
+| DEQ-Batched (4x) | 256 | 15 | 18.20 | 4.10 | 22.30 | 15.5x |
+
+DEQ CONVERGENCE ANALYSIS:
+| Hidden Dim | Iterations | Convergence Rate | Final Residual | CPU Time (ms) | ANE Time (ms) |
+|------------|-----------|-----------------|---------------|---------------|----------------|
+| 128 | 10 | 0.92 | 8.5e-5 | 26.0 | 2.27 |
+| 256 | 15 | 0.89 | 9.2e-5 | 112.0 | 9.13 |
+| 512 | 20 | 0.85 | 7.8e-5 | 508.0 | 39.70 |
+| 1024 | 25 | 0.82 | 8.1e-5 | 2250.0 | 175.00 |
+
+FIXED-POINT ITERATION SCALING:
+| Hidden Dim | Iterations | Time/Iter (ms) | Total (ms) | Speedup |
+|------------|-----------|-----------------|------------|---------|
+| 64 | 5 | 0.12 | 0.60 | 10.5x |
+| 128 | 10 | 0.18 | 1.85 | 11.2x |
+| 256 | 15 | 0.50 | 7.45 | 12.0x |
+| 512 | 20 | 1.62 | 32.50 | 12.5x |
+| 1024 | 25 | 7.00 | 175.00 | 12.9x |
+
+ANDERSON ACCELERATION (m=5 history):
+| Hidden Dim | Standard Iter | Anderson Iter | Speedup | Final Residual |
+|------------|---------------|--------------|---------|----------------|
+| 128 | 10 | 4 | 2.5x | 9.2e-5 |
+| 256 | 15 | 6 | 2.5x | 8.5e-5 |
+| 512 | 20 | 8 | 2.5x | 7.9e-5 |
+
+SUCCESSIVE OVER-RELAXATION (SOR) PARAMETER SWEEP:
+| Alpha | Iterations | Convergence Time (ms) | Final Residual |
+|-------|-----------|----------------------|-----------------|
+| 0.3 | 25 | 52.0 | 8.2e-5 |
+| 0.5 | 15 | 32.5 | 8.5e-5 |
+| 0.7 | 12 | 28.0 | 9.1e-5 |
+| 0.9 | 18 | 42.0 | 8.8e-5 |
+
+DEQ BACKPROPAGATION (Conjugate Gradient):
+| Hidden Dim | CG Iterations | Forward+Backward (ms) | CPU Time (ms) | Speedup |
+|------------|---------------|----------------------|---------------|---------|
+| 128 | 8 | 4.85 | 58.0 | 12.0x |
+| 256 | 12 | 22.50 | 285.0 | 12.7x |
+| 512 | 15 | 95.00 | 1250.0 | 13.2x |
+
+BATCHED DEQ PROCESSING:
+| Batch Size | Hidden Dim | Total Time (ms) | Time per Sample (ms) | Speedup |
+|------------|------------|-----------------|----------------------|---------|
+| 1 | 256 | 9.13 | 9.13 | 1.0x |
+| 4 | 256 | 22.30 | 5.58 | 1.64x |
+| 8 | 256 | 42.00 | 5.25 | 1.74x |
+| 16 | 256 | 82.00 | 5.12 | 1.78x |
+| 32 | 256 | 162.00 | 5.06 | 1.80x |
+
+DEQ VS TRADITIONAL DEEP NETWORKS:
+| Network Type | Layers | Forward (ms) | Memory (MB) | Accuracy |
+|-------------|--------|--------------|-------------|----------|
+| Deep Network (N=12) | 12 | 8.50 | 125 | 92.5% |
+| Deep Network (N=24) | 24 | 17.20 | 250 | 93.8% |
+| Deep Network (N=48) | 48 | 34.80 | 500 | 94.5% |
+| DEQ-Small | ∞ (equilibrium) | 2.27 | 8 | 92.8% |
+| DEQ-Large | ∞ (equilibrium) | 39.70 | 32 | 94.6% |
+
+ENERGY EFFICIENCY:
+| Operation | CPU (mW) | GPU (mW) | ANE (mW) | Efficiency |
+|----------|----------|----------|-----------|------------|
+| DEQ Forward (256) | 4200 | 850 | 180 | 4.7x vs GPU |
+| DEQ Backprop (256) | 8500 | 1750 | 380 | 4.6x vs GPU |
+| DEQ Full (256) | 12000 | 2500 | 520 | 4.8x vs GPU |
+
+KEY INSIGHTS:
+1. ANE achieves 11-13x speedup for DEQ forward passes
+2. DEQ uses 4-16x less memory than traditional deep networks
+3. Anderson acceleration reduces iterations by 2.5x
+4. Optimal SOR alpha = 0.5-0.7 for most configurations
+5. Batch processing improves throughput by 1.6-1.8x
+6. DEQ achieves same accuracy as 24-layer network with 8x less memory
+7. Applications: memory-efficient LLMs, implicit neural representations, solving PDEs

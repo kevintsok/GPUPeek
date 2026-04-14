@@ -1,0 +1,95 @@
+=== Warp-Level Primitives and SIMD Group Operations ===
+
+--- SIMD Shuffle Pattern Comparison ---
+| Pattern | Time(μs) | Throughput | Relative Speed |
+|---------|----------|------------|----------------|
+| Broadcast | 13864.58 | 4.73 M/s | 1.00x |
+| Shuffle XOR | 6595.50 | 9.94 M/s | 2.10x |
+| Shuffle Down | 6776.04 | 9.67 M/s | 2.05x |
+| Shuffle Up | 6333.33 | 10.35 M/s | 2.19x |
+| Shuffle | 6473.96 | 10.12 M/s | 2.14x |
+
+--- Warp-Level Reduction Efficiency ---
+| Reduction Method | Total Operations | Ops/Lane | Efficiency |
+|------------------|-----------------|----------|------------|
+| XOR Shuffle | 5 | 5 | 100.0% |
+| Shuffle Down | 5 | 5 | 100.0% |
+| Sequential | 31 | 31 | 16.1% |
+
+--- Intra-Warp Communication Latency ---
+| Operation | Latency Estimate | Notes |
+|-----------|------------------|-------|
+| simd_broadcast | ~5-10 ns | Single lane to all lanes |
+| simd_shuffle | ~5-15 ns | Depends on lane distance |
+| simd_shuffle_xor | ~5-15 ns | Optimal for power-of-2 offsets |
+| simd_shuffle_down | ~5-15 ns | Cascade pattern |
+
+--- Warp-Level Primitives Performance ---
+| Primitive | Performance | Notes |
+|-----------|-------------|-------|
+| SIMD Vote All | 0.02 GOPS | Hardware-native |
+| SIMD Shuffle | 0.02 GOPS | Lane exchange |
+| SIMD Prefix Sum | 0.02 GOPS | Parallel prefix |
+| Warp Shuffle Reduce | 0.019 GOPS | Combined shuffle+vote |
+| Warp Vote Any | 0.024 GOPS | Any lane true |
+| Warp Shuffle XOR | 0.024 GOPS | Reduction pattern |
+
+--- SIMD Operations Analysis ---
+Apple Metal SIMD Operations (similar to NVIDIA Warp):
+
+1. simd_broadcast
+   - Copies value from one lane to all others
+   - Lowest latency of all shuffle operations
+   - Use for: constant propagation across warp
+
+2. simd_shuffle
+   - Exchange data between lanes with arbitrary pattern
+   - XOR pattern optimal for power-of-2 distances
+   - Use for: reductions, voting, data exchange
+
+3. simd_shuffle_down/up
+   - Shift data between adjacent lanes
+   - Good for cascade operations
+   - Use for: parallel prefix, scan
+
+4. simd_any / simd_all
+   - Vote operations across warp
+   - Hardware-accelerated
+   - Use for: branch voting, convergence checks
+
+--- Reduction Algorithm Comparison ---
+Sequential (within warp):
+- 31 operations for 32 lanes
+- 16.1% efficiency
+
+XOR Shuffle:
+- 5 operations for 32 lanes
+- 100% efficiency (log2(32) = 5)
+
+Key Insight: Always use shuffle-based reductions!
+
+--- SIMD Group Size ---
+- Width: 32 threads (fixed for Apple GPUs)
+- Same as NVIDIA Warp concept
+
+--- Optimization Strategies ---
+1. Use shuffle instead of shared memory for warp-level exchange
+2. XOR shuffle for power-of-2 reduction patterns
+3. Broadcast for constant propagation
+4. Avoid sequential within-warp operations
+
+--- Apple GPU vs NVIDIA Comparison ---
+| Primitive | Apple GPU | NVIDIA CUDA |
+|-----------|-----------|-------------|
+| Thread Group | SIMD Group | Warp |
+| Width | 32 threads | 32 threads |
+| Vote Any | simd_any() | __any_sync() |
+| Vote All | simd_all() | __all_sync() |
+| Shuffle | simd_shuffle() | __shfl_*() |
+| Barrier | threadgroup_barrier | __syncthreads() |
+
+--- Performance Characteristics ---
+- SIMD operations are extremely efficient on Apple GPU
+- Shuffle-based algorithms 2x faster than broadcast
+- XOR shuffle optimal for reductions
+- Hardware-native vote operations are fast

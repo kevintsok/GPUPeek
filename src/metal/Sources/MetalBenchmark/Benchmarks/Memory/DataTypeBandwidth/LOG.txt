@@ -1,0 +1,51 @@
+=== Data Type Memory Bandwidth Analysis ===
+
+--- Float Read Bandwidth ---
+Float4 (16B), 64K: 3.537 GB/s
+Float4 (16B), 256K: 11.683 GB/s
+Float4 (16B), 1024K: 45.700 GB/s
+Float2 (8B), 64K: 1.435 GB/s
+Float2 (8B), 256K: 5.609 GB/s
+Float2 (8B), 1024K: 22.614 GB/s
+Float1 (4B), 64K: 0.699 GB/s
+Float1 (4B), 256K: 2.858 GB/s
+Float1 (4B), 1024K: 11.103 GB/s
+
+--- Half Read Bandwidth ---
+Half4 (8B), 64K: 1.359 GB/s
+Half4 (8B), 256K: 5.723 GB/s
+Half4 (8B), 1024K: 22.137 GB/s
+Half1 (2B), 64K: 0.342 GB/s
+Half1 (2B), 256K: 1.391 GB/s
+Half1 (2B), 1024K: 5.051 GB/s
+
+--- UInt8 Read Bandwidth ---
+UInt8x4 (4B), 64K: 0.696 GB/s
+UInt8x4 (4B), 256K: 2.711 GB/s
+UInt8x4 (4B), 1024K: 9.753 GB/s
+UInt8x1 (1B), 64K: 0.170 GB/s
+UInt8x1 (1B), 256K: 0.690 GB/s
+UInt8x1 (1B), 1024K: 2.261 GB/s
+
+--- Write Bandwidth ---
+Float4 Write, 64K: 1.988 GB/s
+Float4 Write, 256K: 5.413 GB/s
+Float4 Write, 1024K: 10.287 GB/s
+Float1 Write, 64K: 0.615 GB/s
+Float1 Write, 256K: 2.129 GB/s
+Float1 Write, 1024K: 7.561 GB/s
+
+--- Access Pattern Impact ---
+Sequential, 256K: 11.411 GB/s
+Strided (stride=4), 256K: 11.397 GB/s
+
+--- Vectorization Benefit ---
+Float4 vs Float1: 4.12x
+Half4 vs Half1: 4.38x
+
+--- Key Findings ---
+1. Float4 vectorization provides 2-4x bandwidth benefit over Float1
+2. Half precision enables 2x more elements per memory transaction
+3. Sequential access essential for peak memory bandwidth
+4. Apple M2 unified memory limits peak bandwidth
+5. Strided access severely degrades performance

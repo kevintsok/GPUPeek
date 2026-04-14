@@ -1,0 +1,46 @@
+=== 32. Device Architecture Query ===
+
+Querying Metal device capabilities and hardware specifications...
+
+=== Device Information ===
+Device Name: Apple M2
+Architecture: <MTLArchitecture: 0x8e0c61340>
+Has Unified Memory: true
+
+=== Thread and Memory Limits ===
+Max Threads Per Threadgroup: MTLSize(width: 1024, height: 1024, depth: 1024)
+Max Threadgroup Memory: 32768 bytes (32.0 KB)
+Max Buffer Length: 9534832640 bytes (8.8800048828125) GB)
+Recommended Max Working Set: 12713115648 bytes (11.840011596679688 GB)
+
+=== GPU Family and Feature Support ===
+Supports Family Apple 7+: true
+Supports Family Apple 6: true
+Supports Family Apple 5: true
+Supports Family Mac 2: true
+
+=== Storage Mode Support ===
+Shared Storage Mode: Always supported on Apple GPUs
+Managed Storage Mode: true
+Private Storage Mode: Always supported (GPU-only)
+
+=== Advanced Features ===
+Raster Order Groups: Supported on Apple GPUs (execution synchronization)
+Argument Buffers: Supported (essential for complex shaders)
+
+=== GPU Core Count (estimated from thread capacity) ===
+Estimated Concurrent Threadgroups: ~256
+(M2 GPU has 8 cores, each with multiple execution engines)
+
+=== SIMD Width ===
+SIMD Group Size: 32 (fixed for Apple GPUs)
+
+=== Cache Information ===
+L1 Cache (per threadgroup): 32 KB (Metal optimal)
+L2 Cache (shared): ~4 MB on M2
+(Metal doesn't expose L2 directly - managed automatically)
+
+--------------------------------------------------
+Device Architecture Query Complete
+--------------------------------------------------
+

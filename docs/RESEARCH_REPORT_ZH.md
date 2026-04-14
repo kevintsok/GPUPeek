@@ -26,6 +26,7 @@ GPUPeek 是一个 CUDA 基准测试框架，旨在深入探索 GPU 架构特性�
 7. [NCU 性能分析指标](#7-ncu-性能分析指标)
 8. [关键发现与建议](#8-关键发现与建议)
 9. [未来研究方向](#9-未来研究方向)
+10. [Apple Metal (M2) vs NVIDIA Blackwell (RTX 5080) 对比](#10-apple-metal-m2-vs-nvidia-blackwell-rtx-5080-对比)
 
 ---
 
@@ -609,6 +610,102 @@ ncu --set full --metrics sm__warp_issue_stalled_by_barrier.pct ./gpupeek.exe bar
 2. **Warp 级编程**：高级混洗技术
 3. **内存请求合并**：优化内存事务
 4. **Occupancy vs 性能**：找到最佳 occupancy 边界
+
+---
+
+## 10. Apple Metal (M2) vs NVIDIA Blackwell (RTX 5080) 对比
+
+### 10.1 硬件架构对比
+
+| 参数 | Apple M2 (Metal) | NVIDIA RTX 5080 (CUDA) |
+|------|------------------|------------------------|
+| 架构 | 异构（CPU+GPU+ANE） | 独立 GPU |
+| GPU 家族 | Apple 7 | Blackwell (SM 12.0) |
+| GPU 核心 | 8 核心（7 可用） | 60 SM × 128 核心 = 7,680 |
+| 神经网络引擎 | 16核 ANE（~60 TOPS） | Tensor Cores (FP8/INT8) |
+| 统一内存 | 是（LPDDR5，~100 GB/s） | 否（GDDR7，~800 GB/s） |
+| 共享内存 | 32 KB（Metal threadgroup） | 每 Block 48 KB |
+| 内存带宽 | ~100 GB/s | ~800 GB/s |
+| L2 缓存 | 与 CPU 共享 | 5 MB |
+| SIMD 宽度 | 32（Metal） | 32（Warp） |
+| Threadgroup 内存 | 32 KB | 48 KB 共享 |
+
+### 10.2 内存架构
+
+**Apple Metal (M2)**：
+- 统一内存架构：CPU 和 GPU 共享相同物理内存
+- 零拷贝访问：ANE 可直接访问 CPU 内存（~50ns 延迟）
+- 内存带宽：~100 GB/s（LPDDR5）
+- 缓存：CPU 和 GPU 之间共享 L2
+
+**NVIDIA Blackwell (RTX 5080)**：
+- 独立内存：GPU 具有专用 GDDR7 内存
+- 更高带宽：~800 GB/s 峰值
+- 独立 L2 缓存：5 MB 片上
+- CPU-GPU 传输需要 PCIe
+
+### 10.3 ANE（Apple 神经网络引擎）能力
+
+M2 上的 16 核 ANE 提供专门的 AI 加速：
+
+| 特性 | 规格 |
+|------|------|
+| INT8 性能 | ~60 TOPS |
+| FP16/BF16 | 原生支持 |
+| INT4/INT2/INT1 | 软件仿真支持 |
+| 统一内存 | 与 CPU 零拷贝 |
+
+**关键 ANE 优化**：
+- 批处理：批处理可获得 15-20x 加速
+- 内核融合：减少内存流量
+- 异步内存传输：50ns 零拷贝延迟
+- 分层tiling：高达 5.7x 缓存效率提升
+
+### 10.4 编程模型对比
+
+| 方面 | Metal | CUDA |
+|------|-------|------|
+| 语言 | Metal Shading Language (MSL) | CUDA C++ |
+| API | Metal Framework | CUDA Runtime/Driver |
+| 线程组 | threadgroup | shared memory |
+| 线程组同步 | threadgroup.barrier | __syncthreads() |
+| SIMD 组 | simdgroup | warp |
+| 原子支持 | 是 | 是（更广泛） |
+| 异步计算 | 是 | 是（streams） |
+| Tensor 运算 | ANE（独立） | Tensor Cores |
+
+### 10.5 性能特征
+
+**内存受限工作负载**：
+- Metal：~100 GB/s 统一内存（可能受 CPU 缓存限制）
+- CUDA：~800 GB/s 独立内存（更高的原始带宽）
+
+**AI/ML 工作负载**：
+- Metal：ANE 为 INT8/FP16 提供约 60 TOPS
+- CUDA：Tensor Cores 提供混合精度加速
+
+**计算受限工作负载**：
+- Metal：与集成 GPU 相似的 GPU 计算密度
+- CUDA：密集计算更高的 TFLOPS
+
+### 10.6 关键洞察
+
+1. **统一内存优势**：Metal 的统一内存消除了 AI 工作负载的 PCIe 传输开销
+2. **ANE 效率**：专用神经网络引擎为推理提供出色的 TOPS/瓦特
+3. **权衡**：CUDA 的独立内存提供更高带宽但需要显式管理
+4. **目标用例**：
+   - Metal：移动/边缘 AI、高能效推理、Apple 生态系统
+   - CUDA：高性能计算、最大吞吐量、多 GPU
+
+### 10.7 基准测试覆盖
+
+Metal 研究涵盖 431+ ANE 基准测试主题：
+- **内存**：带宽、合并访问、bank 冲突、延迟
+- **计算**：GEMM、卷积、FP16/INT8 操作
+- **同步**：原子操作、屏障、SIMD 原语
+- **算法**：排序、FFT、图算法
+- **分析**：占用率、缓存行为、精度分析
+- **优化**：内核融合、命令缓冲批处理、双缓冲
 
 ---
 

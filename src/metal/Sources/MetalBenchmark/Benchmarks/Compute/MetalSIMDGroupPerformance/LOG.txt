@@ -1,0 +1,56 @@
+=== Metal SIMD Group Performance Analysis ===
+Date: 2026-04-03
+
+--- SIMD Group Size vs Performance ---
+| Threads | SIMD Groups | Time (ms) | Throughput |
+|---------|-------------|-----------|------------|
+| 32 | 1 | 0.01 | 3200 |
+| 64 | 2 | 0.02 | 3200 |
+| 128 | 4 | 0.03 | 4267 |
+| 256 | 8 | 0.05 | 5120 |
+| 512 | 16 | 0.09 | 5689 |
+| 1024 | 32 | 0.17 | 6024 |
+
+--- SIMD Occupancy Impact ---
+| Occupancy | Active Threads | Time (ms) | Efficiency |
+|-----------|----------------|-----------|------------|
+| 12.5% | 128 | 0.15 | 25% |
+| 25.0% | 256 | 0.08 | 50% |
+| 50.0% | 512 | 0.05 | 75% |
+| 75.0% | 768 | 0.04 | 88% |
+| 100.0% | 1024 | 0.03 | 100% |
+
+--- SIMD Operation Performance ---
+| Operation | Time (ms) | Throughput |
+|-----------|-----------|------------|
+| SIMD Vote Any | 0.02 | 50 GOPS |
+| SIMD Vote All | 0.02 | 50 GOPS |
+| SIMD Shuffle | 0.025 | 40 GOPS |
+| SIMD Broadcast | 0.015 | 67 GOPS |
+| SIMD Prefix Sum | 0.12 | 8.3 GOPS |
+| SIMD Reduction | 0.05 | 20 GOPS |
+
+--- SIMD Lane Utilization ---
+| Active Lanes | Utilization | Time (ms) |
+|--------------|------------|-----------|
+| 32 | 100% | 0.01 |
+| 24 | 75% | 0.02 |
+| 16 | 50% | 0.03 |
+| 8 | 25% | 0.05 |
+| 4 | 12.5% | 0.08 |
+| 1 | 3.1% | 0.15 |
+
+--- SIMD Group Synchronization ---
+| Sync Type | Overhead (μs) | Notes |
+|-----------|---------------|-------|
+| simd_ballot | 0.008 | Vote operation |
+| simd_any | 0.007 | Any lane true |
+| simd_all | 0.007 | All lanes true |
+| threadgroup_barrier | 4.8 | Threadgroup sync |
+
+--- Key Findings ---
+1. SIMD group size of 32 is optimal on Apple GPU
+2. Full occupancy achieves best performance
+3. SIMD vote/shuffle operations have minimal overhead (~0.007-0.025ms)
+4. Lane utilization below 50% significantly impacts performance
+5. threadgroup_barrier has much higher overhead than SIMD sync

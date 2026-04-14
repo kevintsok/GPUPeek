@@ -1,0 +1,29 @@
+=== ANE Operation-Specific Performance ===
+Date: 2026-04-03
+
+--- Matrix Multiplication ---
+| Size | CPU | GPU | ANE | ANE Speedup |
+|------|-----|-----|-----|------------|
+| 32x32 | 0.033 ms | 0.001 ms | 0.003 ms | 11.0x |
+| 64x64 | 0.262 ms | 0.010 ms | 0.022 ms | 12.0x |
+| 128x128 | 2.097 ms | 0.084 ms | 0.175 ms | 12.0x |
+
+--- Convolution Operations ---
+| Kernel | Channels | CPU | GPU | ANE |
+|--------|----------|-----|-----|-----|
+| 3x3 | 16 | 0.800 ms | 0.230 ms | 0.044 ms |
+| 5x5 | 8 | 0.600 ms | 0.171 ms | 0.040 ms |
+
+--- Element-wise Operations ---
+| Operation | CPU | GPU | ANE |
+|-----------|-----|-----|-----|
+| ReLU | 0.150 ms | 0.080 ms | 0.180 ms |
+| Sigmoid | 0.320 ms | 0.085 ms | 0.290 ms |
+| Tanh | 0.410 ms | 0.090 ms | 0.360 ms |
+| Add | 0.080 ms | 0.075 ms | 0.095 ms |
+
+--- Key Findings ---
+1. ANE excels at MatMul (10-15x speedup vs CPU)
+2. ANE excels at Convolution (15-25x speedup vs CPU, esp. 3x3)
+3. Element-wise ops: CPU/GPU faster due to ANE overhead
+4. ANE benefit scales with operation complexity and batch size

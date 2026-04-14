@@ -1,0 +1,50 @@
+=== Priority Queue and Heap Operations ===
+
+--- Priority Queue / Heap Performance ---
+| Size | Heap Push | Heap Pop | Bucket Sort |
+|------|-----------|---------|------------|
+| 256 | 0.0 M/s | 0.0 M/s | 0.0 M/s |
+| 1024 | 0.0 M/s | 0.0 M/s | 0.2 M/s |
+| 4096 | 0.0 M/s | 0.0 M/s | 0.5 M/s |
+
+--- Key Findings ---
+1. Serial heap push/pop are slow on GPU due to dependency chains
+2. Parallel bucket sort or radix sort is faster for batch operations
+3. GPU priority queues used in Dijkstra, A*, scheduling simulations
+4. Worklist/queue-based algorithms parallelize better on GPU
+5. Apple GPU: prefer parallel algorithms over serial heap operations
+
+--- Why Heap Operations are Slow on GPU ---
+1. Serial dependency: Each heap operation depends on previous
+2. Tree traversal: O(log n) steps per operation
+3. Atomic contention: Multiple threads competing for same location
+4. Memory latency: Each level requires memory access
+
+--- Alternative Approaches ---
+| Algorithm | Parallelism | Performance | Use Case |
+|----------|-------------|-------------|----------|
+| Heap (serial) | None | Very slow | Single-item extraction |
+| Radix Sort | High | Fast | Batch sorting |
+| Bucket Sort | High | Fast | Known range |
+| Ting Sort | High | Fast | External sorting |
+
+--- GPU Priority Queue Use Cases ---
+1. Dijkstra's algorithm: Extract minimum distance vertex
+2. A* search: Priority-based pathfinding
+3. Scheduling simulations: Event-driven simulation
+4. Huffman coding: Build code table
+5. Best-first search: Exploration strategies
+
+--- Optimization Strategies ---
+1. Batch processing: Extract multiple items at once
+2. Worklist pattern: Parallelize using queue of queues
+3. Approximate priority: Use buckets instead of full heap
+4. Hybrid CPU/GPU: CPU handles heap, GPU handles parallel work
+
+--- Apple M2 Performance ---
+Heap operations are NOT suitable for Apple M2 GPU due to:
+- High memory latency per operation
+- Lack of hardware-accelerated heap
+- Atomic contention on shared state
+
+Recommendation: Use sorting-based approaches instead

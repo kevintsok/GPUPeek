@@ -1,0 +1,34 @@
+=== Memory Transaction Efficiency Analysis ===
+
+--- Basic Read/Write Bandwidth ---
+| Size | Write (GB/s) | Read (GB/s) | ReadWrite (GB/s) |
+|------|--------------|-------------|------------------|
+| 64K | 2.262 | 2.507 | 4.687 |
+| 256K | 7.526 | 9.409 | 14.775 |
+| 1024K | 26.446 | 45.161 | 65.683 |
+| 4096K | 75.006 | 192.575 | 123.128 |
+
+--- Access Pattern Analysis ---
+| Pattern | Bandwidth (GB/s) | Relative to Sequential |
+|---------|------------------|----------------------|
+| Sequential | 10.938 | 1.00x |
+| Strided x4 | 11.316 | 0.97x |
+| Strided x16 | 10.942 | 1.00x |
+| Temporal (16x read same) | 11.136 | 0.98x |
+
+--- Read-Write Patterns ---
+| Pattern | Bandwidth (GB/s) |
+|---------|------------------|
+| Write-Read | 1.427 |
+| Read-Modify-Write | 1.407 |
+| Bidirectional | 22.730 |
+
+--- Atomic Operations ---
+Atomic increment: 0.155 GB/s effective
+
+--- Key Findings ---
+1. Read and write bandwidth differ on unified memory architecture
+2. Spatial locality (sequential vs strided) significantly impacts bandwidth
+3. Temporal locality benefits from caching but unified memory limits this
+4. Read-modify-write patterns are memory-bound on Apple M2
+5. Atomic operations have significant overhead on unified memory

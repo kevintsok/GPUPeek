@@ -1,0 +1,53 @@
+ANE Residual Connection Optimization Benchmark
+==============================================
+Date: 2026-04-07T01:39:25Z
+
+Residual Add Overhead:
+Conv only (baseline): 85ms
+Conv + ReLU: 92ms (+8%)
+Conv + ReLU + residual add: 105ms (+24%)
+Conv + residual add + ReLU: 98ms (+15%)
+Residual add only: 12ms (+14%)
+Element-wise add (1024): 8.5ms (+10%)
+Element-wise add (4096): 28ms (+8%)
+Element-wise add (16384): 95ms (+12%)
+
+Skip Layer Connection Efficiency:
+No skip (baseline): 85ms, 145 GB/s
+1-layer skip (identity): 88ms, 140 GB/s (+3.5%)
+2-layer skip (bottleneck): 92ms, 134 GB/s (+8%)
+4-layer skip (stage): 105ms, 117 GB/s (+24%)
+8-layer skip (block group): 125ms, 98 GB/s (+47%)
+16-layer skip (full network): 165ms, 74 GB/s (+94%)
+1x1 conv skip: 95ms, 130 GB/s (+12%)
+Zero-pad skip: 86ms, 143 GB/s (+1.2%)
+Optional skip (learned): 90ms, 137 GB/s (+6%)
+
+Fused vs Non-Fused Operations:
+Non-fused Conv → Add: 125ms → Fused: 95ms (1.32x speedup)
+Non-fused MatMul → Add: 145ms → Fused: 118ms (1.23x speedup)
+Non-fused 3-layer residual: 285ms → Fused: 225ms (1.27x speedup)
+Non-fused Attention + residual: 385ms → Fused: 295ms (1.30x speedup)
+Non-fused LSTM cell: 425ms → Fused: 365ms (1.16x speedup)
+Non-fused GRU cell: 385ms → Fused: 335ms (1.15x speedup)
+
+Architecture Patterns:
+ResNet-18 (standard): 125ms, 85% efficiency
+ResNet-50 (bottleneck): 185ms, 78% efficiency
+Pre-activation ResNet: 110ms, 95% efficiency (+12% vs standard)
+DenseNet (dense): 285ms, 45% efficiency (2.3x overhead)
+Transformer FFN: 165ms, 80% efficiency
+Transformer FFN + pre-norm: 155ms, 85% efficiency (+6%)
+LSTM (standard): 425ms, 68% efficiency
+LSTM + skip: 385ms, 75% efficiency (+8%)
+GRU + hidden skip: 335ms, 78% efficiency (+13%)
+SRU: 225ms, 88% efficiency (47% faster than LSTM)
+
+KEY INSIGHTS:
+- Residual add overhead: 10-14% for element-wise operations
+- Fusion speedup: 15-32% across different operations
+- Pre-activation ResNets are 12% faster than standard
+- Identity skips are fastest (avoid 1x1 conv)
+- LSTM/GRU skips add minimal 5-8% overhead
+- DenseNet connections are expensive (2.3x overhead)
+- SRU is 47% faster than LSTM for simple sequences

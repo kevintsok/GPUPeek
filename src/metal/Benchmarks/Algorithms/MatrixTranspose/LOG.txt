@@ -1,0 +1,5 @@
+=== 19. Matrix Transpose Analysis ===
+
+Transpose Naive: 0.083 GOPS
+Transpose Shared (tile): 0.088 GOPS
+

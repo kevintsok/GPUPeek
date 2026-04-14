@@ -1,0 +1,9 @@
+=== 40. Bitonic Sort Analysis ===
+
+Bitonic Sort (8192 elements, 91 steps): 0.0002 GOPS
+(n=8192, log²n=91 kernel launches)
+
+--------------------------------------------------
+Bitonic Sort Analysis Complete
+--------------------------------------------------
+

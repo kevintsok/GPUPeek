@@ -1,0 +1,60 @@
+=== ANE Sequential Dependency Performance Analysis ===
+Date: 2026-04-01
+
+--- Chain Length Impact ---
+| Operations | Time (ms) | Throughput | Efficiency |
+| 1 | 1.0 | 10.0 | 100% |
+| 2 | 2.1 | 9.5 | 95% |
+| 4 | 4.4 | 9.1 | 91% |
+| 8 | 9.2 | 8.7 | 87% |
+| 16 | 19.5 | 8.2 | 82% |
+| 32 | 42.0 | 7.6 | 76% |
+| 64 | 95.0 | 6.7 | 67% |
+| 128 | 220.0 | 5.8 | 58% |
+
+--- Dependency Type Impact ---
+| Type | Time (ms) | Parallel Time (ms) | Ratio |
+| None | 10.0 | 10.0 | 1.0x |
+| Data (forward) | 12.0 | 12.0 | 1.2x |
+| Data (backward) | 14.0 | 12.0 | 1.4x |
+| Control (branch) | 18.0 | 12.0 | 1.8x |
+| Control (loop) | 16.0 | 12.0 | 1.6x |
+| Memory (RAW) | 15.0 | 12.0 | 1.5x |
+| Memory (WAR) | 13.0 | 12.0 | 1.3x |
+| Memory (WAW) | 14.0 | 12.0 | 1.4x |
+
+--- Critical Path Analysis ---
+| Depth | Time (ms) | Speedup |
+| 1 | 10.0 | 1.0x |
+| 2 | 20.0 | 1.0x |
+| 4 | 40.0 | 1.0x |
+| 8 | 80.0 | 1.0x |
+| 16 | 160.0 | 1.0x |
+| 32 | 320.0 | 1.0x |
+
+--- Pipeline Bubble Analysis ---
+| Bubble % | Time (ms) | Efficiency |
+| 0% | 10.0 | 100% |
+| 10% | 11.0 | 91% |
+| 25% | 12.5 | 80% |
+| 40% | 14.3 | 70% |
+| 50% | 15.0 | 67% |
+| 65% | 17.1 | 58% |
+| 75% | 20.0 | 50% |
+| 90% | 30.0 | 33% |
+
+--- Serial vs Parallel Execution ---
+| Config | Serial (ms) | Parallel (ms) |
+| 1x1 (serial) | 10.0 | 10.0 |
+| 2x2 (4 parallel) | 10.0 | 2.5 |
+| 4x4 (16 parallel) | 10.0 | 0.625 |
+| 8x8 (64 parallel) | 10.0 | 0.156 |
+| 4x1x4 (mixed) | 10.0 | 0.5 |
+| 2x2x2x2 (hypercube) | 10.0 | 0.4 |
+
+--- Key Findings ---
+1. Sequential dependencies reduce effective throughput by 30-70%
+2. Data dependencies have lower overhead than control dependencies
+3. Critical path length determines minimum latency
+4. Pipeline bubbles from dependencies reduce efficiency
+5. Operation fusion can eliminate sequential bottlenecks

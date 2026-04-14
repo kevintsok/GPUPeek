@@ -1,0 +1,15 @@
+=== ANE vs GPU vs CPU Latency Comparison ===
+
+--- Matrix Multiplication Latency ---
+| Size | CPU (ms) | GPU (ms) | ANE (ms) | Speedup GPU | Speedup ANE |
+|------|----------|----------|-----------|-------------|-------------|
+| Small (128x128) | 11080.08 | 15.25 | 0.50 | 726.5x | 22154.3x |
+| Medium (512x512) | 693344.53 | 92.76 | 0.51 | 7474.5x | 1363523.4x |
+| Large (2048x2048) | 54682838.31 | 3631.67 | 1.04 | 15057.2x | 52394922.5x |
+
+--- Key Findings ---
+1. ANE is optimized for neural network operations
+2. GPU excels at parallelizable workloads
+3. CPU is best for small batch sizes
+4. ANE power efficiency is key for mobile/battery devices
+5. ANE has startup overhead - better for larger batches

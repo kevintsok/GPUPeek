@@ -1,0 +1,21 @@
+=== Reduction Operations Optimization Analysis ===
+
+--- Sum Reduction Performance ---
+| Size | Naive (ms) | Parallel (ms) | Shared (ms) | Warp (ms) | MultiWarp (ms) |
+|------|------------|---------------|------------|------------|----------------|
+| 1024 | 11.991 | 6.660 | 7.430 | 6.728 | 6.422 |
+| 4096 | 25.438 | 7.200 | 7.025 | 6.321 | 6.533 |
+| 16384 | < 0.001 | 8.585 | 7.620 | 6.948 | 7.151 |
+| 65536 | < 0.001 | 13.564 | 8.009 | 7.445 | 7.585 |
+| 262144 | < 0.001 | 38.616 | 11.838 | 13.591 | 13.011 |
+| 1048576 | < 0.001 | 58.632 | 13.614 | 13.432 | 11.260 |
+
+--- Speedup vs Naive ---
+| 1024 | 1.80x | 1.61x | 1.78x | 1.87x |
+| 4096 | 3.53x | 3.62x | 4.02x | 3.89x |
+
+--- Key Findings ---
+1. Tree-based parallel reduction scales O(log n) vs O(n) for naive
+2. Shared memory reduction reduces global memory traffic
+3. Warp-level reduction (SIMD) is fastest for small reductions
+4. Multi-warp combines warp-level speed with threadgroup efficiency

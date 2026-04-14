@@ -1,0 +1,9 @@
+=== 33. Mixed-Precision GEMM Analysis ===
+
+Mixed-Precision GEMM (FP16in, FP32acc, 512x512): 4.40 GOPS
+(vs FP32 GEMM Register Blocked: 13.14 GOPS)
+
+--------------------------------------------------
+Mixed-Precision GEMM Analysis Complete
+--------------------------------------------------
+

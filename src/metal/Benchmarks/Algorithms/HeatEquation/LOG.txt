@@ -1,0 +1,4 @@
+=== 30. Heat Equation / Jacobi Iteration ===
+
+Jacobi (1024x1024, 100 iterations): 0.317 GOPS
+

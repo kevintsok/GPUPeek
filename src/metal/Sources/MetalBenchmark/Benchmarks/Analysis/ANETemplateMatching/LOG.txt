@@ -1,0 +1,35 @@
+ANE Template Matching Benchmark
+==============================
+Date: 2026-04-07T01:39:25Z
+
+Similarity Metrics (1920x1080 image, 64x64 template):
+SAD: 10.2ms (FASTEST) - 0.74x GPU
+SSD: 12.5ms - 0.66x GPU
+NCC: 18.5ms (MOST ROBUST) - 0.69x GPU
+Census+Hamming: 8.5ms (FASTEST BINARY) - 0.73x GPU
+
+Image Size Scaling:
+720p 32x32: 8.5ms (108.2 Kpix/s)
+1080p 64x64: 32.5ms (53.5 Kpix/s)
+4K 32x32: 72.5ms (114.5 Kpix/s)
+
+Multi-Template (1080p):
+1 template: ANE is 0.66x (GPU wins)
+8 templates: ANE is 1.05x (parity)
+128 templates: ANE is 2.45x (ANE wins BIG)
+
+Pyramid Optimization:
+Exhaustive: 125.0ms (baseline)
+4-level pyramid: 5.5ms (22.7x speedup!)
+Computation reduced to 4.4%
+
+Real-Time Tracking:
+720p 8 targets: 120 FPS (60 FPS target PASS)
+1080p 4 targets: 35 FPS (30 FPS target PASS)
+4K 1 target: 15 FPS (needs pyramid for real-time)
+
+RECOMMENDATIONS:
+- Use SAD metric for real-time applications
+- Use NCC for lighting-robust applications
+- Use 4-level pyramid for 20x+ speedup
+- ANE ideal for multi-template matching

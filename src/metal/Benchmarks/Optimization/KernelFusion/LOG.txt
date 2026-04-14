@@ -1,0 +1,6 @@
+=== 13. Kernel Fusion Analysis ===
+
+Fused (1 kernel):    0.08 GOPS
+Separate (2 kernels): 0.03 GOPS
+Fusion Speedup:      2.36x
+

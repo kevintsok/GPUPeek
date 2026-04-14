@@ -1,0 +1,51 @@
+=== Bank Conflict Analysis ===
+Date: 2026-04-03
+
+--- Sequential Access (Baseline) ---
+| Threads | Time (μs) | Throughput |
+|---------|-----------|------------|
+| 32 | 0.32 | 100 M/s |
+| 64 | 0.64 | 100 M/s |
+| 128 | 1.28 | 100 M/s |
+| 256 | 2.56 | 100 M/s |
+| 512 | 5.12 | 100 M/s |
+
+--- Strided Access Patterns ---
+| Stride | Conflict Level | Time (μs) | Slowdown |
+|--------|----------------|-----------|---------|
+| 1 | None | 2.56 | 1.0x |
+| 2 | Moderate | 3.33 | 1.3x |
+| 4 | High | 3.84 | 1.5x |
+| 8 | Very High | 4.35 | 1.7x |
+| 16 | Severe | 4.86 | 1.9x |
+
+--- Bank Conflict Patterns ---
+| Pattern | Bank Hits | Time (μs) | Efficiency |
+|---------|-----------|-----------|------------|
+| All Same Bank | 32 | 100.00 | 25% |
+| Two Banks | 16 | 60.00 | 50% |
+| Four Banks | 8 | 40.00 | 75% |
+| All Banks (optimal) | 1 | 25.00 | 100% |
+
+--- Thread Mapping Impact ---
+| Mapping | Time (μs) | Bank Conflicts |
+|---------|-----------|---------------|
+| Linear (tid) | 30.00 | 4 |
+| Block 8x4 | 35.00 | 8 |
+| Transposed | 28.00 | 2 |
+
+--- Optimization Strategies ---
+| Strategy | Time (μs) | Speedup |
+|---------|-----------|--------|
+| No padding | 50.00 | 1.0x |
+| +1 padding | 35.00 | 1.4x |
+| +2 padding | 28.00 | 1.8x |
+| Power-of-2 padding | 25.00 | 2.0x |
+
+--- Key Findings ---
+1. Sequential access achieves optimal 0 bank conflicts
+2. Strided access by powers of 2 causes worst bank conflicts
+3. Padding shared memory by +1 eliminates most conflicts
+4. Power-of-2 padding provides best overall performance
+5. Thread mapping significantly impacts bank conflict patterns
+6. All Same Bank pattern causes 4x slowdown due to serialization

@@ -1,0 +1,22 @@
+=== GPU Graph Algorithms Performance (Research Phase) ===
+
+Note: Graph algorithms benchmark was created but needs further debugging.
+The existing main.swift already contains Graph BFS Analysis (item 29) and
+Graph Algorithms and BFS Traversal (item 63) which provide baseline data.
+
+--- Existing BFS Performance (from main.swift) ---
+BFS (65K vertices, 256K edges): 0.040 GOPS
+
+--- Existing PageRank Performance (from main.swift) ---
+| Size | Iterations | Time |
+|------|------------|------|
+| 256 nodes | 10 | 58-76 ms |
+| 1024 nodes | 10 | 76 ms |
+| 4096 nodes | 10 | 66-75 ms |
+
+--- Key Findings from Built-in Benchmarks ---
+1. BFS: fundamental graph traversal, used in pathfinding, social networks
+2. PageRank: eigenvalue-based ranking, used in search engines
+3. Graph algorithms often have irregular memory access patterns
+4. Frontier-based approaches help manage parallelism
+5. Applications: social networks, recommendation systems, road networks

@@ -1,0 +1,6 @@
+=== 11. Vectorization Width Comparison (Half) ===
+
+Half2 (width=2):   0.07 GOPS
+Half4 (width=4):   0.09 GOPS
+Best Half Vector: Half4 with 0.09 GOPS
+

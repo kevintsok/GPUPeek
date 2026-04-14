@@ -1,0 +1,99 @@
+=== Apple Metal GPU Optimization Summary ===
+
+--- Performance Ceiling (Apple M2实测) ---
+| Metric | Measured | Theoretical | Utilization |
+|--------|----------|------------|------------|
+| Peak Memory Bandwidth | ~2 GB/s | 100 GB/s | ~2% |
+| Peak Compute (FP32) | ~12 GFLOPS | Unknown | N/A |
+| Peak GEMM (FP16 tiled) | ~15 GFLOPS | Unknown | N/A |
+| Burst Write (16/thread) | ~6 GB/s | 100 GB/s | ~6% |
+
+--- Optimization Impact Summary (Tier 1: Critical, 10x+ impact) ---
+| Optimization | Speedup | When to Apply |
+|-------------|---------|----------------|
+| Memory Coalescing | 5.3x | Always |
+| Burst Write (16/thread) | 3-4x | Write-heavy kernels |
+| Kernel Fusion | 2.36x | Multi-pass algorithms |
+| Command Buffer Batching | 1.88x | Multiple sequential kernels |
+
+--- Optimization Impact Summary (Tier 2: High, 2-5x impact) ---
+| Optimization | Speedup | When to Apply |
+|-------------|---------|----------------|
+| Float4 Vectorization | ~2x | Vectorizable data |
+| FP16 Precision | ~2x | ML workloads |
+| Shared Memory Tiling | 2-5x | GEMM, Stencil |
+| Register Blocking 4x4 | 5x | Large matrix multiply |
+
+--- Optimization Impact Summary (Tier 3: Medium, 1.1-1.5x impact) ---
+| Optimization | Speedup | When to Apply |
+|-------------|---------|----------------|
+| Threadgroup Size 256+ | 1.1-1.3x | Always |
+| Async Execution | 1.65x | Batched kernels |
+| FMA Instructions | 1.5x | Compute-bound |
+
+--- Memory Access Patterns ---
+| Pattern | Performance | Relative |
+|---------|-------------|----------|
+| Sequential (coalesced) | 1.5 GB/s | 1.0x (baseline) |
+| Non-Coalesced | 0.14 GB/s | 0.09x |
+| Burst Write (16/thread) | 6.17 GB/s | 4.1x |
+| Float4 Read | 3.56 GB/s | 2.4x |
+
+--- Compute Operations ---
+| Operation | Performance | Notes |
+|----------|-------------|-------|
+| FP32 MatMul Naive | 4.30 GFLOPS | Memory bound |
+| FP32 MatMul Tiled | 9.11 GFLOPS | 2.1x vs naive |
+| FP16 MatMul Naive | 4.88 GFLOPS | Similar to FP32 |
+| FP16 MatMul Tiled | 14.98 GFLOPS | Peak compute |
+| Register-Blocked 4x4 (1024) | 21.89 GFLOPS | Best GEMM |
+
+--- Synchronization Costs ---
+| Operation | Overhead | Notes |
+|-----------|----------|-------|
+| Threadgroup Barrier | ~4.8 μs | Fixed cost |
+| Kernel Launch | ~0.5 μs | Per dispatch |
+| Command Buffer Batch (3) | ~0.3 μs | Amortized |
+| addDependency() | ~0.25 μs | Per dependency |
+
+--- Algorithm Performance Database ---
+| Operation | Performance | Bound Type |
+|-----------|-------------|-----------|
+| GEMM 1024x1024 | 21.89 GFLOPS | Compute |
+| GEMM 512x512 | 13.7 GFLOPS | Compute |
+| GEMM 256x256 | 4.3 GFLOPS | Memory |
+| Scan (1M) | 0.29 GOPS | Memory |
+| Sort (256K) | 0.015 GOPS | Memory |
+| FFT (1024) | 0.01 GOPS | Memory |
+| Hash Lookup | 2.5 M/s | Memory |
+| Bloom Filter | 2.4 M/s | Memory |
+
+--- Key Insights ---
+1. Apple M2 operates predominantly in MEMORY BOUND regime
+2. Unified memory architecture shares bandwidth with CPU (~2 GB/s effective)
+3. Memory coalescing provides the biggest optimization (5.3x)
+4. Kernel fusion and batching provide consistent speedups
+5. Multi-queue does NOT help (0.76x slower) due to overhead
+
+--- Priority Optimization Order ---
+P0 (Must Do):
+1. Ensure coalesced memory access
+2. Use Float4/Half4 vectorization
+3. Burst write (16+ elements per thread)
+4. Use FP16 for ML/inference
+
+P1 (Should Do):
+5. Implement shared memory tiling for GEMM/Stencil
+6. Fuse multiple kernels into one
+7. Batch command buffers
+8. Use 4x4 register blocking
+
+P2 (Can Do):
+9. Tune threadgroup size (256 vs 512)
+10. Use async execution for independent kernels
+11. Use FMA instead of mul+add
+
+P3 (Avoid):
+- Multi-queue (overhead doesn't pay off)
+- Dynamic shader generation at runtime
+- Small batch sizes without profiling

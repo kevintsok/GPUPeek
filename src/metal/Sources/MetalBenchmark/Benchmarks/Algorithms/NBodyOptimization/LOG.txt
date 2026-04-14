@@ -1,0 +1,16 @@
+=== N-Body Simulation Optimization Analysis ===
+
+--- N-Body Scaling ---
+| Bodies | Interactions | GOPS |
+|--------|-------------|------|
+| 256 | 32640 | 0.0674 |
+| 512 | 130816 | 0.2062 |
+| 1024 | 523776 | 0.5207 |
+| 2048 | 2096128 | 1.3072 |
+| 4096 | 8386560 | 1.2089 |
+
+--- Key Findings ---
+1. N-Body is O(n²) complexity
+2. Performance scales poorly with body count
+3. Apple M2 unified memory limits peak performance
+4. For large simulations, use Barnes-Hut algorithm

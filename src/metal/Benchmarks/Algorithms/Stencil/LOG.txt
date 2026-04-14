@@ -1,0 +1,6 @@
+=== 20. Stencil Computation Analysis ===
+
+Stencil Naive (global mem): 0.035 GOPS
+Stencil Shared (tile+halo): 0.079 GOPS
+Stencil Iterated (5x): 0.084 GOPS
+

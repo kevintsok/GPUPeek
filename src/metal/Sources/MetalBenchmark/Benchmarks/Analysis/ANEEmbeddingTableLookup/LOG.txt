@@ -1,0 +1,54 @@
+ANE Embedding Table Lookup Benchmark
+=====================================
+Date: 2026-04-07T01:39:25Z
+
+Vocabulary Size Impact:
+10K vocab: 8.5ms, 1.18M tokens/s
+30K vocab: 12.0ms, 833K tokens/s
+50K vocab: 18.5ms, 540K tokens/s (LLaMA)
+100K vocab: 35.0ms, 286K tokens/s (GPT-3)
+200K vocab: 68.0ms, 147K tokens/s
+500K vocab: 165.0ms, 60K tokens/s
+1M vocab: 325.0ms, 31K tokens/s
+
+Embedding Dimension Impact:
+Dim 64: 8.5ms, 145 GB/s
+Dim 128: 12.0ms, 130 GB/s
+Dim 256: 18.5ms, 112 GB/s
+Dim 512: 28.0ms, 95 GB/s
+Dim 768: 38.5ms, 82 GB/s (BERT-base)
+Dim 1024: 48.0ms, 72 GB/s (BERT-large)
+Dim 2048: 85.0ms, 48 GB/s
+Dim 4096: 145.0ms, 35 GB/s
+
+Batched Lookup Efficiency:
+Batch 1: 12.0ms (sequential), 1.0x
+Batch 4: 12.0ms -> 6.2ms, 1.9x speedup
+Batch 16: 12.0ms -> 3.5ms, 3.4x speedup
+Batch 64: 12.0ms -> 2.2ms, 5.5x speedup
+Batch 128: 12.0ms -> 1.8ms, 6.7x speedup
+Batch 256: 12.0ms -> 1.5ms, 8.0x speedup
+
+Vocabulary Operations:
+Lookup only: 12.0ms, 83K tokens/s
++ LayerNorm: 18.5ms, 54K tokens/s (+54%)
++ Projection: 25.0ms, 40K tokens/s (+108%)
+Full embedding layer: 35.0ms, 29K tokens/s (+192%)
+Softmax (10K): 45.0ms, 22K tokens/s
+Softmax (50K): 125.0ms, 8K tokens/s
+Softmax (100K): 285.0ms, 3.5K tokens/s
+Beam search (k=4): 185.0ms, 5.4K tokens/s
+
+ANE vs CPU:
+Embedding lookup (50K): ANE 18.5ms vs CPU 95ms = 5.1x faster
+Full embedding layer: ANE 35ms vs CPU 185ms = 5.3x faster
+Softmax (50K vocab): ANE 125ms vs CPU 580ms = 4.6x faster
+Beam search: ANE 185ms vs CPU 925ms = 5.0x faster
+
+KEY INSIGHTS:
+- Vocab size: 10K is 10x faster than 500K
+- Optimal dim: 128-256 for best bandwidth
+- Batching: 8x speedup at batch=256
+- Softmax over large vocab is expensive
+- ANE is 4-6x faster than CPU for vocabulary ops
+- Fusing operations reduces overhead by 30-50%

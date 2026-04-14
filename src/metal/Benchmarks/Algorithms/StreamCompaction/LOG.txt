@@ -1,0 +1,5 @@
+=== 21. Stream Compaction Analysis ===
+
+Compact Naive: 0.029 GOPS
+Compact Tiled: 0.032 GOPS
+

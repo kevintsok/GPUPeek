@@ -1,0 +1,6 @@
+=== 18. Histogram Computation Analysis ===
+
+Histogram Naive (contention): 0.065 GOPS
+Histogram Strided: 0.072 GOPS
+Histogram Vectorized (float4): 0.154 GOPS
+

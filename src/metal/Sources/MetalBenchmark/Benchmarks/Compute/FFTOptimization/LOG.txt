@@ -1,0 +1,33 @@
+=== FFT Optimization Deep Dive ===
+
+--- Naive Radix-2 (Global Memory) ---
+N=256: 0.0012 GFLOPS
+N=512: 0.0025 GFLOPS
+N=1024: 0.0045 GFLOPS
+N=2048: 0.0067 GFLOPS
+N=4096: 0.0090 GFLOPS
+
+--- Shared Memory Radix-2 ---
+N=256: 0.0013 GFLOPS
+N=512: 0.0027 GFLOPS
+N=1024: 0.0048 GFLOPS
+N=2048: 0.0076 GFLOPS
+N=4096: 0.0108 GFLOPS
+
+--- Radix-4 ---
+N=256: 0.0012 GFLOPS
+N=1024: 0.0043 GFLOPS
+N=4096: 0.0099 GFLOPS
+N=16384: 0.0079 GFLOPS
+
+--- Speedup (Shared vs Naive) ---
+N=256: 1.09x
+N=512: 1.06x
+N=1024: 1.07x
+N=2048: 1.14x
+N=4096: 1.21x
+
+--- Key Findings ---
+1. Shared memory reduces global memory traffic
+2. Radix-4 reduces number of stages
+3. Performance scales with size

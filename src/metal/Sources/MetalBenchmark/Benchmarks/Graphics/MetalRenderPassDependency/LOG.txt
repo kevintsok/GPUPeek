@@ -1,0 +1,66 @@
+=== Metal Render Pass Dependency Performance Analysis ===
+Date: 2026-04-01
+
+--- Load/Store Action Performance ---
+| Configuration | Time (ms) | Bandwidth (GB/s) |
+| DontCare/DontCare | 8.0 | 50 |
+| DontCare/Store | 10.0 | 40 |
+| Load/DontCare | 12.0 | 33 |
+| Load/Store | 18.0 | 22 |
+| Clear/DontCare | 6.0 | 66 |
+| Clear/Store | 8.5 | 47 |
+
+--- Barrier Overhead Analysis ---
+| Barrier Type | Overhead (us) | Efficiency |
+| No Barrier | 0.00 | 100.0% |
+| Texture Barrier | 0.15 | 98.0% |
+| Buffer Barrier | 0.12 | 99.0% |
+| Full Barrier | 0.50 | 95.0% |
+| Render Pass Start | 0.08 | 99.5% |
+| Render Pass End | 0.10 | 99.0% |
+
+--- Dependency Chain Depth ---
+| Passes | Total Time (ms) | Speedup |
+| 1 | 10.0 | 1.00x |
+| 2 | 14.0 | 1.43x |
+| 3 | 18.0 | 1.67x |
+| 4 | 23.0 | 1.74x |
+| 5 | 30.0 | 1.67x |
+| 6 | 40.0 | 1.50x |
+| 8 | 60.0 | 1.33x |
+| 10 | 90.0 | 1.11x |
+
+--- Parallel Pass Performance ---
+| Strategy | Time (ms) | Utilization |
+| Sequential | 30.0 | 50% |
+| Parallel (2) | 16.0 | 90% |
+| Parallel (3) | 12.0 | 85% |
+| Parallel (4) | 10.0 | 75% |
+| Over-Parallel (8) | 12.0 | 50% |
+| Texture Bound | 25.0 | 60% |
+| Compute Bound | 18.0 | 80% |
+
+--- Synchronization Frequency ---
+| Frequency | Overhead (ms) | Efficiency |
+| Every Frame | 5.0 | 70% |
+| Every 2 Frames | 3.0 | 85% |
+| Every 4 Frames | 2.0 | 93% |
+| Every 8 Frames | 1.5 | 97% |
+| No Sync | 1.0 | 100% |
+| Adaptive | 2.2 | 90% |
+
+--- Texture Usage Patterns ---
+| Pattern | Time (ms) | Memory Traffic |
+| Streaming (High) | 15.0 | 60 |
+| Streaming (Low) | 8.0 | 120 |
+| Cached | 5.0 | 200 |
+| Always Resident | 4.0 | 250 |
+| GPU Only | 3.0 | 330 |
+| Shared (CPU+GPU) | 12.0 | 83 |
+
+--- Key Findings ---
+1. DontCare load action saves 30-50% bandwidth
+2. Barrier overhead is 0.1-0.5us per barrier
+3. Dependency chains should stay < 5 passes for efficiency
+4. Parallel passes need explicit synchronization
+5. Texture streaming reduces memory pressure by 40-60%

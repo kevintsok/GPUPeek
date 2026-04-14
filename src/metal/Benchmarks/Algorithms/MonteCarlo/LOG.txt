@@ -1,0 +1,63 @@
+=== Monte Carlo Simulation and Random Number Generation ===
+
+--- Random Number Generation Performance ---
+| Size | Gen Throughput |
+|------|---------------|
+| 256 | 0.0 M/s |
+| 1024 | 0.2 M/s |
+| 4096 | 0.8 M/s |
+| 16384 | 3.1 M/s |
+
+--- Monte Carlo Pi Estimation ---
+| Samples | Estimate | Error |
+|---------|----------|-------|
+| 1024 | 3.12891 | 0.40% |
+| 4096 | 3.11816 | 0.75% |
+| 16384 | 3.14404 | 0.08% |
+| 65536 | 3.16174 | 0.64% |
+
+--- Key Findings ---
+1. PRNG: hash-based generators fast on GPU, use for parallel sampling
+2. Box-Muller: transforms uniform to Gaussian distribution
+3. Monte Carlo: embarrassingly parallel, ideal for GPU acceleration
+4. Pi estimation: classic example, converges as 1/sqrt(n)
+5. Applications: finance (option pricing), physics (particle transport), ML (dropout)
+
+--- PRNG Algorithm Comparison ---
+| Algorithm | Speed | Quality | GPU-friendly |
+|----------|-------|---------|-------------|
+| XOR-shift | Fastest | Medium | Yes |
+| LCG | Fast | Low | Yes |
+| PCG | Medium | High | Yes |
+| Hash-based | Medium | High | Yes |
+
+--- Monte Carlo Applications ---
+1. Financial Engineering: Option pricing, risk analysis
+2. Physics: Particle transport, quantum Monte Carlo
+3. Statistics: Bayesian inference, bootstrapping
+4. Machine Learning: Dropout, stochastic gradient descent
+5. Graphics: Path tracing, global illumination
+
+--- Performance Characteristics ---
+- Embarrassingly parallel: No data dependencies
+- Scales linearly with number of samples
+- Random number generation is the bottleneck
+- Memory access is mostly sequential (good for GPU)
+
+--- Optimization Strategies ---
+1. Use fast PRNG (XOR-shift) for large simulations
+2. Pre-generate random seeds for each thread
+3. Use shared memory for thread-local PRNG state
+4. Batch process samples to reduce kernel launch overhead
+5. Consider quasi-random sequences (Sobol) for faster convergence
+
+--- Convergence Analysis ---
+Monte Carlo convergence: O(1/sqrt(N))
+- 1M samples: ~0.1% error
+- 10M samples: ~0.03% error
+- 100M samples: ~0.01% error
+
+--- Apple M2 Performance ---
+- Random number generation: ~3 M/s (16K batch)
+- Monte Carlo simulation: Near linear scaling
+- Memory bandwidth: Not the bottleneck for simple MC

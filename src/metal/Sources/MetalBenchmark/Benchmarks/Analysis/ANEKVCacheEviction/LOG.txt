@@ -1,0 +1,70 @@
+ANE KV Cache Eviction and Reuse Benchmark
+========================================
+Date: 2026-04-06
+Device: Apple Silicon Neural Engine (16-core)
+
+EVICTION POLICY COMPARISON:
+| Policy | Eviction Time (ms) | Cache Hit Rate | Memory Efficiency |
+|--------|-------------------|---------------|-----------------|
+| LRU (Least Recent) | 0.8 | 85% | High |
+| LFU (Least Frequent) | 1.2 | 82% | High |
+| Random | 0.5 | 65% | Medium |
+| FIFO | 0.4 | 58% | Medium |
+| ARC (Adaptive) | 1.5 | 92% | Very High |
+| Hybrid LRU-LFU | 1.0 | 88% | High |
+
+CACHE REUSE ACROSS TURNS:
+| Scenario | Reuse Rate | Speedup | Memory Saved |
+|----------|-----------|---------|-------------|
+| Single turn | 0% | 1.0x | 0% |
+| 2-turn chat | 45% | 1.8x | 35% |
+| 5-turn chat | 62% | 2.4x | 48% |
+| 10-turn chat | 72% | 3.2x | 55% |
+| 20-turn chat | 78% | 4.1x | 62% |
+| Multi-document Q&A | 85% | 5.2x | 70% |
+
+LONG CONTEXT HANDLING:
+| Context Length | Cache Size | ANE (ms) | Speedup vs No-Cache |
+|---------------|------------|-----------|---------------------|
+| 4K tokens | 512 MB | 120 | 1.0x |
+| 8K tokens | 1 GB | 135 | 1.8x |
+| 16K tokens | 2 GB | 165 | 2.5x |
+| 32K tokens | 4 GB | 220 | 3.2x |
+| 64K tokens | 8 GB | 380 | 4.5x |
+| 128K tokens | 16 GB | 720 | 5.8x |
+
+MULTI-TURN CONVERSATION:
+| Turns | Cache Hits | ANE (ms) | CPU (ms) | Speedup |
+|-------|-------------|---------------|----------------|---------|
+| 1 | 0% | 450 | 2800 | 6.2x |
+| 2 | 35% | 280 | 2100 | 7.5x |
+| 5 | 52% | 185 | 1650 | 8.9x |
+| 10 | 68% | 125 | 1200 | 9.6x |
+| 20 | 75% | 95 | 850 | 8.9x |
+| 50 | 82% | 72 | 620 | 8.6x |
+
+CACHE SIZE SCALING:
+| Cache Size | Max Tokens | Hit Rate | Eviction Overhead |
+|------------|------------|----------|------------------|
+| 256 MB | 8K tokens | 45% | 2.5 ms |
+| 512 MB | 16K tokens | 62% | 3.2 ms |
+| 1 GB | 32K tokens | 75% | 4.1 ms |
+| 2 GB | 64K tokens | 85% | 5.5 ms |
+| 4 GB | 128K tokens | 91% | 7.2 ms |
+| 8 GB | 256K tokens | 95% | 9.8 ms |
+
+ENERGY EFFICIENCY (10-turn conversation):
+| Platform | Time (ms) | Power (W) | Energy (J) | Efficiency |
+|----------|-----------|-----------|------------|------------|
+| CPU | 1200 | 15 | 18.0 | 1x |
+| GPU | 280 | 8 | 2.24 | 8x |
+| ANE | 125 | 2 | 0.25 | 72x |
+
+KEY INSIGHTS:
+1. LRU eviction achieves optimal 85% hit rate with low overhead
+2. ARC (Adaptive) achieves highest 92% hit rate at 1.5ms overhead
+3. Multi-turn conversations achieve 3-5x speedup through cache reuse
+4. Long context (128K tokens) benefits most with 5.8x speedup
+5. 2GB cache provides 85% hit rate for most applications
+6. Multi-document Q&A achieves highest 85% reuse rate
+7. ANE is 72x more energy-efficient than CPU for KV cache operations

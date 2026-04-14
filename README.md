@@ -8,38 +8,78 @@ A CUDA benchmark framework for exploring GPU mechanisms and metrics.
 GPUPeek/
 ├── CMakeLists.txt              # Global build configuration
 ├── README.md
-├── CLAUDE.md                  # Project rules and conventions
-├── docs/                      # Research reports
-├── include/                   # Header files
-├── NVIDIA_GPU/               # NVIDIA GPU code
-│   ├── ref/                  # NVIDIA official documentation
-│   ├── common/               # Architecture-agnostic code
-│   │   ├── main.cu          # Main program (auto-detects GPU)
-│   │   ├── gpu_info.h/cu   # GPU information utilities
-│   │   └── timer.h         # GPU/CPU timing utilities
-│   ├── generic/              # Generic kernels (work on all GPUs)
-│   │   ├── bandwidth_kernel.cu
-│   │   ├── compute_kernel.cu
-│   │   └── warp_kernel.cu
-│   └── sm_120/              # SM 12.0 (Blackwell)
-│       ├── arch.cu          # Architecture info
-│       ├── arch_kernels.cu  # Architecture-specific kernels
-│       ├── benchmarks.cu    # Benchmark runner
-│       └── [modules]/        # Independent research modules
-│           ├── CMakeLists.txt # Each module can build independently
-│           ├── main.cu       # Module entry point
-│           ├── README.md     # Module documentation
-│           ├── RESEARCH.md    # Research findings
-│           └── *_kernel.cu   # Module source code
-└── APPLE_GPU/               # Apple GPU support (future)
+├── CLAUDE.md                     # Project rules and conventions
+├── ref/                         # NVIDIA official documentation
+│   └── README.md                 # Documentation index
+└── src/
+    ├── common/                   # Architecture-agnostic code
+    │   ├── main.cu              # Main program (auto-detects GPU)
+    │   ├── gpu_info.h/cu        # GPU information utilities
+    │   └── timer.h              # GPU/CPU timing utilities
+    ├── generic/                  # Generic kernels (work on all GPUs)
+    │   ├── bandwidth_kernel.cu   # Memory bandwidth kernels
+    │   ├── compute_kernel.cu     # Compute throughput kernels
+    │   └── warp_kernel.cu       # Warp-level operation kernels
+    ├── metal/                    # Apple Metal GPU (M1/M2/M3/M4 series)
+    │   ├── RESEARCH.md           # Research documentation
+    │   ├── bandwidth_test.metal  # Memory bandwidth kernels
+    │   ├── bandwidth_host.mm     # Host code for bandwidth tests
+    │   └── compute_test.metal    # Compute throughput kernels
+    └── sm_120/                  # SM 12.0 (Blackwell) specific
+        ├── arch.cu               # Architecture info & utilities
+        ├── arch_kernels.cu       # Architecture-specific kernels
+        ├── benchmarks.cu          # Architecture-specific benchmark runner
+        ├── memory_research_kernel.cu    # Memory research kernels
+        ├── memory_research_benchmarks.cu
+        ├── deep_research_kernel.cu      # Deep research kernels
+        ├── deep_research_benchmarks.cu
+        ├── advanced_research_kernel.cu   # Advanced research kernels
+        ├── advanced_research_benchmarks.cu
+        ├── ncu_profiling_kernel.cu      # NCU profiling kernels
+        ├── ncu_profiling_benchmarks.cu
+        ├── cuda_core_kernels.cu         # CUDA Core arithmetic kernels
+        ├── cuda_core_benchmarks.cu
+        ├── atomic_kernels.cu            # Atomic research kernels
+        ├── atomic_benchmarks.cu
+        ├── barrier_kernels.cu           # Barrier sync kernels
+        ├── barrier_benchmarks.cu
+        ├── warp_specialize_kernels.cu   # Warp specialization kernels
+        ├── warp_specialize_benchmarks.cu
+        ├── mma_research_kernel.cu      # MMA research kernels
+        ├── mma_research_benchmarks.cu
+        ├── tensor_mem_research_kernel.cu   # Tensor memory kernels
+        ├── tensor_mem_research_benchmarks.cu
+        ├── dp4a_research_kernel.cu        # DP4A (INT8 dot) kernels
+        ├── dp4a_research_benchmarks.cu
+        ├── wgmma_research_kernel.cu       # WGMMA (Async warpgroup MMA) kernels
+        ├── wgmma_research_benchmarks.cu
+        ├── fp8_research_kernel.cu        # FP8 / TCGen05 Block Scaling kernels
+        ├── fp8_research_benchmarks.cu
+        ├── cuda_graph_research_kernel.cu   # CUDA Graph kernels
+        ├── cuda_graph_research_benchmarks.cu
+        ├── unified_memory_research_kernel.cu   # Unified Memory kernels
+        ├── unified_memory_research_benchmarks.cu
+        ├── multi_stream_research_kernel.cu   # Multi-Stream kernels
+        ├── multi_stream_research_benchmarks.cu
+        ├── mbarrier_research_kernel.cu   # Mbarrier (memory barrier) kernels
+        ├── mbarrier_research_benchmarks.cu
+        ├── cooperative_groups_research_kernel.cu   # Cooperative Groups kernels
+        ├── cooperative_groups_research_benchmarks.cu
+        ├── redux_sync_research_kernel.cu   # Redux.sync warp reduction kernels
+        ├── redux_sync_research_benchmarks.cu
+        ├── fp4_fp6_research_kernel.cu   # FP4/FP6 low-precision MMA kernels
+        └── fp4_fp6_research_benchmarks.cu
 ```
 
 ## GPU Architecture Support
 
-- `NVIDIA_GPU/sm_120/` - Blackwell (RTX 5080, RTX 5070, etc.)
-- `NVIDIA_GPU/sm_90/` - Ada Lovelace (RTX 4090, RTX 4080, etc.)
-- `NVIDIA_GPU/sm_80/` - Ampere (RTX 3090, A100, etc.)
-- `NVIDIA_GPU/sm_70/` - Volta/Vega (V100, etc.)
+Each GPU architecture (compute capability) has its own directory:
+- `metal/` - Apple Metal GPU (M1/M2/M3/M4 series)
+- `sm_120/` - Blackwell (RTX 5080, RTX 5070, etc.)
+- `sm_90/` - Ada Lovelace (RTX 4090, RTX 4080, etc.)
+- `sm_80/` - Ampere (RTX 3090, A100, etc.)
+- `sm_70/` - Volta/Vega (V100, etc.)
+- ... (can be extended as needed)
 
 ## Building
 

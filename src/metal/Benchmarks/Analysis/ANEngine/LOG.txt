@@ -1,0 +1,84 @@
+=== Apple Neural Engine (ANE) Research ===
+
+--- Key Finding: ANE is NOT part of Metal/GPU ---
+
+ANE is a SEPARATE neural network accelerator:
+- NOT programmed via Metal compute shaders
+- NOT accessible from shader code
+- Accessed via CoreML, Vision, NaturalLanguage frameworks
+
+--- ANE Specifications (历代芯片) ---
+
+| Chip     | ANE TOPS | Notes                    |
+|----------|----------|--------------------------|
+| A12      | 5 TOPS   | First ANE (iPhone XS)   |
+| A14      | 11 TOPS  | iPhone 12               |
+| A15      | 15.8 TOPS| iPhone 13               |
+| A16      | 17 TOPS  | iPhone 14 Pro           |
+| A17 Pro  | 35 TOPS  | iPhone 15 Pro           |
+| A18 Pro  | 35 TOPS  | iPhone 16 Pro           |
+| M1       | 11 TOPS  | First Mac ANE           |
+| M2       | 15.8 TOPS| MacBook Air M2          |
+| M3       | 18 TOPS  | MacBook Air M3          |
+| M4       | 38 TOPS  | iPad Pro M4             |
+
+--- CoreML Compute Units ---
+
+| Compute Unit | Target | Best For |
+|--------------|--------|----------|
+| .cpuOnly | CPU only | Debugging, simple models |
+| .gpuOnly | Metal GPU | GPU-accelerated inference |
+| .aneOnly | Apple Neural Engine | Efficient neural network |
+| .cpuAndGPU | CPU + GPU | Balanced performance |
+| .all | CPU + GPU + ANE | Maximum performance |
+
+--- Vision Framework (ANE-powered) ---
+
+| Vision Request | Purpose |
+|----------------|---------|
+| VNRecognizeTextRequest | OCR text recognition |
+| VNDetectFaceRectanglesRequest | Face detection |
+| VNDetectFaceLandmarksRequest | Facial landmarks |
+| VNDetectHumanRectanglesRequest | Human detection |
+| VNRecognizeAnimalsRequest | Animal recognition |
+| VNClassifyImageRequest | Image classification |
+
+--- NaturalLanguage Framework (ANE-powered) ---
+
+| NLP Component | Purpose |
+|---------------|---------|
+| NLLanguageRecognizer | Language identification |
+| NLModel | Text classification |
+| NLTagger | Part-of-speech tagging |
+| NLEmotionalAttitude | Sentiment analysis (iOS 17+) |
+
+--- ANE vs GPU Performance (Neural Networks) ---
+
+| Operation | ANE Advantage | Notes |
+|-----------|--------------|-------|
+| MatMul (small) | 10-100x | Dedicated MAC units |
+| Conv2D | 5-20x | Sliding window optimization |
+| Attention | 10-50x | Transformer acceleration |
+| BatchNorm | 2-5x | Efficient element-wise |
+| Softmax | 5-10x | Specialized reduction |
+
+--- Conclusion ---
+
+1. ANE is a DEDICATED neural network accelerator (NPU)
+2. NOT part of GPU - separate silicon component
+3. Cannot be programmed via Metal Shading Language
+4. Access via CoreML, Vision, NLP frameworks
+5. For GPU research: ANE is outside Metal GPU architecture scope
+6. GPU tensor core equivalent: use SIMD group WMMA emulation
+
+--- Metal vs ANE Summary ---
+
+Metal (GPU):
+- General parallel compute
+- Accessed via MTLComputeCommandEncoder
+- Flexible but slower for ML
+
+ANE:
+- Neural network inference only
+- Accessed via CoreML/Vision/NLP
+- 5-50x faster for ML ops but not programmable directly

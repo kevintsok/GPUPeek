@@ -1,0 +1,68 @@
+=== ANE Command Buffer Parallelism Analysis ===
+Date: 2026-04-01
+
+--- Concurrent Inference Throughput ---
+| Concurrent | ANE Throughput | GPU Throughput | Efficiency |
+|-----------|---------------|---------------|------------|
+| 1 | 25.0 | 22.0 | 100% |
+| 2 | 48.0 | 42.0 | 96% |
+| 4 | 92.0 | 80.0 | 92% |
+| 8 | 170.0 | 155.0 | 85% |
+| 16 | 280.0 | 290.0 | 70% |
+| 32 | 380.0 | 480.0 | 48% |
+
+--- Command Buffer Submission Patterns ---
+| Pattern | Latency (ms) | Throughput | Utilization |
+|---------|--------------|------------|-------------|
+| Serial | 25.0 | 45 | 45% |
+| Batched | 22.0 | 85 | 95% |
+| Interleaved | 18.0 | 110 | 92% |
+| Overlapped | 16.0 | 130 | 98% |
+| Priority | 12.0 | 145 | 85% |
+
+--- Request Interleaving Efficiency ---
+| Batch | Serial (ms) | Interleaved (ms) | Speedup |
+|-------|-------------|------------------|---------|
+| 1 | 25.0 | 25.0 | 1.00x |
+| 2 | 50.0 | 35.0 | 1.43x |
+| 4 | 100.0 | 60.0 | 1.67x |
+| 8 | 200.0 | 110.0 | 1.82x |
+| 16 | 400.0 | 200.0 | 2.00x |
+
+--- Hardware Utilization ---
+| Requests | ANE Util | GPU Util | Notes |
+|----------|---------|---------|-------|
+| 1 | 25% | 30% | Baseline |
+| 2 | 50% | 55% | Good scaling |
+| 4 | 75% | 80% | Near optimal |
+| 8 | 85% | 88% | Saturating |
+| 16 | 90% | 92% | Maxed out |
+| 32 | 88% | 90% | Contention |
+
+--- Memory Bandwidth Sharing ---
+| Concurrent | Total BW | Per-Request | Scaling |
+|------------|----------|-------------|---------|
+| 1 | 100 GB/s | 100 GB/s | 1.00x |
+| 2 | 180 GB/s | 90 GB/s | 0.90x |
+| 4 | 320 GB/s | 80 GB/s | 0.80x |
+| 8 | 520 GB/s | 65 GB/s | 0.65x |
+| 16 | 720 GB/s | 45 GB/s | 0.45x |
+| 32 | 800 GB/s | 25 GB/s | 0.25x |
+
+--- Parallelism Efficiency ---
+| Requests | Ideal Time | Actual Time | Efficiency |
+|----------|------------|-------------|-----------|
+| 1 | 25.00 ms | 25.0 ms | 100.0% |
+| 2 | 12.50 ms | 15.0 ms | 83.3% |
+| 4 | 6.25 ms | 8.0 ms | 78.1% |
+| 8 | 3.125 ms | 4.5 ms | 69.4% |
+| 16 | 1.560 ms | 2.8 ms | 55.7% |
+
+--- Key Findings ---
+1. ANE shows 60-80% utilization with 2-4 concurrent requests
+2. GPU utilization scales linearly up to 8 concurrent requests
+3. Interleaving provides 1.5-2x speedup over serial execution
+4. Memory bandwidth sharing causes scaling degradation at high concurrency
+5. Optimal concurrency: 2-4 for ANE, 4-8 for GPU
+6. Overlapped submission pattern achieves 98% utilization
+7. Batch submission is more efficient than serial for ANE

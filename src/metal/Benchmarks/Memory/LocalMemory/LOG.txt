@@ -1,0 +1,61 @@
+=== Local Memory Copy Analysis ===
+
+--- Local Memory Copy Performance (1M elements) ---
+Baseline (global->global): 0.650 GB/s
+Global->Shared->Global: 0.693 GB/s
+Block-strided avg: 0.054 GB/s
+
+--- Key Findings ---
+1. Local memory operations involve global memory access
+2. Shared memory provides slight improvement for some patterns
+3. Block-strided access is significantly slower
+4. Apple M2 unified memory affects local memory performance
+
+--- Memory Copy Patterns Analysis ---
+Pattern 1: Direct Global->Global
+- Direct memory copy between global buffers
+- Performance: ~0.65 GB/s
+
+Pattern 2: Global->Shared->Global
+- Using shared memory as intermediate cache
+- Performance: ~0.69 GB/s
+- Slight improvement from better coalescing
+
+Pattern 3: Block-strided
+- Non-contiguous memory access patterns
+- Performance: ~0.05 GB/s (significantly slower!)
+
+--- Performance Comparison ---
+| Pattern | Bandwidth | Relative Speed |
+|---------|-----------|----------------|
+| Global->Global | 0.65 GB/s | 1.0x (baseline) |
+| Global->Shared->Global | 0.69 GB/s | 1.06x |
+| Block-strided | 0.05 GB/s | 0.08x |
+
+--- Why Block-Strided is Slow ---
+1. Poor cache line utilization
+2. Memory coalescing failure
+3. Multiple memory transactions per access
+4. Bank conflicts in shared memory (if applicable)
+
+--- Optimization Strategies ---
+1. Use contiguous memory access when possible
+2. Coalesce global memory accesses
+3. Avoid strided patterns in hot paths
+4. Consider transformation before/after copy
+
+--- Apple M2 Local Memory Characteristics ---
+- Unified memory architecture affects performance
+- Shared memory is actually threadgroup memory
+- Local memory is device/threadgroup memory accessed via pointers
+- Performance depends on access patterns
+
+--- When Local Memory Operations Matter ---
+1. Data reorganization between kernels
+2. Transpose operations
+3. Gather/scatter conversions
+4. Format conversions
+
+--- Performance Implications ---
+Block-strided is 13x slower than contiguous access!
+Always prefer sequential access patterns.

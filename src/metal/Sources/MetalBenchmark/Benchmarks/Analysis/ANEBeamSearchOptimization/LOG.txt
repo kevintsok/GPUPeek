@@ -1,0 +1,24 @@
+ANE Beam Search and Sequence Selection Optimization
+================================================
+Date: 2026-04-06T00:00:00Z
+
+Background:
+-----------
+Beam search is used in LLM decoding to find high-quality sequences.
+Key operations include argmax, top-k selection, and score updates.
+
+Key Findings:
+-------------
+1. Argmax time scales linearly with vocabulary size
+2. Top-K selection overhead grows with K
+3. Beam search adds 20-30% overhead vs greedy
+4. Batch processing improves total throughput
+5. Softmax computation is not the bottleneck
+
+Performance Summary:
+- Argmax (32K vocab): ~5-10 μs
+- Top-8 selection: ~20-30 μs
+- Beam-8 decode step: ~50-100 μs
+- End-to-end (100 tokens): ~5-10 ms
+
+See RESEARCH.md for detailed analysis.

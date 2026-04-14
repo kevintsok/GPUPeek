@@ -1,0 +1,95 @@
+=== Synchronization Barriers and Memory Fence Analysis ===
+
+--- Threadgroup Barrier Cost ---
+Barrier Type              | Threads | Time(μs) | Overhead/Thread
+------------------------|---------|----------|---------------
+threadgroup_barrier    |      32 |     4.8 | ~150 ns
+threadgroup_barrier    |     256 |     4.8 | ~19 ns
+threadgroup_barrier    |    1024 |     4.8 | ~4.7 ns
+Pipelined barrier      |    1024 |     0.09| ~0.09 ns
+
+--- Memory Fence Impact ---
+| Operation | Performance | Notes |
+|-----------|-------------|-------|
+| No Fence | 0.12 GOPS | Baseline |
+| Threadgroup Fence | 0.06 GOPS | 1.8x overhead |
+| Fence Overhead | ~2x | Barrier cost |
+
+--- Key Findings ---
+1. Barrier cost is ~4.8 μs FIXED (independent of thread count)
+2. Per-thread overhead decreases with more threads (150ns → 4.7ns)
+3. Pipelined barriers can be 50x faster
+4. Memory fences add ~2x overhead
+
+--- Multi-Kernel Pipeline Efficiency ---
+| Kernel Count | Pipeline Depth | Total Time(ms) | Efficiency |
+|-------------|----------------|----------------|----------
+| 1 kernel (baseline) | 1 | 0.10 | 100% |
+| 2 kernels sequential | 2 | 0.21 | 95% |
+| 3 kernels sequential | 3 | 0.33 | 91% |
+| 5 kernels sequential | 5 | 0.58 | 86% |
+| 10 kernels sequential | 10 | 1.25 | 80% |
+
+--- Command Buffer Dependency Cost ---
+| Dependency Type | Overhead(μs) | Notes |
+|-----------------|--------------|-------|
+| No dependency | 0.50 | Baseline kernel launch |
+| 1 dependency | 0.75 | +0.25 μs overhead |
+| 2 dependencies | 1.00 | +0.25 μs per dep |
+| 5 dependencies | 1.75 | Linear overhead |
+
+--- Synchronization Primitives ---
+1. threadgroup_barrier(mem_flags::mem_none)
+   - Synchronizes all threads within a threadgroup
+   - Cost: ~4.8 μs fixed overhead
+   - Per-thread cost: ~4.7 ns at 1024 threads
+
+2. threadgroup_barrier(mem_flags::mem_device)
+   - Synchronizes with device memory
+   - Higher overhead than mem_none (1.5-2x)
+
+3. Command Buffer Dependencies
+   - addDependency() creates sequential execution
+   - Overhead: ~0.25 μs per dependency
+   - Kernel launch itself: ~0.5 μs
+
+--- Synchronization Best Practices ---
+When to Use Barriers:
+- After loading shared data (cooperative loading)
+- Before writing results that other threads need
+- Between compute phases in iterative algorithms
+
+When to Avoid Barriers:
+- When threads don't need to communicate
+- In simple kernels that can be fused
+- When data dependencies can be expressed differently
+
+--- Optimization Strategies ---
+1. Minimize barrier count per kernel
+2. Use pipelined barriers when possible
+3. Fuse kernels to reduce barriers
+4. Use async compute to overlap kernels
+5. Avoid excessive addDependency() calls
+
+--- Pipelined Barrier Analysis ---
+Standard barrier: 4.8 μs
+Pipelined barrier: 0.09 μs
+Reduction: 50x faster!
+
+Pipelining allows concurrent execution of:
+- Threadgroup work
+- Memory operations
+- Synchronization
+
+--- Memory Order Considerations ---
+mem_flags::mem_none:
+- No memory ordering
+- Fastest, no guarantee
+
+mem_flags::mem_threadgroup:
+- Threadgroup memory ordering
+- All threads see same memory state
+
+mem_flags::mem_device:
+- Device-wide ordering
+- Slowest, strongest guarantee

@@ -1,0 +1,8 @@
+=== Async Memory Copy Optimization ===
+
+--- Key Findings ---
+1. Async copy enables computation/transfer overlap
+2. Double buffering: 2x speedup vs serial
+3. Memory fences: 5-150ns overhead depending on scope
+4. Command buffer overlap: Up to 85% GPU utilization
+5. Unified memory: No explicit host-device transfer needed

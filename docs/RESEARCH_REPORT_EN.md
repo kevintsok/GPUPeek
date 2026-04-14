@@ -26,6 +26,7 @@ GPUPeek is a CUDA benchmark framework designed for deep exploration of GPU archi
 7. [NCU Profiling Metrics](#7-ncu-profiling-metrics)
 8. [Key Findings and Recommendations](#8-key-findings-and-recommendations)
 9. [Future Research Directions](#9-future-research-directions)
+10. [Apple Metal (M2) vs NVIDIA Blackwell (RTX 5080) Comparison](#10-apple-metal-m2-vs-nvidia-blackwell-rtx-5080-comparison)
 
 ---
 
@@ -609,6 +610,102 @@ ncu --set full --metrics sm__warp_issue_stalled_by_barrier.pct ./gpupeek.exe bar
 2. **Warp-Level Programming**: Advanced shuffle techniques
 3. **Memory Request Coalescing**: Optimizing memory transactions
 4. **Occupancy vs Performance**: Finding optimal occupancy boundaries
+
+---
+
+## 10. Apple Metal (M2) vs NVIDIA Blackwell (RTX 5080) Comparison
+
+### 10.1 Hardware Architecture Comparison
+
+| Parameter | Apple M2 (Metal) | NVIDIA RTX 5080 (CUDA) |
+|-----------|------------------|------------------------|
+| Architecture | Heterogeneous (CPU+GPU+ANE) | Discrete GPU |
+| GPU Family | Apple 7 | Blackwell (SM 12.0) |
+| GPU Cores | 8 cores (7 available) | 60 SMs × 128 cores = 7,680 |
+| Neural Engine | 16-core ANE (~60 TOPS) | Tensor Cores (FP8/INT8) |
+| Unified Memory | Yes (LPDDR5, ~100 GB/s) | No (GDDR7, ~800 GB/s) |
+| Shared Memory | 32 KB (Metal threadgroup) | 48 KB per block |
+| Memory Bandwidth | ~100 GB/s | ~800 GB/s |
+| L2 Cache | Shared with CPU | 5 MB |
+| SIMD Width | 32 (Metal) | 32 (Warp) |
+| Threadgroup Memory | 32 KB | 48 KB shared |
+
+### 10.2 Memory Architecture
+
+**Apple Metal (M2)**:
+- Unified memory architecture: CPU and GPU share same physical memory
+- Zero-copy access: ANE can access CPU memory directly (~50ns latency)
+- Memory bandwidth: ~100 GB/s (LPDDR5)
+- Cache: Shared L2 between CPU and GPU
+
+**NVIDIA Blackwell (RTX 5080)**:
+- Discrete memory: GPU has dedicated GDDR7 memory
+- Higher bandwidth: ~800 GB/s peak
+- Separate L2 cache: 5 MB on-chip
+- PCIe for CPU-GPU transfer when needed
+
+### 10.3 ANE (Apple Neural Engine) Capabilities
+
+The 16-core ANE on M2 provides specialized AI acceleration:
+
+| Feature | Specification |
+|---------|---------------|
+| INT8 Performance | ~60 TOPS |
+| FP16/BF16 | Native support |
+| INT4/INT2/INT1 | Emulated support |
+| Unified Memory | Zero-copy with CPU |
+
+**Key ANE Optimizations**:
+- Batch processing: 15-20x speedup with batching
+- Kernel fusion: Reduces memory traffic
+- Async memory transfer: 50ns zero-copy latency
+- Hierarchical tiling: Up to 5.7x cache efficiency improvement
+
+### 10.4 Programming Model Comparison
+
+| Aspect | Metal | CUDA |
+|--------|-------|------|
+| Language | Metal Shading Language (MSL) | CUDA C++ |
+| API | Metal Framework | CUDA Runtime/Driver |
+| Thread Group | threadgroup | shared memory |
+| Thread Group Sync | threadgroup.barrier | __syncthreads() |
+| SIMD Group | simdgroup | warp |
+| Atomic Support | Yes | Yes (extensive) |
+| Async Compute | Yes | Yes (streams) |
+| Tensor Ops | ANE (separate) | Tensor Cores |
+
+### 10.5 Performance Characteristics
+
+**Memory-Bound Workloads**:
+- Metal: ~100 GB/s unified memory (may be limited by CPU cache)
+- CUDA: ~800 GB/s discrete memory (higher raw bandwidth)
+
+**AI/ML Workloads**:
+- Metal: ANE provides ~60 TOPS for INT8/FP16
+- CUDA: Tensor Cores provide mixed precision acceleration
+
+**Compute-Bound Workloads**:
+- Metal: Similar GPU compute density to integrated GPUs
+- CUDA: Higher TFLOPS for dense compute
+
+### 10.6 Key Insights
+
+1. **Unified Memory Advantage**: Metal's unified memory eliminates PCIe transfer overhead for AI workloads
+2. **ANE Efficiency**: Dedicated neural engine provides excellent TOPS/watt for inference
+3. **Trade-offs**: CUDA's discrete memory provides higher bandwidth but requires explicit management
+4. **Target Use Cases**:
+   - Metal: Mobile/edge AI, power-efficient inference, Apple ecosystem
+   - CUDA: High-performance computing, maximum throughput, multi-GPU
+
+### 10.7 Benchmark Coverage
+
+Metal research covers 431+ ANE benchmark topics:
+- **Memory**: Bandwidth, coalescing, bank conflicts, latency
+- **Compute**: GEMM, convolution, FP16/INT8 operations
+- **Synchronization**: Atomics, barriers, SIMD primitives
+- **Algorithms**: Sorting, FFT, graph algorithms
+- **Analysis**: Occupancy, cache behavior, precision analysis
+- **Optimization**: Kernel fusion, command buffer batching, double buffering
 
 ---
 
