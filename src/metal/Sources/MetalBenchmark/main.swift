@@ -17546,6 +17546,7 @@ do { try ANEZeroShotFewShotLearningBenchmark(device: device, queue: queue).run()
 do { try ANEKVCacheOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANERoPEOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try ANETokenBatchingOptimizationBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
+do { try TritonMetalInteropBenchmark(device: device, queue: queue).run() } catch { print("Error: \(error)") }
 do { try testAsynchronousOverlap(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testMultiQueueParallelism(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
 do { try testSharedEventSynchronization(device: device, queue: queue, library: library) } catch { print("Error: \(error)") }
