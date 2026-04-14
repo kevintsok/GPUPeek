@@ -2156,6 +2156,158 @@ Arithmetic Intensity = FLOPs / Memory Bytes
 3. **Triple buffer增加流水线深度** - 适合多阶段处理
 4. **适用场景** - 迭代算法、图像处理、视频编解码
 
+---
+
+## Triton Backend Research: Triton on Apple Metal GPU
+
+### 研究概述
+
+本节研究Triton编译器架构及其在Apple Metal GPU上的支持可行性。
+
+### Triton编译器架构
+
+Triton是OpenAI开发的开源GPU内核编程语言和编译器，旨在简化高效GPU代码的编写。
+
+**核心架构**: Triton基于MLIR (Multi-Level Intermediate Representation)，采用三层IR架构：
+
+| IR层 | 说明 | 作用 |
+|------|------|------|
+| **Triton IR** | 高层、硬件无关 | 前端优化、公共子表达式消除、死代码消除 |
+| **TritonGPU IR** | 低层、GPU专用 | 流水线优化、预取优化、共享内存分配 |
+| **LLVM IR** | 平台无关 | 底层优化、代码生成 |
+
+**编译流程**:
+```
+Python代码
+    ↓
+Triton IR (前端)
+    ↓
+TritonGPU IR (优化器)
+    ↓
+LLVM IR
+    ↓
+目标代码 (PTX/cubin 或 AMDGCN)
+```
+
+**官方支持的GPU后端**:
+
+| GPU厂商 | 目标代码 | 状态 |
+|---------|----------|------|
+| NVIDIA | PTX → cubin (via ptxas) | ✅ 官方支持 |
+| AMD | AMDGCN (via ROCm) | ✅ 官方支持 (third_party/amd/) |
+| CPU | LLVM backend | ✅ 官方支持 |
+| Apple Metal | 无 | ❌ 不支持 |
+
+### Apple Metal Shader Converter
+
+Apple提供了Metal Shader Converter工具，支持将DXIL (DirectX Intermediate Language) 转换为Metal IR。
+
+**支持的输入格式**:
+- **DXIL** (DirectX Intermediate Language) - 基于LLVM IR字节码
+
+**转换流程**:
+```bash
+DXIL bytecode → Metal shader converter → Metal IR/metallib
+```
+
+**系统要求**:
+- macOS 13 Ventura + Xcode 15 (converter)
+- macOS 14 Sonoma / iOS 17+ (runtime)
+- Windows 10 + Visual Studio 2019 (converter)
+
+**参考链接**: [Apple Metal Shader Converter Documentation](https://developer.apple.com/metal/shader-converter/)
+
+### Triton → Metal 编译路径分析
+
+**潜在路径**:
+
+```
+Triton → LLVM IR → [需要DXIL emitter] → DXIL → Metal Shader Converter → Metal
+```
+
+**可行性分析**:
+
+| 步骤 | 当前状态 | 难度 |
+|------|----------|------|
+| Triton → LLVM IR | ✅ 已有 | - |
+| LLVM IR → DXIL | ❌ 不存在 | 高 (需要DXIL emitter) |
+| DXIL → Metal | ✅ Apple提供 | 低 |
+
+**主要障碍**: Triton目前没有DXIL输出后端，这是将Triton代码编译到Metal的核心障碍。
+
+**替代方案分析**:
+
+1. **SPIR-V路径**: LLVM IR → SPIR-V → Metal
+   - Apple **不**支持SPIR-V输入
+   - ❌ 不可行
+
+2. **HLSL路径**: Triton → LLVM IR → HLSL → DXIL → Metal
+   - 需要HLSL emitter
+   - 复杂且无开源项目
+   - ❌ 不可行
+
+3. **MLIR直接到Metal**:
+   - Apple未提供MLIR到Metal的直接路径
+   - ❌ 不可行
+
+### 现有相关项目
+
+**搜索结果**:
+- ❌ 未发现任何现有的Triton Metal后端项目
+- ❌ 未发现活跃的第三方DXIL emitter for LLVM
+- Apple Metal Shader Converter仅接受DXIL，不接受标准LLVM IR
+
+### 推荐方案
+
+**短期方案 (直接使用Metal)**:
+- 继续使用现有Swift/Metal API进行GPU编程
+- GPUPeek的Metal基准测试已覆盖主要性能特征
+- 可考虑使用Metal Performance Shaders (MPS) 框架
+
+**长期方案 (Triton + Metal)**:
+
+1. **贡献Triton DXIL后端**:
+   - 在Triton中实现DXIL emitter (类似PTX emitter)
+   - 技术可行性：高
+   - 工作量：6-12个月
+   - 需深入了解DXIL规范和Triton后端架构
+
+2. **Apple生态整合**:
+   - 推动Apple支持标准LLVM IR或SPIR-V输入到Metal
+   - 联系Apple开发者社区
+   - 技术可行性：中 (取决于Apple决策)
+
+3. **替代语言方案**:
+   - **Mojo** (Modular AI): Chris Lattner (LLVM/MLIR创建者) 开发的新语言
+   - 支持多后端，包括CPU后端
+   - 长期可能支持Metal
+   - 项目状态：发展中
+
+### 参考资料
+
+1. **Triton官方仓库**: https://github.com/triton-language/triton
+2. **Triton文档**: https://triton-lang.org/
+3. **Apple Metal Shader Converter**: https://developer.apple.com/metal/shader-converter/
+4. **DXIL规范**: Microsoft DirectX Shader Compiler documentation
+5. **MLIR文档**: https://mlir.llvm.org/
+
+### 结论
+
+**当前状态**: Triton**不**支持Apple Metal GPU。
+
+**核心原因**: Apple的Metal Shader Converter只接受DXIL格式，而Triton没有DXIL输出后端。
+
+**可行的替代路径**:
+1. 等待第三方贡献Triton DXIL后端
+2. 参与Triton社区，开发DXIL emitter
+3. 长期关注Mojo语言的发展
+4. 继续使用现有Metal API进行Apple GPU研究
+
+**对于GPUPeek的建议**: 继续使用现有的Metal API基准测试框架，因为：
+- 现有框架已覆盖主要性能特征
+- Metal API是Apple生态系统的标准
+- Triton到Metal的路径短期内不可行
+
 
 
 
