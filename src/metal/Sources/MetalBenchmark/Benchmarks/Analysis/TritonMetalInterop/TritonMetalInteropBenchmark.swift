@@ -792,7 +792,9 @@ public struct TritonMetalInteropBenchmark {
             enc.setBuffer(aBuffer, offset: 0, index: 0)
             enc.setBuffer(bBuffer, offset: 0, index: 1)
             enc.setBuffer(cBuffer, offset: 0, index: 2)
-            enc.setBytes(&N, length: 4, index: 3)
+            withUnsafeBytes(of: N) { ptr in
+                enc.setBytes(ptr.baseAddress!, length: 4, index: 3)
+            }
             enc.dispatchThreadgroups(MTLSize(width: (size + 255) / 256, height: 1, depth: 1),
                                       threadsPerThreadgroup: MTLSize(width: 16, height: 16, depth: 1))
             enc.endEncoding()
@@ -948,7 +950,9 @@ public struct TritonMetalInteropBenchmark {
             enc.setComputePipelineState(pipeline)
             enc.setBuffer(inputBuffer, offset: 0, index: 0)
             enc.setBuffer(outputBuffer, offset: 0, index: 1)
-            enc.setBytes(&size, length: 4, index: 2)
+            withUnsafeBytes(of: size) { ptr in
+                enc.setBytes(ptr.baseAddress!, length: 4, index: 2)
+            }
             enc.dispatchThreadgroups(MTLSize(width: (Int(size) + 255) / 256, height: 1, depth: 1),
                                       threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
             enc.endEncoding()
